@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="#ffffffff"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:layout_centerVertical="true"
+    tools:context="com.gitz.jeff.andrew.uberclone.userType">
+
+
+    <android.support.design.widget.TextInputLayout
+        android:id="@+id/fullName"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="150dp">
+    </android.support.design.widget.TextInputLayout>
+
+
+    <Button
+        android:layout_width="fill_parent"
+        android:layout_height="36dp"
+        android:layout_marginTop="16dp"
+        android:background="#b45705"
+        android:onClick="customerType"
+        android:text="I'm a Customer"
+        android:textSize="18sp"
+        android:textAllCaps="false"
+        android:textColor="#fff"
+        android:layout_marginBottom="20dp"/>
+
+    <Button
+        android:layout_width="fill_parent"
+        android:layout_height="36dp"
+        android:background="#3b5998"
+        android:onClick="driverType"
+        android:text="I'm a Driver"
+        android:textSize="18sp"
+        android:textAllCaps="false"
+        android:textColor="#fff" />
+</LinearLayout>

@@ -1,0 +1,67 @@
+<FrameLayout
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:map="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.gitz.jeff.andrew.uberclone.CustomerMapActivity">
+
+
+
+    <fragment xmlns:android="http://schemas.android.com/apk/res/android"
+
+        android:id="@+id/map"
+        android:name="com.google.android.gms.maps.SupportMapFragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/logout"
+            android:onClick="logOut"
+            android:text="Logout"
+            android:textAllCaps="false"
+            android:layout_alignParentLeft="true"/>
+
+        <Button
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/cancelRequest"
+            android:text="Cancel Request?"
+            android:onClick="cancelRequest"
+            android:textAllCaps="false"
+            android:layout_alignParentRight="true"/>
+
+        <android.support.v7.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin= "20sp"
+            android:layout_below="@+id/cancelRequest">
+
+            <fragment
+
+                android:id="@+id/place_autocomplete_fragment"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:name="com.google.android.gms.location.places.ui.PlaceAutocompleteFragment"/>
+
+        </android.support.v7.widget.CardView>
+
+    </RelativeLayout>
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/requestUber"
+        android:text="Call Uber"
+        android:onClick="requestUber"
+        android:layout_gravity="bottom"
+        android:textAllCaps="false"
+        />
+
+</FrameLayout>

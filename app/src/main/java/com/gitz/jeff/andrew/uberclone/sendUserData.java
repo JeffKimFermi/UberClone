@@ -46,5 +46,37 @@ public class sendUserData
         Volley.newRequestQueue(context).add(getRequest);
 
     }
+
+    //Method Drive ID dat
+    public static void sendUserID(Context myContext, final String eventKey, final String driverPhoneNumber)
+    {
+        final Context context= myContext;
+
+        String url = "http://159.65.197.113:22/phpmyadmin/sms_data/sms.php?destination=" + eventKey + "&phone" + driverPhoneNumber;
+
+        StringRequest getRequest = new StringRequest(Request.Method.GET, url,
+                new Response.Listener<String>()
+                {
+                    @Override
+                    public void onResponse(String response)
+                    {
+                        // display response
+                        Log.e("Response", response.toString());
+                    }
+                },
+                new Response.ErrorListener()
+                {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.e("Error.Response", error.toString());
+                    }
+                }
+        );
+
+        //request_json.setRetryPolicy(new DefaultRetryPolicy(20 * 1000, 1, 1.0f));
+
+        Volley.newRequestQueue(context).add(getRequest);
+
+    }
 }
 

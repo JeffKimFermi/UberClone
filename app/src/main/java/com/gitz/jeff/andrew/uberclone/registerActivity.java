@@ -2,19 +2,17 @@ package com.gitz.jeff.andrew.uberclone;
 
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.EditText;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
 
-public class UberMainActivity extends AppCompatActivity {
+public class registerActivity extends AppCompatActivity {
 
     EditText userName;      //User Name
     EditText phoneNumber;   //User Phone Number
@@ -22,18 +20,17 @@ public class UberMainActivity extends AppCompatActivity {
     EditText passWord1;     //User Password
     EditText passWord2;     //Password Confirmation
     ArrayList<String> userCredentials = new ArrayList<>(); //ArrayList to Hold User Data
+    TinyDB saveUserPhoneNumber;  //Save User Phone Number within the App
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_uber_main);
+        setContentView(R.layout.activity_register_activity);
+        saveUserPhoneNumber = new TinyDB(getBaseContext());
     }
 
-    /**
-     * A native method that is implemented by the 'native-lib' native library,
-     * which is packaged with this application.
-     */
+
     public native String stringFromJNI();
 
     // Used to load the 'native-lib' library on application startup.
@@ -68,6 +65,7 @@ public class UberMainActivity extends AppCompatActivity {
                 String name = userName.getText().toString().trim();                   //User's Name
                 String number = phoneNumber.getText().toString().trim();              //User Mobile Number
                 String email = emailAddress.getText().toString().trim();              //User Email Address
+                saveUserPhoneNumber.putString("userPhoneNumber", number);            //Save User Phone Number in Shared Prefs
 
                 ConnectivityManager cm = (ConnectivityManager) getBaseContext().getSystemService(Context.CONNECTIVITY_SERVICE);
                 NetworkInfo activeNetwork = cm.getActiveNetworkInfo();

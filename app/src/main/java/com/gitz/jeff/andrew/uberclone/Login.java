@@ -26,7 +26,7 @@ public class Login extends AppCompatActivity
         String enteredPhoneNumber = loginPhone.getText().toString().trim();
         String enteredPassword = loginPassword.getText().toString().trim();
 
-        Intent intent  = new Intent(getBaseContext(), DriverMapActivity.class);
+        Intent intent  = new Intent(getBaseContext(), CustomerMapActivity.class);
         startActivity(intent);
     }
 }

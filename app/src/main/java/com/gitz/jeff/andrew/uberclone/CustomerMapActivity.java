@@ -1,5 +1,6 @@
 package com.gitz.jeff.andrew.uberclone;
 
+
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -11,13 +12,11 @@ import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -25,34 +24,30 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
 
-import org.w3c.dom.Text;
-
-public class DriverMapActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, com.google.android.gms.location.LocationListener {
+public class CustomerMapActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, com.google.android.gms.location.LocationListener {
 
     private GoogleMap mMap;
     GoogleApiClient googleApiClient;
     Location lastLocation;
     LocationRequest locationRequest;
     TinyDB getSavedUserPhoneNumber; //Get user Driver User Phone Number to act as ID
-    String driverUserId = null;
-    Button logout;   //Driver has Logged Out
-
-    LinearLayout customerInformation;
-    ImageView customerProfileImage;
-    TextView customerName, customerCellNumber;
-
+    String customerUserId = null;
+    Button request;   //Request for a Taxi
+    Button cancel;    //Cancel Taxi Request
+    private LatLng pickUpLocation;   //Will Hold Pick Up Location Co-ordinates
+    private Boolean driverFound = true;
+    String destination;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState)
+    {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_driver_map);
-
+        setContentView(R.layout.activity_customer_map);
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
-
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED)
         {
             ActivityCompat.requestPermissions(DriverMapActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_REQUEST_CODE);
@@ -62,13 +57,28 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
         {
             mapFragment.getMapAsync(this);
         }
-
         getSavedUserPhoneNumber = new TinyDB(getBaseContext());
-        driverUserId = getSavedUserPhoneNumber.getString("userPhoneNumber");  //Get Saved Phone Number to act as User ID
-        customerInformation = (LinearLayout)findViewById(R.id.customerInfo);
-        customerProfileImage = (ImageView)findViewById(R.id.customerProfileImage);
-        customerName = (TextView)findViewById(R.id.customerName);
-        customerCellNumber = (TextView)findViewById(R.id.customerPhoneNumber);
+        customerUserId = getSavedUserPhoneNumber.getString("userPhoneNumber");  //Get Saved Phone Number to act as User ID
+        request = (Button)findViewById(R.id.requestUber);
+        cancel = (Button)findViewById(R.id.cancelRequest);
+        cancel.setVisibility(View.INVISIBLE);
+
+
+        PlaceAutocompleteFragment autocompleteFragment = (PlaceAutocompleteFragment)getFragmentManager().findFragmentById(R.id.place_autocomplete_fragment);
+        autocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener()
+        {
+            @Override
+            public void onPlaceSelected(Place place)  //Get Info on the Selected Place
+            {
+               destination = place.getName().toString();
+            }
+
+            @Override
+            public void onError(Status status)   //Handle the Error
+            {
+                destination = place.getName().toString();
+            }
+        });
     }
 
 
@@ -101,13 +111,13 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
     @Override
     public void onLocationChanged(Location location)  //Will be called every second
     {
-      lastLocation = location;
-      LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
-      mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
-      mMap.animateCamera(CameraUpdateFactory.zoomTo(11));
+        lastLocation = location;
+        LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
+        mMap.animateCamera(CameraUpdateFactory.zoomTo(11));
 
-      Double currentLatitudeAddress = location.getLatitude();     //Get current Latitude coordinates
-      Double currentLongitudeAddress = location.getLongitude();   //Get current Longitude coordinates
+        Double currentLatitudeAddress = location.getLatitude();     //Get current Latitude coordinates
+        Double currentLongitudeAddress = location.getLongitude();   //Get current Longitude coordinates
     }
 
 
@@ -120,14 +130,76 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED)
         {
-            ActivityCompat.requestPermissions(DriverMapActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_REQUEST_CODE);
+
+            return;
         }
         LocationServices.FusedLocationApi.requestLocationUpdates(googleApiClient, locationRequest, this);
     }
 
+    public void requestUber(View view)
+    {
+       if(lastLocation!= null && lastLocation!= null)
+       {
+           pickUpLocation = new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude());   //Get Customer Pickup Location Co-ordinates
+           mMap.addMarker(new MarkerOptions().position(pickUpLocation).title("Pick Me Up Here"));  //Add Marker, and Set Title of Marker
+       }
+       request.setText("Getting you a Driver...");
+
+       if(driverFound) //If Appropriate Driver Has Been Found
+       {
+           /*
+           Location customerLocation = new Location("");
+           if(customerLocation != null)
+           {
+               customerLocation.setLatitude(pickUpLocation.latitude);
+               customerLocation.setLongitude(pickUpLocation.longitude);
+           }
+
+
+           Location driverLocation = new Location("");  //Use Customer Location Till Driver Location Provided By Server System
+           if(driverLocation != null)
+           {
+               driverLocation.setLatitude(pickUpLocation.latitude);
+               driverLocation.setLongitude(pickUpLocation.longitude);
+           }
+           */
+
+           //float distanceBtwnCustomerAndDriver = customerLocation.distanceTo(driverLocation);         //Distance in Metres
+           float distanceBtwnCustomerAndDriver = 500;  //Use Dummy Data for the Time Being
+           if(distanceBtwnCustomerAndDriver < 100)  //If Distance Btwn Driver and Customer is less than 100m
+           {
+               request.setText("Driver has Arrived");
+           }
+
+           else                                     //If Distance Btwn Driver and Customer is more than 100m
+           {
+               request.setText("Driver Found: " + String.valueOf(distanceBtwnCustomerAndDriver) + "m");  //Change Button Appropriately
+           }
+
+           cancel.setVisibility(View.VISIBLE);
+       }
+
+    }
+
+    public void cancelRequest(View view)
+    {
+        if(driverFound)  //If Cancel Button Pressed while Driver has Already been Found
+        {
+            //sendUserData.sendUserID(getBaseContext(), "customerRequestCancelled", customerUserId);     //Send Driver ID that End of Activity
+            request.setText("Cancel Request Successful");
+        }
+    }
+
+    public  void appSettings(View view)
+    {
+      Intent intent = new Intent(getBaseContext(), customerSettingsActivity.class);
+      startActivity(intent);
+      return;
+    }
+
     public void logOut(View view)
     {
-        //sendUserData.sendUserID(getBaseContext(), "driverLoggedOut", driverUserId);     //Send Driver ID that End of Activity
+        //sendUserData.sendDriverID(getBaseContext(), driverUserId);     //Send Driver ID that End of Activity
         Intent intent = new Intent(getBaseContext(), registerActivity.class);
         startActivity(intent);     //Go to the Main Activity after Logout
         finish();
@@ -143,7 +215,6 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
 
     }
-
 
     final int LOCATION_REQUEST_CODE = 1;
     @Override
@@ -173,7 +244,6 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
     protected void onStop()  //If Driver gets out of this activity, Notify Db, for Him to be removed as Hes is no longer Active
     {
         super.onStop();
-        //sendUserData.sendUserID(getBaseContext(), "driverLoggedOut", driverUserId);     //Send Driver ID that End of Activity
+        //sendUserData.sendDriverID(getBaseContext(), driverUserId);     //Send Driver ID that End of Activity
     }
-
 }
