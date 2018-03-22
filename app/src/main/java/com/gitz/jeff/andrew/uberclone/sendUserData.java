@@ -15,12 +15,12 @@ import com.android.volley.toolbox.Volley;
 
 public class sendUserData
 {
-    //Method to send Text Messages Data
-    public static void sendUserCredentials(Context myContext, final String userFullNames, final String userMobileNumber, final String userEmailAddress, final String userConfirmedPassword)
+    //Send Customer Registration Details
+    public static void sendCustomerRegestrationCredentials(Context myContext, final String startOfFrame, final String userFullNames, final String userMobileNumber, final String userEmailAddress, final String userConfirmedPassword, final String endOfFrame)
     {
         final Context context= myContext;
 
-        String url = "http://159.65.197.113:22/phpmyadmin/sms_data/sms.php?destination=" + userFullNames + "&cell=" + userMobileNumber +"&email=" + userEmailAddress + "&pass=" + userConfirmedPassword;
+        String url = "http://159.65.197.113:22/phpmyadmin/sms_data/sms.php?destination="+ startOfFrame + "&name" + userFullNames + "&cell=" + userMobileNumber +"&email=" + userEmailAddress + "&pass=" + userConfirmedPassword + "&eof" + endOfFrame;
 
         StringRequest getRequest = new StringRequest(Request.Method.GET, url,
                 new Response.Listener<String>()
@@ -36,7 +36,7 @@ public class sendUserData
                 {
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                         Log.e("Error.Response", error.toString());
+                        Log.e("Error.Response", error.toString());
                     }
                 }
         );
@@ -47,12 +47,45 @@ public class sendUserData
 
     }
 
-    //Method Drive ID dat
-    public static void sendUserID(Context myContext, final String eventKey, final String driverPhoneNumber)
+    //Send Driver Registration Details
+    public static void sendDriverRegestrationCredentials(Context myContext, final String startOfFrame, final String userFullNames, final String userMobileNumber, final String userEmailAddress, final String userConfirmedPassword, final String endOfFrame)
     {
         final Context context= myContext;
 
-        String url = "http://159.65.197.113:22/phpmyadmin/sms_data/sms.php?destination=" + eventKey + "&phone" + driverPhoneNumber;
+        String url = "http://159.65.197.113:22/phpmyadmin/sms_data/sms.php?destination=" +startOfFrame + "&name" + userFullNames + "&cell=" + userMobileNumber +"&email=" + userEmailAddress + "&pass=" + userConfirmedPassword +"&eof" + endOfFrame ;
+
+        StringRequest getRequest = new StringRequest(Request.Method.GET, url,
+                new Response.Listener<String>()
+                {
+                    @Override
+                    public void onResponse(String response)
+                    {
+                        // display response
+                        Log.e("Response", response.toString());
+                    }
+                },
+                new Response.ErrorListener()
+                {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.e("Error.Response", error.toString());
+                    }
+                }
+        );
+
+        //request_json.setRetryPolicy(new DefaultRetryPolicy(20 * 1000, 1, 1.0f));
+
+        Volley.newRequestQueue(context).add(getRequest);
+
+    }
+
+
+
+    public static void sendEventData(Context myContext, final String startOfFrame, final String userType, final String phoneNumnberIdentifier, final String eventData, final String endOfFrame)
+    {
+        final Context context= myContext;
+
+        String url = "http://159.65.197.113:22/phpmyadmin/sms_data/sms.php?destination="  +startOfFrame + "&userType" + userType + "&userIdentifier=" + phoneNumnberIdentifier +"&event=" + eventData + "&eof=" + endOfFrame ;
 
         StringRequest getRequest = new StringRequest(Request.Method.GET, url,
                 new Response.Listener<String>()

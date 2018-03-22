@@ -9,6 +9,9 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -16,6 +19,11 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.directions.route.AbstractRouting;
+import com.directions.route.Route;
+import com.directions.route.RouteException;
+import com.directions.route.Routing;
+import com.directions.route.RoutingListener;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationRequest;
@@ -25,10 +33,17 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
 
 import org.w3c.dom.Text;
 
-public class DriverMapActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, com.google.android.gms.location.LocationListener {
+import java.util.ArrayList;
+import java.util.List;
+
+import static com.gitz.jeff.andrew.uberclone.R.id.map;
+
+public class DriverMapActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, com.google.android.gms.location.LocationListener, RoutingListener {
 
     private GoogleMap mMap;
     GoogleApiClient googleApiClient;
@@ -37,10 +52,13 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
     TinyDB getSavedUserPhoneNumber; //Get user Driver User Phone Number to act as ID
     String driverUserId = null;
     Button logout;   //Driver has Logged Out
-
+    public static float myZoomLevel = 14;
     LinearLayout customerInformation;
-    ImageView customerProfileImage;
-    TextView customerName, customerCellNumber;
+    ImageView customerProfileImage;   //Assigned Customer Profile Image
+    TextView customerName, customerPhoneNumber;  //Assigned Customer Name and Phone Number
+    private List<Polyline> polylines;
+    private static final int[] COLORS = new int[]{R.color.primary_dark_material_light};
+    boolean customerAssigned = true;   //Customer not assigned by default
 
 
     @Override
@@ -49,9 +67,8 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
         setContentView(R.layout.activity_driver_map);
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-
-        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.map);
+        polylines = new ArrayList<>();
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(map);
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED)
         {
@@ -68,8 +85,31 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
         customerInformation = (LinearLayout)findViewById(R.id.customerInfo);
         customerProfileImage = (ImageView)findViewById(R.id.customerProfileImage);
         customerName = (TextView)findViewById(R.id.customerName);
-        customerCellNumber = (TextView)findViewById(R.id.customerPhoneNumber);
+        customerPhoneNumber = (TextView)findViewById(R.id.customerPhoneNumber);
+        getAssignedCustomer(); //Update Driver UI Appropriately
+
     }
+
+    public void getAssignedCustomer()
+    {
+        String name = "Lisa Randall";  //Dummy Data
+        String phoneNumber = "0728648142";  //Dummy Data
+        if(customerAssigned)
+        {
+           customerInformation.setVisibility(View.VISIBLE);
+           customerName.setText(name);
+           customerPhoneNumber.setText(phoneNumber);
+        }
+
+        else
+        {
+            customerInformation.setVisibility(View.GONE);
+            customerName.setText("");
+            customerPhoneNumber.setText("");
+        }
+
+    }
+
 
 
     @Override
@@ -84,6 +124,15 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
 
         buildGoogleApiClient();
         mMap.setMyLocationEnabled(true);
+
+
+        mMap.setOnCameraMoveListener(new GoogleMap.OnCameraMoveListener()   //Update my Zoom Level to Manual Inputs
+        {
+            @Override
+            public void onCameraMove() {
+                myZoomLevel = mMap.getCameraPosition().zoom;
+            }
+        });
     }
 
 
@@ -101,18 +150,31 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
     @Override
     public void onLocationChanged(Location location)  //Will be called every second
     {
-      lastLocation = location;
-      LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
-      mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
-      mMap.animateCamera(CameraUpdateFactory.zoomTo(11));
+        lastLocation = location;
+        LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
 
-      Double currentLatitudeAddress = location.getLatitude();     //Get current Latitude coordinates
-      Double currentLongitudeAddress = location.getLongitude();   //Get current Longitude coordinates
+        mMap.animateCamera(CameraUpdateFactory.zoomTo(myZoomLevel), new GoogleMap.CancelableCallback() {
+            @Override
+            public void onFinish() {
+                myZoomLevel = mMap.getCameraPosition().zoom;
+            }
+
+            @Override
+            public void onCancel() {
+
+            }
+        });
+
+        // Log.e("ZOOM_LEVEL",""+myZoomLevel);
+        Double currentLatitudeAddress = location.getLatitude();     //Get current Latitude coordinates
+        Double currentLongitudeAddress = location.getLongitude();   //Get current Longitude coordinates
     }
 
 
     @Override
-    public void onConnected(@Nullable Bundle bundle) {
+    public void onConnected(@Nullable Bundle bundle)
+    {
         locationRequest = new LocationRequest();
         locationRequest.setInterval(1000);    //Refresh rate
         locationRequest.setFastestInterval(1000);
@@ -120,28 +182,10 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED)
         {
-            ActivityCompat.requestPermissions(DriverMapActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_REQUEST_CODE);
+
+            return;
         }
         LocationServices.FusedLocationApi.requestLocationUpdates(googleApiClient, locationRequest, this);
-    }
-
-    public void logOut(View view)
-    {
-        //sendUserData.sendUserID(getBaseContext(), "driverLoggedOut", driverUserId);     //Send Driver ID that End of Activity
-        Intent intent = new Intent(getBaseContext(), registerActivity.class);
-        startActivity(intent);     //Go to the Main Activity after Logout
-        finish();
-        return;
-    }
-
-    @Override
-    public void onConnectionSuspended(int i) {
-
-    }
-
-    @Override
-    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-
     }
 
 
@@ -156,7 +200,7 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
                 if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED)
                 {
                     SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-                            .findFragmentById(R.id.map);
+                            .findFragmentById(map);
                     mapFragment.getMapAsync(this);
                 }
 
@@ -169,11 +213,147 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
         }
     }
 
+/*
+    public void getAssignedCustomerPickupLocation()
+    {
+        getRouteToMarker(pickUpLatLang);
+    }
+*/
+    public void rideCancelled()
+    {
+        clearRouteFromMap();   //Clear Route From Map
+    }
+
+    public void getRouteToMarker(LatLng pickUpLatLang)
+    {
+        Routing routing = new Routing.Builder()
+                .travelMode(AbstractRouting.TravelMode.DRIVING)
+                .withListener(this)
+                .alternativeRoutes(false)  //Disable Alternative Routes for Now
+                .waypoints(new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude() ), pickUpLatLang)     //end is pickUpLatLang, start will be last latlong coordininates
+                .build();
+        routing.execute();
+    }
+
+
+    public void clearRouteFromMap()
+    {
+        for(Polyline line: polylines)
+        {
+            line.remove();
+        }
+        polylines.clear();
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
+    }
+
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+
+    }
+
+
+
     @Override
     protected void onStop()  //If Driver gets out of this activity, Notify Db, for Him to be removed as Hes is no longer Active
     {
         super.onStop();
         //sendUserData.sendUserID(getBaseContext(), "driverLoggedOut", driverUserId);     //Send Driver ID that End of Activity
+    }
+
+    @Override
+    public void onRoutingFailure(RouteException e)
+    {
+        if(e != null)
+        {
+            Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
+        else
+        {
+            Toast.makeText(this, "Something went wrong, Try again", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    public void onRoutingStart()
+    {
+
+    }
+
+    @Override
+    public void onRoutingSuccess(ArrayList<Route> route, int shortestRouteIndex)
+    {
+        if(polylines.size()>0) {
+            for (Polyline poly : polylines) {
+                poly.remove();
+            }
+        }
+
+        polylines = new ArrayList<>();
+        //add route(s) to the map.
+        for (int i = 0; i <route.size(); i++) {
+
+            //In case of more than 5 alternative routes
+            int colorIndex = i % COLORS.length;
+
+            PolylineOptions polyOptions = new PolylineOptions();
+            polyOptions.color(getResources().getColor(COLORS[colorIndex]));
+            polyOptions.width(10 + i * 3);
+            polyOptions.addAll(route.get(i).getPoints());
+            Polyline polyline = mMap.addPolyline(polyOptions);
+            polylines.add(polyline);
+
+            Toast.makeText(getApplicationContext(),"Route "+ (i+1) +": Distance: "+ route.get(i).getDistanceValue()+": Duration- "+ route.get(i).getDurationValue(),Toast.LENGTH_SHORT).show();
+        }
+    }
+
+
+    @Override
+    public void onRoutingCancelled()
+    {
+
+    }
+
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater menuInflater = getMenuInflater();
+        menuInflater.inflate(R.menu.main_activity_menu, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId())
+        {
+            case R.id.settingsId:
+                Intent intent1 = new Intent(getBaseContext(), settingsActivity.class);
+                startActivity(intent1);
+                break;
+
+            case R.id.logoutId:
+                Intent intent4 = new Intent(getBaseContext(), driverRegister.class);
+                startActivity(intent4);
+                break;
+
+
+            case R.id.helpId:
+                Intent intent2 = new Intent(getBaseContext(), Help.class);
+                startActivity(intent2);
+                break;
+
+            case R.id.aboutId:
+                Intent intent3 = new Intent(getBaseContext(), About.class);
+                startActivity(intent3);
+                break;
+
+        }
+        return super.onOptionsItemSelected(item);
     }
 
 }

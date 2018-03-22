@@ -12,11 +12,11 @@ import android.widget.Toast;
 
 import java.util.ArrayList;
 
-public class registerActivity extends AppCompatActivity {
+public class driverRegister extends AppCompatActivity {
 
     EditText userName;      //User Name
     EditText phoneNumber;   //User Phone Number
-    EditText emailAddress;  //User Email Address
+    EditText vehicleRegistration;  //User Email Address
     EditText passWord1;     //User Password
     EditText passWord2;     //Password Confirmation
     ArrayList<String> userCredentials = new ArrayList<>(); //ArrayList to Hold User Data
@@ -24,11 +24,13 @@ public class registerActivity extends AppCompatActivity {
     TinyDB saveRegistrationComplete;
     int registrationStatus = 1; //Registration Done Successfully
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_register_activity);
+        setContentView(R.layout.activity_driver_register);
+
         saveUserPhoneNumber = new TinyDB(getBaseContext());
         saveRegistrationComplete = new TinyDB(getBaseContext());
     }
@@ -37,15 +39,17 @@ public class registerActivity extends AppCompatActivity {
     public native String stringFromJNI();
 
     // Used to load the 'native-lib' library on application startup.
-    static {
+    static
+    {
         System.loadLibrary("native-lib");
     }
+
 
     public void register(View view)
     {
         userName = (EditText)findViewById(R.id.userName);
         phoneNumber = (EditText)findViewById(R.id.phoneNumber);
-        emailAddress = (EditText)findViewById(R.id.userEmail);
+        vehicleRegistration= (EditText)findViewById(R.id.vehicleRegistration);
         passWord1 = (EditText)findViewById(R.id.passWord1);
         passWord2 = (EditText)findViewById(R.id.passWord2);
 
@@ -57,7 +61,7 @@ public class registerActivity extends AppCompatActivity {
         /*Perform Error Handling*/
         if(pass1.matches("") || pass2.matches(""))        //If No Input Entered
         {
-           Toast.makeText(getBaseContext(), "Missing Input", Toast.LENGTH_LONG).show();  //Toast Error Message
+            Toast.makeText(getBaseContext(), "Missing Input", Toast.LENGTH_LONG).show();  //Toast Error Message
         }
 
         else                                              //Acceptable Input
@@ -67,7 +71,7 @@ public class registerActivity extends AppCompatActivity {
                 String password = pass1;                                              //Std name for user password
                 String name = userName.getText().toString().trim();                   //User's Name
                 String number = phoneNumber.getText().toString().trim();              //User Mobile Number
-                String email = emailAddress.getText().toString().trim();              //User Email Address
+                String registration = vehicleRegistration.getText().toString().trim();              //User Email Address
                 saveUserPhoneNumber.putString("userPhoneNumber", number);            //Save User Phone Number in Shared Prefs
 
                 ConnectivityManager cm = (ConnectivityManager) getBaseContext().getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -78,7 +82,7 @@ public class registerActivity extends AppCompatActivity {
                     //IF Connected to Network either via Mobile Data or Wifi
                     if (activeNetwork.getType() == ConnectivityManager.TYPE_MOBILE || activeNetwork.getType() == ConnectivityManager.TYPE_WIFI)
                     {
-                        //sendUserData.sendUserCredentials(getBaseContext(), name, number,email, password);     //Send Bloody Data
+                        //sendUserData.sendUserCredentials(getBaseContext(), name, number,registration, password);     //Send Bloody Data
                     }
 
                     saveRegistrationComplete.putInt("registrationStatus", registrationStatus);  //Save Integer that Registration Done Successfully
@@ -88,9 +92,10 @@ public class registerActivity extends AppCompatActivity {
 
                     userName.setText("");   //Clear all Edit Text Boxes
                     phoneNumber.setText("");
-                    emailAddress.setText("");
+                    vehicleRegistration.setText("");
                     passWord1.setText("");
                     passWord2.setText("");
+
                 }
 
                 else                               //If not connected to network

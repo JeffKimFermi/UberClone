@@ -5,13 +5,6 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context="com.gitz.jeff.andrew.uberclone.DriverMapActivity">
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/logout"
-        android:onClick="logOut"
-        android:text="Logout"
-        android:textAllCaps="false"/>
 
     <fragment xmlns:android="http://schemas.android.com/apk/res/android"
 
@@ -27,13 +20,13 @@
         android:layout_gravity="bottom"
         android:orientation="horizontal"
         android:background="@android:color/white"
-        android:visibility="visible">
+        android:visibility="gone">
         
         <ImageView
             android:layout_width="100sp"
             android:layout_height="100sp"
             android:id="@+id/customerProfileImage"
-            android:src="@mipmap/ic_launcher"
+            android:src="@mipmap/ic_launcher_round"
             android:padding="20sp"/>
 
         <LinearLayout

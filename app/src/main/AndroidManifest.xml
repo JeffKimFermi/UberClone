@@ -50,7 +50,10 @@
             android:label="@string/title_activity_driver_map" />
         <activity android:name=".CustomerMapActivity" />
         <activity android:name=".registerActivity" />
-        <activity android:name=".customerSettingsActivity"></activity>
+        <activity android:name=".settingsActivity" />
+        <activity android:name=".driverRegister" />
+        <activity android:name=".About" />
+        <activity android:name=".Help"></activity>
     </application>
 
 </manifest>
