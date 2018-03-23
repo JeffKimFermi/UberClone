@@ -17,7 +17,7 @@
         android:layout_height="wrap_content"
         android:id="@+id/about_txt"
         android:textSize="20dp"
-        android:text="Stacy's Home V1.2"
+        android:text="Queencia V1.0"
         android:layout_marginBottom="5dp"
         android:textStyle="normal|bold" />
 
@@ -27,7 +27,7 @@
         android:id="@+id/about_txt1"
         android:textSize="16dp"
         android:layout_below="@+id/about_txt"
-        android:text="This Software was Written by Jeff Kim, Hardware Design Engineer, Electronics Enthusiast and App Developer. As part of Project Manhattan."/>
+        android:text="This Software was Written by Jeff, Andrew and Daniel."/>
 
     <TextView
         android:layout_width="wrap_content"
@@ -36,7 +36,17 @@
         android:textSize="16dp"
         android:layout_below="@+id/about_txt1"
         android:layout_marginBottom="5dp"
-        android:text="jeffkims.woz@gmail.com"/>
+        android:text="EastmanDanielJeff@gmail.com"/>
+
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/about_txt6"
+        android:textSize="16dp"
+        android:layout_below="@+id/about_txt2"
+        android:layout_marginBottom="5dp"
+        android:text="+254 721512564"/>
 
     <TextView
         android:layout_width="wrap_content"
@@ -47,6 +57,15 @@
         android:layout_marginBottom="5dp"
         android:text="+254 728648142"/>
 
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/about_txt7"
+        android:textSize="16dp"
+        android:layout_below="@+id/about_txt2"
+        android:layout_marginBottom="5dp"
+        android:text="+254 720844920"/>
+
 
     <TextView
         android:layout_width="wrap_content"
@@ -54,7 +73,7 @@
         android:id="@+id/about_txt4"
         android:textSize="16dp"
         android:layout_below="@+id/about_txt3"
-        android:text="copyright © 2017"
+        android:text="copyright © 2018"
         android:layout_marginBottom="5dp"
         android:textStyle="normal|bold" />
 

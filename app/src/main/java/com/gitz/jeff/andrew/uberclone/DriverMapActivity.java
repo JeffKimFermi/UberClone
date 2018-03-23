@@ -4,11 +4,15 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.net.Uri;
+import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -43,7 +47,7 @@ import java.util.List;
 
 import static com.gitz.jeff.andrew.uberclone.R.id.map;
 
-public class DriverMapActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, com.google.android.gms.location.LocationListener, RoutingListener {
+public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, com.google.android.gms.location.LocationListener, RoutingListener {
 
     private GoogleMap mMap;
     GoogleApiClient googleApiClient;
@@ -55,48 +59,68 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
     public static float myZoomLevel = 14;
     LinearLayout customerInformation;
     ImageView customerProfileImage;   //Assigned Customer Profile Image
-    TextView customerName, customerPhoneNumber;  //Assigned Customer Name and Phone Number
+    TextView customerDestination, customerName, customerPhoneNumber;  //Assigned Customer Name and Phone Number
     private List<Polyline> polylines;
     private static final int[] COLORS = new int[]{R.color.primary_dark_material_light};
-    boolean customerAssigned = true;   //Customer not assigned by default
-
+    boolean customerAssigned = false;   //Customer not assigned by default
+    private static final int MY_PERMISSIONS_REQUEST_ACCOUNTS = 1;
+    final int LOCATION_REQUEST_CODE = 1;
+    ImageView callCustomer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_driver_map);
 
+
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         polylines = new ArrayList<>();
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(map);
 
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED)
-        {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(DriverMapActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_REQUEST_CODE);
-        }
-
-        else
-        {
+        } else {
             mapFragment.getMapAsync(this);
         }
 
         getSavedUserPhoneNumber = new TinyDB(getBaseContext());
         driverUserId = getSavedUserPhoneNumber.getString("userPhoneNumber");  //Get Saved Phone Number to act as User ID
-        customerInformation = (LinearLayout)findViewById(R.id.customerInfo);
-        customerProfileImage = (ImageView)findViewById(R.id.customerProfileImage);
-        customerName = (TextView)findViewById(R.id.customerName);
-        customerPhoneNumber = (TextView)findViewById(R.id.customerPhoneNumber);
-        getAssignedCustomer(); //Update Driver UI Appropriately
+        customerInformation = (LinearLayout) findViewById(R.id.customerInfo);
+        customerProfileImage = (ImageView) findViewById(R.id.customerProfileImage);
+        customerName = (TextView) findViewById(R.id.customerName);
+        customerPhoneNumber = (TextView) findViewById(R.id.customerPhoneNumber);
+        customerDestination = (TextView) findViewById(R.id.customerDestination);
+        callCustomer = (ImageView) findViewById(R.id.callCustomer);
 
+        getAssignedCustomer(); //Update Driver UI Appropriately
+        callCustomer.setOnClickListener(new View.OnClickListener()    //Call Customer Listener
+        {
+            @Override
+            public void onClick(View v) {
+                String customerNumber = "0735555255";
+                Intent callIntent = new Intent(Intent.ACTION_CALL);
+                callIntent.setData(Uri.parse("tel:" + customerNumber));
+
+                if (ActivityCompat.checkSelfPermission(DriverMapActivity.this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED)
+                {
+
+                    return;
+                }
+                startActivity(callIntent);
+
+            }
+        });
     }
 
     public void getAssignedCustomer()
     {
+        String destination = "Jamhuri";
         String name = "Lisa Randall";  //Dummy Data
         String phoneNumber = "0728648142";  //Dummy Data
         if(customerAssigned)
         {
            customerInformation.setVisibility(View.VISIBLE);
+           customerDestination.setText(destination);
            customerName.setText(name);
            customerPhoneNumber.setText(phoneNumber);
         }
@@ -176,8 +200,8 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
     public void onConnected(@Nullable Bundle bundle)
     {
         locationRequest = new LocationRequest();
-        locationRequest.setInterval(1000);    //Refresh rate
-        locationRequest.setFastestInterval(1000);
+        locationRequest.setInterval(5000);    //Refresh rate
+        locationRequest.setFastestInterval(5000);
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);  //Highest Accuracy, However drains a lot of battery power
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED)
@@ -189,29 +213,6 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
     }
 
 
-    final int LOCATION_REQUEST_CODE = 1;
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        switch (requestCode)
-        {
-            case LOCATION_REQUEST_CODE:
-            {
-                if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED)
-                {
-                    SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-                            .findFragmentById(map);
-                    mapFragment.getMapAsync(this);
-                }
-
-                else
-                {
-                    Toast.makeText(getBaseContext(), "Please Provide Permission", Toast.LENGTH_LONG).show();
-                }
-                break;
-            }
-        }
-    }
 
 /*
     public void getAssignedCustomerPickupLocation()

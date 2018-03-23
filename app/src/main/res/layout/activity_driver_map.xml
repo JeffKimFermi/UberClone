@@ -12,45 +12,83 @@
         android:name="com.google.android.gms.maps.SupportMapFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
-    
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/customerInfo"
-        android:layout_gravity="bottom"
-        android:orientation="horizontal"
-        android:background="@android:color/white"
-        android:visibility="gone">
-        
-        <ImageView
-            android:layout_width="100sp"
-            android:layout_height="100sp"
-            android:id="@+id/customerProfileImage"
-            android:src="@mipmap/ic_launcher_round"
-            android:padding="20sp"/>
+        android:orientation="vertical"
+        android:layout_gravity="bottom">
 
         <LinearLayout
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingLeft="40sp">
+            android:id="@+id/customerInfo"
+            android:layout_gravity="bottom"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:background="@android:color/white"
+            android:visibility="visible">
 
-            <TextView
+            <ImageView
+                android:layout_width="90sp"
+                android:layout_height="90sp"
+                android:id="@+id/customerProfileImage"
+                android:src="@drawable/ic_customer_profile_picture"
+                android:padding="15sp"/>
+
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:id="@+id/customerName"
-                android:paddingBottom="10sp"
-                android:paddingTop="20sp"/>
+                android:orientation="vertical"
+                android:layout_gravity="center_vertical"
+                android:paddingLeft="40sp"
+                android:paddingRight="40sp">
 
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:id="@+id/customerPhoneNumber"
-                android:paddingBottom="10sp"
-                android:paddingTop="20sp"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/customerDestination"
+                    android:paddingBottom="5sp"
+                    android:paddingTop="15sp"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/customerName"
+                    android:paddingBottom="5sp"
+                    android:paddingTop="5sp"/>
+
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/customerPhoneNumber"
+                    android:paddingBottom="15sp"
+                    android:paddingTop="5sp"/>
+
+            </LinearLayout>
+
+            <ImageView
+                android:layout_width="85sp"
+                android:layout_height="85sp"
+                android:onClick="callAssignedCustomer"
+                android:id="@+id/callCustomer"
+                android:src="@drawable/callbtn"
+                android:scaleX="-1"
+                android:padding="15sp"/>
 
         </LinearLayout>
+
+        <Button
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/requestCustomer"
+            android:text="Ready for a Customer"
+            android:onClick="callQueencia"
+            android:layout_gravity="bottom"
+            android:textAllCaps="false"
+            />
 
     </LinearLayout>
 

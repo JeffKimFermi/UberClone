@@ -7,7 +7,6 @@
     tools:context="com.gitz.jeff.andrew.uberclone.CustomerMapActivity">
 
 
-
     <fragment xmlns:android="http://schemas.android.com/apk/res/android"
 
         android:id="@+id/map"
@@ -45,14 +44,83 @@
 
     </RelativeLayout>
 
-    <Button
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/requestUber"
-        android:text="Call Uber"
-        android:onClick="requestUber"
-        android:layout_gravity="bottom"
-        android:textAllCaps="false"
-        />
+        android:orientation="vertical"
+        android:layout_gravity="bottom">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/driverInfo"
+            android:layout_gravity="bottom"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:background="@android:color/white"
+            android:visibility="visible">
+
+            <ImageView
+                android:layout_width="90sp"
+                android:layout_height="90sp"
+                android:id="@+id/driverProfileImage"
+                android:src="@drawable/ic_customer_profile_picture"
+                android:padding="15sp"/>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_gravity="center_vertical"
+                android:paddingLeft="40sp"
+                android:paddingRight="40sp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/driverName"
+                    android:paddingBottom="5sp"
+                    android:paddingTop="15sp"/>
+
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/driverPhoneNumber"
+                    android:paddingBottom="5sp"
+                    android:paddingTop="5sp"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/driverCar"
+                    android:paddingBottom="15sp"
+                    android:paddingTop="5sp"/>
+
+            </LinearLayout>
+
+            <ImageView
+                android:layout_width="85sp"
+                android:layout_height="85sp"
+                android:onClick="callAssignedDriver"
+                android:id="@+id/callDriver"
+                android:src="@drawable/callbtn"
+                android:scaleX="-1"
+                android:padding="15sp"/>
+
+        </LinearLayout>
+
+
+        <Button
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/requestUber"
+            android:text="Call Queencia"
+            android:onClick="requestUber"
+            android:layout_gravity="bottom"
+            android:textAllCaps="false"
+            />
+
+    </LinearLayout>
 
 </FrameLayout>

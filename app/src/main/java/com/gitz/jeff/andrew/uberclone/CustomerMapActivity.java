@@ -5,16 +5,23 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.net.Uri;
+import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.directions.route.AbstractRouting;
@@ -43,7 +50,9 @@ import com.google.android.gms.maps.model.PolylineOptions;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CustomerMapActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, com.google.android.gms.location.LocationListener, RoutingListener {
+import static com.gitz.jeff.andrew.uberclone.R.id.map;
+
+public class CustomerMapActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, com.google.android.gms.location.LocationListener, RoutingListener {
 
     private GoogleMap mMap;
     GoogleApiClient googleApiClient;
@@ -63,7 +72,13 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
     private List<Polyline> polylines;
     private static final int[] COLORS = new int[]{R.color.primary_dark_material_light};
     private PlaceAutocompleteFragment autocompleteFragment;
-
+    LinearLayout driverInformation;
+    ImageView driverProfileImage;   //Assigned Customer Profile Image
+    TextView driverCar, driverName, driverPhoneNumber;  //Assigned Customer Name and Phone Number
+    boolean driverAssigned = false;   //Driver has been successfully assigned
+    ImageView callDriver;
+    private static final int MY_PERMISSIONS_REQUEST_ACCOUNTS = 1;
+    final int LOCATION_REQUEST_CODE = 1;
 
 
     @Override
@@ -72,6 +87,7 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_customer_map);
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
+
         polylines = new ArrayList<>();
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
 
@@ -85,13 +101,38 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
             mapFragment.getMapAsync(this);
         }
 
+        driverInformation = (LinearLayout)findViewById(R.id.driverInfo);
+        driverProfileImage = (ImageView)findViewById(R.id.driverProfileImage);
+        driverName = (TextView)findViewById(R.id.driverName);
+        driverPhoneNumber = (TextView)findViewById(R.id.driverPhoneNumber);
+        driverCar = (TextView)findViewById(R.id.driverCar);
 
         getSavedUserPhoneNumber = new TinyDB(getBaseContext());
         customerUserId = getSavedUserPhoneNumber.getString("userPhoneNumber");  //Get Saved Phone Number to act as User ID
         request = (Button)findViewById(R.id.requestUber);
         cancel = (Button)findViewById(R.id.cancelRequest);
         cancel.setVisibility(View.INVISIBLE);
+        callDriver = (ImageView) findViewById(R.id.callDriver);
 
+        getAssignedDriver();   //Display Driver Details
+
+        callDriver.setOnClickListener(new View.OnClickListener()    //Call Customer Listener
+        {
+            @Override
+            public void onClick(View v) {
+                String customerNumber = "0735555255";
+                Intent callIntent = new Intent(Intent.ACTION_CALL);
+                callIntent.setData(Uri.parse("tel:" + customerNumber));
+
+                if (ActivityCompat.checkSelfPermission(CustomerMapActivity.this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED)
+                {
+
+                    return;
+                }
+                startActivity(callIntent);
+
+            }
+        });
 
         autocompleteFragment = (PlaceAutocompleteFragment) getFragmentManager().findFragmentById(R.id.place_autocomplete_fragment);
         autocompleteFragment.setHint("Enter Destination");
@@ -189,6 +230,29 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
 
     }
 
+    public void getAssignedDriver()
+    {
+        String vehicleNumberPlate = "KAV 587V";
+        String name = "Demiris Chotas";  //Dummy Data
+        String phoneNumber = "0728648142";  //Dummy Data
+        if(driverAssigned)   //If Driver Assigned Successfully
+        {
+            driverInformation.setVisibility(View.VISIBLE);
+            driverName.setText(name);
+            driverPhoneNumber.setText(phoneNumber);
+            driverCar.setText(vehicleNumberPlate);
+        }
+
+        else
+        {
+            driverInformation.setVisibility(View.GONE);
+            driverName.setText("");
+            driverCar.setText("");
+        }
+    }
+
+
+
     public void cancelRequest(View view)
     {
         if(driverFound)  //If Cancel Button Pressed while Driver has Already been Found
@@ -247,8 +311,8 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
     public void onConnected(@Nullable Bundle bundle)
     {
         locationRequest = new LocationRequest();
-        locationRequest.setInterval(1000);    //Refresh rate
-        locationRequest.setFastestInterval(1000);
+        locationRequest.setInterval(5000);    //Refresh rate
+        locationRequest.setFastestInterval(5000);
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);  //Highest Accuracy, However drains a lot of battery power
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED)
@@ -351,30 +415,6 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
 
     }
 
-    final int LOCATION_REQUEST_CODE = 1;
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        switch (requestCode)
-        {
-            case LOCATION_REQUEST_CODE:
-            {
-                if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED)
-                {
-                    SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-                            .findFragmentById(R.id.map);
-                    mapFragment.getMapAsync(this);
-                }
-
-                else
-                {
-                    Toast.makeText(getBaseContext(), "Please Provide Permission", Toast.LENGTH_LONG).show();
-                }
-                break;
-            }
-        }
-    }
-
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu)
@@ -415,6 +455,58 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
         return super.onOptionsItemSelected(item);
     }
 
+
+    /*
+        private boolean checkAndRequestPermission()
+        {
+            // Manifest.permission.READ_CONTACTS, Manifest.permission.READ_SMS, Manifest.permission.READ_PHONE_STATE
+            int permissionAccessFineLocation = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION);
+            int permissionAccessCoarseLocation = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION);
+            int permissionMakePhoneCall = ContextCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE);
+
+            List<String> listPermissionsNeeded = new ArrayList<>();
+            if(permissionAccessFineLocation != PackageManager.PERMISSION_GRANTED)
+            {
+                listPermissionsNeeded.add(Manifest.permission.ACCESS_FINE_LOCATION);
+            }
+
+            if(permissionAccessCoarseLocation!= PackageManager.PERMISSION_GRANTED)
+            {
+                listPermissionsNeeded.add(Manifest.permission.ACCESS_COARSE_LOCATION);
+            }
+
+            if(permissionMakePhoneCall != PackageManager.PERMISSION_GRANTED)
+            {
+                listPermissionsNeeded.add(Manifest.permission.CALL_PHONE);
+            }
+
+            if (!listPermissionsNeeded.isEmpty())
+            {
+                ActivityCompat.requestPermissions(this,
+                        listPermissionsNeeded.toArray(new String[listPermissionsNeeded.size()]), MY_PERMISSIONS_REQUEST_ACCOUNTS);
+                return false;
+            }
+
+            return true;
+        }
+
+        @Override    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults)
+        {
+            switch (requestCode)
+            {
+                case MY_PERMISSIONS_REQUEST_ACCOUNTS:
+                    if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED)
+                    {
+                        //Permission Granted Successfully. Write working code here.
+                        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(map);
+                        mapFragment.getMapAsync(this);
+                    }
+
+                    break;
+            }
+        }
+
+    */
     @Override
     protected void onStop()  //If Driver gets out of this activity, Notify Db, for Him to be removed as Hes is no longer Active
     {
