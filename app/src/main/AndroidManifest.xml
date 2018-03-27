@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="com.gitz.jeff.andrew.uberclone">
 
     <uses-permission android:name="android.permission.GET_ACCOUNTS" />
@@ -12,12 +13,6 @@
     <uses-permission android:name="android.permission.CALL_PHONE" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
-    <!--
-         The ACCESS_COARSE/FINE_LOCATION permissions are not required to use
-         Google Maps Android API v2, but you must specify either coarse or fine
-         location permissions for the 'MyLocation' functionality. 
-    -->
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
     <application
         android:allowBackup="true"
@@ -25,7 +20,8 @@
         android:label="Queencia"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme">
+        android:theme="@style/AppTheme"
+        tools:replace="android:label">
         <activity android:name=".userType">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -50,11 +46,14 @@
             android:name=".DriverMapActivity"
             android:label="@string/title_activity_driver_map" />
         <activity android:name=".CustomerMapActivity" />
-        <activity android:name=".registerActivity" />
-        <activity android:name=".settingsActivity" />
         <activity android:name=".driverRegister" />
+        <activity android:name=".registerActivity"/>
         <activity android:name=".About" />
-        <activity android:name=".Help"></activity>
+        <activity android:name=".Help" />
+        <activity android:name=".settingsApp">
+
+        </activity>
+
     </application>
 
 </manifest>

@@ -3,6 +3,7 @@ package com.gitz.jeff.andrew.uberclone;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Build;
@@ -36,7 +37,10 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 
@@ -66,6 +70,11 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
     private static final int MY_PERMISSIONS_REQUEST_ACCOUNTS = 1;
     final int LOCATION_REQUEST_CODE = 1;
     ImageView callCustomer;
+    Marker pickUpMarker;
+    public LatLng pickUpLocation;   //Will Hold Pick Up Location Co-ordinates
+    Button readyForCustomer;
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -79,7 +88,9 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(DriverMapActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_REQUEST_CODE);
-        } else {
+        }
+        else
+        {
             mapFragment.getMapAsync(this);
         }
 
@@ -91,6 +102,7 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
         customerPhoneNumber = (TextView) findViewById(R.id.customerPhoneNumber);
         customerDestination = (TextView) findViewById(R.id.customerDestination);
         callCustomer = (ImageView) findViewById(R.id.callCustomer);
+        readyForCustomer = (Button)findViewById(R.id.readyForCustomer);
 
         getAssignedCustomer(); //Update Driver UI Appropriately
         callCustomer.setOnClickListener(new View.OnClickListener()    //Call Customer Listener
@@ -112,11 +124,19 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
         });
     }
 
+
+
     public void getAssignedCustomer()
     {
         String destination = "Jamhuri";
         String name = "Lisa Randall";  //Dummy Data
         String phoneNumber = "0728648142";  //Dummy Data
+
+        if(lastLocation!= null && lastLocation!= null)
+        {
+            pickUpLocation = new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude());   //Get Customer Pickup Location Co-ordinates
+            pickUpMarker = mMap.addMarker(new MarkerOptions().position(pickUpLocation).title("Pick Me Up Here"));  //Add Marker, and Set Title of Marker
+        }
         if(customerAssigned)
         {
            customerInformation.setVisibility(View.VISIBLE);
@@ -212,7 +232,12 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
         LocationServices.FusedLocationApi.requestLocationUpdates(googleApiClient, locationRequest, this);
     }
 
-
+    public void readyForCustomer(View view)
+    {
+        readyForCustomer.setText("Checking For Customers");
+        readyForCustomer.setBackgroundColor(Color.RED);
+        readyForCustomer.setTextColor(Color.WHITE);
+    }
 
 /*
     public void getAssignedCustomerPickupLocation()
@@ -333,7 +358,7 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
         switch (item.getItemId())
         {
             case R.id.settingsId:
-                Intent intent1 = new Intent(getBaseContext(), settingsActivity.class);
+                Intent intent1 = new Intent(getBaseContext(), settingsApp.class);
                 startActivity(intent1);
                 break;
 

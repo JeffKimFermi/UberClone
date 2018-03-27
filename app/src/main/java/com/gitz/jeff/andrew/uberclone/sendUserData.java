@@ -6,8 +6,12 @@ import android.util.Log;
 import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  * Created by Jeff.Woz on 12-10-2017.
@@ -51,14 +55,23 @@ public class sendUserData
     public static void sendDriverRegestrationCredentials(Context myContext, final String startOfFrame, final String userFullNames, final String userMobileNumber, final String userEmailAddress, final String userConfirmedPassword, final String endOfFrame)
     {
         final Context context= myContext;
+        JSONObject jsonObj = new JSONObject();
+        try
+        {
 
-        String url = "http://159.65.197.113:22/phpmyadmin/sms_data/sms.php?destination=" +startOfFrame + "&name" + userFullNames + "&cell=" + userMobileNumber +"&email=" + userEmailAddress + "&pass=" + userConfirmedPassword +"&eof" + endOfFrame ;
-
-        StringRequest getRequest = new StringRequest(Request.Method.GET, url,
-                new Response.Listener<String>()
+            jsonObj.put("name", startOfFrame); // Set the first name/pair
+            jsonObj.put("surname", userFullNames);
+        }
+        catch (JSONException jse)
+        {
+            jse.printStackTrace();
+        }
+        String url= "http://date.jsontest.com";
+        JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.GET, url,null, //url,jsonObj
+                new Response.Listener<JSONObject>()
                 {
                     @Override
-                    public void onResponse(String response)
+                    public void onResponse(JSONObject response)
                     {
                         // display response
                         Log.e("Response", response.toString());

@@ -1,5 +1,6 @@
 package com.gitz.jeff.andrew.uberclone;
 
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
@@ -9,8 +10,8 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
-
 import java.util.ArrayList;
+import dmax.dialog.SpotsDialog;
 
 public class registerActivity extends AppCompatActivity {
 
@@ -23,6 +24,7 @@ public class registerActivity extends AppCompatActivity {
     TinyDB saveUserPhoneNumber;  //Save User Phone Number within the App
     TinyDB saveRegistrationComplete;
     int registrationStatus = 1; //Registration Done Successfully
+    private final static int displayTime = 3500;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -75,22 +77,35 @@ public class registerActivity extends AppCompatActivity {
                 if (activeNetwork != null  && activeNetwork.isAvailable() && activeNetwork.isConnected())
 
                 {
+                    final AlertDialog alertDialog = new SpotsDialog(registerActivity.this, R.style.customCustomerRegister); //Show a Dialog Box
+                    alertDialog.show();
+
+
                     //IF Connected to Network either via Mobile Data or Wifi
                     if (activeNetwork.getType() == ConnectivityManager.TYPE_MOBILE || activeNetwork.getType() == ConnectivityManager.TYPE_WIFI)
                     {
                         //sendUserData.sendUserCredentials(getBaseContext(), name, number,email, password);     //Send Bloody Data
                     }
 
-                    saveRegistrationComplete.putInt("registrationStatus", registrationStatus);  //Save Integer that Registration Done Successfully
-                    Toast.makeText(getBaseContext(), "Registration Successful", Toast.LENGTH_LONG).show();  //Give Reg successful Message
-                    Intent intent = new Intent(getBaseContext(), Login.class);  //Open Login Activity upon Successfully Registration
-                    startActivity(intent);
+                    new android.os.Handler().postDelayed(new Runnable()   //Display AlertDialog Box for 4 Seconds before Opening next Activity
+                    {
+                        @Override
+                        public void run()
+                        {
+                            saveRegistrationComplete.putInt("registrationStatus", registrationStatus);  //Save Integer that Registration Done Successfully
+                            Toast.makeText(getBaseContext(), "Registration Successful", Toast.LENGTH_LONG).show();  //Give Reg successful Message
+                            Intent intent = new Intent(getBaseContext(), Login.class);  //Open Login Activity upon Successfully Registration
+                            startActivity(intent);
 
-                    userName.setText("");   //Clear all Edit Text Boxes
-                    phoneNumber.setText("");
-                    emailAddress.setText("");
-                    passWord1.setText("");
-                    passWord2.setText("");
+                            userName.setText("");   //Clear all Edit Text Boxes
+                            phoneNumber.setText("");
+                            emailAddress.setText("");
+                            passWord1.setText("");
+                            passWord2.setText("");
+                            alertDialog.dismiss(); //Dismiss it after 4 seconds
+                        }
+                    }, displayTime);
+
                 }
 
                 else                               //If not connected to network
@@ -114,5 +129,8 @@ public class registerActivity extends AppCompatActivity {
     {
         Intent intent = new Intent(getBaseContext(), Login.class);
         startActivity(intent);
+
     }
+
+
 }

@@ -124,4 +124,15 @@
         android:textAllCaps="false"
         android:textColor="#fff" />
 
+
+    <steelkiwi.com.library.DotsLoaderView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/dotsLoader"
+        android:visibility="visible"
+        app:dlv_item_drawable="@drawable/circle_background"
+        app:dlv_line_color="@color/point_color">
+
+    </steelkiwi.com.library.DotsLoaderView>
+
 </LinearLayout>

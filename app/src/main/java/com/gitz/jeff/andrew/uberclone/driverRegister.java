@@ -1,16 +1,18 @@
 package com.gitz.jeff.andrew.uberclone;
 
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
-
 import java.util.ArrayList;
+import dmax.dialog.SpotsDialog;
 
 public class driverRegister extends AppCompatActivity {
 
@@ -23,6 +25,8 @@ public class driverRegister extends AppCompatActivity {
     TinyDB saveUserPhoneNumber;  //Save User Phone Number within the App
     TinyDB saveRegistrationComplete;
     int registrationStatus = 1; //Registration Done Successfully
+    private final int displayTime = 3500;  //Alert Dialog Display Time
+
 
 
     @Override
@@ -35,14 +39,6 @@ public class driverRegister extends AppCompatActivity {
         saveRegistrationComplete = new TinyDB(getBaseContext());
     }
 
-
-    public native String stringFromJNI();
-
-    // Used to load the 'native-lib' library on application startup.
-    static
-    {
-        System.loadLibrary("native-lib");
-    }
 
 
     public void register(View view)
@@ -77,24 +73,34 @@ public class driverRegister extends AppCompatActivity {
                 ConnectivityManager cm = (ConnectivityManager) getBaseContext().getSystemService(Context.CONNECTIVITY_SERVICE);
                 NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
                 if (activeNetwork != null  && activeNetwork.isAvailable() && activeNetwork.isConnected())
-
                 {
+                    final AlertDialog alertDialog = new SpotsDialog(driverRegister.this, R.style.customDriverRegister);  //Show a Dialog Box for 4 seconds
+                    alertDialog.show();
+
                     //IF Connected to Network either via Mobile Data or Wifi
                     if (activeNetwork.getType() == ConnectivityManager.TYPE_MOBILE || activeNetwork.getType() == ConnectivityManager.TYPE_WIFI)
                     {
                         //sendUserData.sendUserCredentials(getBaseContext(), name, number,registration, password);     //Send Bloody Data
                     }
 
-                    saveRegistrationComplete.putInt("registrationStatus", registrationStatus);  //Save Integer that Registration Done Successfully
-                    Toast.makeText(getBaseContext(), "Registration Successful", Toast.LENGTH_LONG).show();  //Give Reg successful Message
-                    Intent intent = new Intent(getBaseContext(), Login.class);  //Open Login Activity upon Successfully Registration
-                    startActivity(intent);
+                    new Handler().postDelayed(new Runnable()
+                    {
+                        @Override
+                        public void run()
+                        {
+                            saveRegistrationComplete.putInt("registrationStatus", registrationStatus);  //Save Integer that Registration Done Successfully
+                            Toast.makeText(getBaseContext(), "Registration Successful", Toast.LENGTH_LONG).show();  //Give Reg successful Message
+                            Intent intent = new Intent(getBaseContext(), Login.class);  //Open Login Activity upon Successfully Registration
+                            startActivity(intent);
 
-                    userName.setText("");   //Clear all Edit Text Boxes
-                    phoneNumber.setText("");
-                    vehicleRegistration.setText("");
-                    passWord1.setText("");
-                    passWord2.setText("");
+                            userName.setText("");   //Clear all Edit Text Boxes
+                            phoneNumber.setText("");
+                            vehicleRegistration.setText("");
+                            passWord1.setText("");
+                            passWord2.setText("");
+                            alertDialog.dismiss(); //Dismiss it after 4 seconds
+                        }
+                    }, displayTime);
 
                 }
 

@@ -8,6 +8,15 @@
     android:padding="16dp"
     tools:context="com.gitz.jeff.andrew.uberclone.Help">
 
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:text="Customer Support"
+        android:textColor="#90c40909"
+        android:textSize="22sp"
+        android:layout_marginBottom="20sp"/>
+
     <android.support.design.widget.TextInputLayout
         android:id="@+id/full_name"
         android:layout_width="fill_parent"
@@ -26,7 +35,8 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:layout_marginTop="30sp">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -35,10 +45,10 @@
             android:gravity="center_vertical">
 
             <ImageView
-                android:layout_width="75sp"
-                android:layout_height="75sp"
+                android:layout_width="70sp"
+                android:layout_height="70sp"
                 android:id="@+id/callCustomerCare"
-                android:src="@drawable/callbtn"
+                android:src="@drawable/ic_call_customer"
                 android:padding="12sp"
                 android:scaleType="fitCenter"
                 android:adjustViewBounds="true"
@@ -48,7 +58,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Call Customer Support"
-                android:textSize="18dp"/>
+                android:textSize="16dp"/>
 
 
         </LinearLayout>
@@ -72,16 +82,17 @@
                     android:layout_width="270dp"
                     android:layout_height="wrap_content"
                     android:ems="10"
-                    android:hint="Enter message"
+                    android:hint="Type to Compose"
                     android:inputType="textPhonetic" />
 
             </android.support.design.widget.TextInputLayout>
 
-            <ImageButton
-                android:layout_width="60dp"
-                android:layout_height="match_parent"
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="37dp"
                 android:id="@+id/send_btn"
-                android:background="@drawable/send"
+                android:text="Send"
+                android:background="#F5F5F5"
                 android:onClick="send_msg"
                 android:textAllCaps="false"
                 android:foregroundGravity="center_horizontal"
