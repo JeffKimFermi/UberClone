@@ -77,7 +77,8 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
     public  LatLng latlngDestinationCoordinates;    //Longitude Latitude coordates of your destination
     public LatLng latlngPickUpLocationCoordinates;  //Longitude Latitude co-ordinates of your preferred Pickup Location
     private List<Polyline> polylines;
-    private static final int[] COLORS = new int[]{R.color.primary_dark_material_light};
+    //private static final int[] COLORS = new int[]{R.color.primary_dark,R.color.primary,R.color.primary_light,R.color.accent,R.color.primary_dark_material_light};
+    private static final int[] COLORS = new int[]{R.color.primary,};
     private PlaceAutocompleteFragment autocompleteFragment;
     LinearLayout driverInformation;
     ImageView driverProfileImage;   //Assigned Customer Profile Image

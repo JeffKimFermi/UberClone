@@ -13,7 +13,8 @@ import android.widget.Toast;
 import java.util.ArrayList;
 import dmax.dialog.SpotsDialog;
 
-public class registerActivity extends AppCompatActivity {
+public class registerActivity extends AppCompatActivity
+{
 
     EditText userName;      //User Name
     EditText phoneNumber;   //User Phone Number
@@ -66,11 +67,12 @@ public class registerActivity extends AppCompatActivity {
         {
             if (pass1.equals(pass2))
             {
-                String password = pass1;                                              //Std name for user password
-                String name = userName.getText().toString().trim();                   //User's Name
-                String number = phoneNumber.getText().toString().trim();              //User Mobile Number
+                String userType = "Customer";                                         //Customer
+                String userNames = userName.getText().toString().trim();                   //User's Name
+                String userPhone = phoneNumber.getText().toString().trim();              //User Mobile Number
+                String userPassword = pass1;                                              //Std name for user password
                 String email = emailAddress.getText().toString().trim();              //User Email Address
-                saveUserPhoneNumber.putString("userPhoneNumber", number);            //Save User Phone Number in Shared Prefs
+                saveUserPhoneNumber.putString("userPhoneNumber", userPhone);             //Save User Phone Number in Shared Prefs
 
                 ConnectivityManager cm = (ConnectivityManager) getBaseContext().getSystemService(Context.CONNECTIVITY_SERVICE);
                 NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
@@ -84,7 +86,8 @@ public class registerActivity extends AppCompatActivity {
                     //IF Connected to Network either via Mobile Data or Wifi
                     if (activeNetwork.getType() == ConnectivityManager.TYPE_MOBILE || activeNetwork.getType() == ConnectivityManager.TYPE_WIFI)
                     {
-                        //sendUserData.sendUserCredentials(getBaseContext(), name, number,email, password);     //Send Bloody Data
+
+                        sendUserData.sendUserRegistrationCredentials(getBaseContext(), userType, userNames, userPhone, userPassword);     //Send Bloody Data
                     }
 
                     new android.os.Handler().postDelayed(new Runnable()   //Display AlertDialog Box for 4 Seconds before Opening next Activity
@@ -113,8 +116,6 @@ public class registerActivity extends AppCompatActivity {
                     Toast.makeText(getBaseContext(), "Turn ON Mobile Data", Toast.LENGTH_LONG).show();
                 }
 
-                //String userData = name + "pluto" + number + "pluto" + password;        //Will hold user Data to be sent to Server
-                //userCredentials.add(userData);                                         //Store in ArrayList
             }
             else
             {

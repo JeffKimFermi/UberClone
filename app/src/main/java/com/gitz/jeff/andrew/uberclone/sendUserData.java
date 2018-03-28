@@ -19,60 +19,82 @@ import org.json.JSONObject;
 
 public class sendUserData
 {
+
     //Send Customer Registration Details
-    public static void sendCustomerRegestrationCredentials(Context myContext, final String startOfFrame, final String userFullNames, final String userMobileNumber, final String userEmailAddress, final String userConfirmedPassword, final String endOfFrame)
+    public static void sendUserRegistrationCredentials(Context myContext, final String userType, final String userFullNames, final String userPhoneNumber, final String userConfirmedPassword)
     {
+        final TinyDB saveRegistrationResponse = new TinyDB(myContext);
+
         final Context context= myContext;
+        JSONObject jsonObj = new JSONObject();
+        try
+        {
 
-        String url = "http://159.65.197.113:22/phpmyadmin/sms_data/sms.php?destination="+ startOfFrame + "&name" + userFullNames + "&cell=" + userMobileNumber +"&email=" + userEmailAddress + "&pass=" + userConfirmedPassword + "&eof" + endOfFrame;
+            jsonObj.put("userType", userType);
+            jsonObj.put("userName", userFullNames); // Set the first name/pair
+            jsonObj.put("userPhone", userPhoneNumber);
+            jsonObj.put("userPassword", userConfirmedPassword);
+        }
+        catch (JSONException jse)
+        {
+            jse.printStackTrace();
+        }
 
-        StringRequest getRequest = new StringRequest(Request.Method.GET, url,
-                new Response.Listener<String>()
+        String url= "http://46.101.73.84:8080/user/add";
+        JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.POST, url,jsonObj,   //url,jsonObj
+                new Response.Listener<JSONObject>()
                 {
                     @Override
-                    public void onResponse(String response)
+                    public void onResponse(JSONObject response)
                     {
-                        // display response
+                        String registrationResponse = response.toString();
+                        saveRegistrationResponse.putString("registrationResponse", registrationResponse);
+
                         Log.e("Response", response.toString());
                     }
                 },
                 new Response.ErrorListener()
                 {
                     @Override
-                    public void onErrorResponse(VolleyError error) {
+                    public void onErrorResponse(VolleyError error)
+                    {
                         Log.e("Error.Response", error.toString());
                     }
                 }
         );
 
-        //request_json.setRetryPolicy(new DefaultRetryPolicy(20 * 1000, 1, 1.0f));
-
         Volley.newRequestQueue(context).add(getRequest);
-
     }
 
+
     //Send Driver Registration Details
-    public static void sendDriverRegestrationCredentials(Context myContext, final String startOfFrame, final String userFullNames, final String userMobileNumber, final String userEmailAddress, final String userConfirmedPassword, final String endOfFrame)
+    /*
+    public static void sendDriverRegestrationCredentials(Context myContext,final String userType, final String userFullNames, final String userPhoneNumber, final String userConfirmedPassword)
     {
         final Context context= myContext;
         JSONObject jsonObj = new JSONObject();
         try
         {
 
-            jsonObj.put("name", startOfFrame); // Set the first name/pair
-            jsonObj.put("surname", userFullNames);
+            jsonObj.put("userType", userType);
+            jsonObj.put("userName", userFullNames); // Set the first name/pair
+            jsonObj.put("userPhone", userPhoneNumber);
+            jsonObj.put("userPassword", userConfirmedPassword);
         }
         catch (JSONException jse)
         {
             jse.printStackTrace();
         }
-        String url= "http://date.jsontest.com";
-        JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.GET, url,null, //url,jsonObj
+
+        String url= "http://46.101.73.84:8080/user/add";
+        JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.POST, url,jsonObj,   //url,jsonObj
                 new Response.Listener<JSONObject>()
                 {
                     @Override
                     public void onResponse(JSONObject response)
                     {
+                        //Get Response
+                        String serverResponse = response.toString());
                         // display response
                         Log.e("Response", response.toString());
                     }
@@ -86,27 +108,78 @@ public class sendUserData
                 }
         );
 
-        //request_json.setRetryPolicy(new DefaultRetryPolicy(20 * 1000, 1, 1.0f));
-
         Volley.newRequestQueue(context).add(getRequest);
 
     }
 
+*/
+    //Send User Login Details
+    public static void sendLoginRequest (Context myContext,final String userId, final String userPassword)
+    {
+        final TinyDB saveLoginRequestResponse = new TinyDB(myContext);
+
+        final Context context= myContext;
+        JSONObject jsonObj = new JSONObject();
+        try
+        {
+            jsonObj.put("userID", userId);
+            jsonObj.put("userPassword", userPassword); // Set the first name/pair
+        }
+        catch (JSONException jse)
+        {
+            jse.printStackTrace();
+        }
+
+        String url= "http://46.101.73.84:8080/user/login";
+        JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.POST, url,jsonObj,   //url,jsonObj
+                new Response.Listener<JSONObject>()
+                {
+                    @Override
+                    public void onResponse(JSONObject response)
+                    {
+                        String loginResponse = response.toString();
+                        saveLoginRequestResponse.putString("loginResponse", loginResponse);
+                        Log.e("Response", response.toString());
+                    }
+                },
+                new Response.ErrorListener()
+                {
+                    @Override
+                    public void onErrorResponse(VolleyError error)
+                    {
+                        Log.e("Error.Response", error.toString());
+                    }
+                }
+        );
+
+        Volley.newRequestQueue(context).add(getRequest);
+    }
 
 
-    public static void sendEventData(Context myContext, final String startOfFrame, final String userType, final String phoneNumnberIdentifier, final String eventData, final String endOfFrame)
+
+    //Send Event Data
+    public static void sendEventData(Context myContext,final String userId, final String eventID)
     {
         final Context context= myContext;
+        JSONObject jsonObj = new JSONObject();
+        try
+        {
+            jsonObj.put("userID", userId);
+            jsonObj.put("eventID", eventID); // Set the first name/pair
+        }
+        catch (JSONException jse)
+        {
+            jse.printStackTrace();
+        }
 
-        String url = "http://159.65.197.113:22/phpmyadmin/sms_data/sms.php?destination="  +startOfFrame + "&userType" + userType + "&userIdentifier=" + phoneNumnberIdentifier +"&event=" + eventData + "&eof=" + endOfFrame ;
-
-        StringRequest getRequest = new StringRequest(Request.Method.GET, url,
-                new Response.Listener<String>()
+        String url= "http://date.jsontest.com";
+        JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.POST, url,jsonObj,   //url,jsonObj
+                new Response.Listener<JSONObject>()
                 {
                     @Override
-                    public void onResponse(String response)
+                    public void onResponse(JSONObject response)
                     {
-                        // display response
+                        String serverResponse = response.toString();
                         Log.e("Response", response.toString());
                     }
                 },
@@ -119,10 +192,8 @@ public class sendUserData
                 }
         );
 
-        //request_json.setRetryPolicy(new DefaultRetryPolicy(20 * 1000, 1, 1.0f));
-
         Volley.newRequestQueue(context).add(getRequest);
-
     }
+
 }
 

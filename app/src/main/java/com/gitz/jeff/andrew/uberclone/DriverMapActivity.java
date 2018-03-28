@@ -65,7 +65,7 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
     ImageView customerProfileImage;   //Assigned Customer Profile Image
     TextView customerDestination, customerName, customerPhoneNumber;  //Assigned Customer Name and Phone Number
     private List<Polyline> polylines;
-    private static final int[] COLORS = new int[]{R.color.primary_dark_material_light};
+    private static final int[] COLORS = new int[]{R.color.primary_dark,R.color.primary,R.color.primary_light,R.color.accent,R.color.primary_dark_material_light};
     boolean customerAssigned = false;   //Customer not assigned by default
     private static final int MY_PERMISSIONS_REQUEST_ACCOUNTS = 1;
     final int LOCATION_REQUEST_CODE = 1;

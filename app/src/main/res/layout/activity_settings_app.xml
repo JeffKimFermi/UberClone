@@ -19,7 +19,10 @@
     <ListView
     android:id="@+id/settingsListView"
     android:layout_height="match_parent"
-    android:layout_width="wrap_content"
+    android:layout_width="match_parent"
+    android:divider="#f00"
+    android:listSelector="#F5F5F5"
+    android:dividerHeight="1dp"
     android:layout_marginTop="20sp"
     android:layout_marginBottom="20sp">
     </ListView>
