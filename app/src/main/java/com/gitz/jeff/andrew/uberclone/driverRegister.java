@@ -49,8 +49,6 @@ public class driverRegister extends AppCompatActivity {
         passWord1 = (EditText)findViewById(R.id.passWord1);
         passWord2 = (EditText)findViewById(R.id.passWord2);
 
-
-
         String pass1 = passWord1.getText().toString();    //First Password
         String pass2 = passWord2.getText().toString();     //Second Password/Password confirmation
 
@@ -76,7 +74,8 @@ public class driverRegister extends AppCompatActivity {
                 NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
                 if (activeNetwork != null  && activeNetwork.isAvailable() && activeNetwork.isConnected())
                 {
-                    final AlertDialog alertDialog = new SpotsDialog(driverRegister.this, R.style.customDriverRegister);  //Show a Dialog Box for 4 seconds
+                    //final AlertDialog alertDialog = new SpotsDialog(driverRegister.this, R.style.customDriverRegister);  //Show a Dialog Box for 4 seconds
+                    final AlertDialog alertDialog = new SpotsDialog(driverRegister.this);  //Show a Dialog Box for 4 seconds
                     alertDialog.show();
 
                     //IF Connected to Network either via Mobile Data or Wifi

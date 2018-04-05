@@ -18,24 +18,22 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Toast;
 
-import com.google.android.gms.maps.SupportMapFragment;
-
 import java.util.ArrayList;
 import java.util.List;
-
-import static com.gitz.jeff.andrew.uberclone.R.id.map;
 
 public class userType extends AppCompatActivity
 {
     TinyDB saveUserType;
     TinyDB savedRegistrationComplete;
     int userType = 0;
-    int registrationStatus = 0; //0 is Default, 1 is when registration already done
-    int customerUser = 1;  // 1 For Customer, 2 For Driver;
-    int driverUser = 2;    // 1 For Customer, 2 For Driver;
+    int registrationStatus = 0;                      //0 is Default, 1 is when registration already done
+    int customerUser = 1;                            // 1 For Customer, 2 For Driver;
+    int driverUser = 2;                              // 1 For Customer, 2 For Driver;
     private static final int MY_PERMISSIONS_REQUEST_ACCOUNTS = 1;
-    boolean gpsEnabled = true;       //Must be true for one to use app
-    boolean mobileDataEnabled = true; //Must be true for one to use app
+    boolean gpsEnabled = true;                       //Must be true for one to use app
+    boolean mobileDataEnabled = true;                //Must be true for one to use app
+    TinyDB loginStatus;                              //Will save a boolean value representing registration status
+    boolean loginSuccessful = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -58,10 +56,10 @@ public class userType extends AppCompatActivity
             {}
         }
 
-
         saveUserType= new TinyDB(getBaseContext());
         savedRegistrationComplete = new TinyDB(getBaseContext());
-        registrationStatus = savedRegistrationComplete.getInt("registrationStatus");  //Get status of Registration
+        loginStatus = new TinyDB(getBaseContext());
+        loginSuccessful = loginStatus.getBoolean("loginStatus");                           //Get True or false
 
         openSavedUserTypeActivity();   //Open Saved User Activity
 
@@ -83,7 +81,7 @@ public class userType extends AppCompatActivity
         if(mobileDataEnabled && gpsEnabled)
         {
             saveUserType.putInt("usesType", customerUser);  //Save that the User is a customer
-            Intent intent = new Intent(getBaseContext(), registerActivity.class);
+            Intent intent = new Intent(getBaseContext(), customerRegister.class);
             startActivity(intent);
         }
     }
@@ -128,8 +126,9 @@ public class userType extends AppCompatActivity
 
             //Notify User
             AlertDialog.Builder dialog = new AlertDialog.Builder(userType.this);
-            dialog.setMessage("GPS Services Disabled");
-            dialog.setPositiveButton("Enable", new DialogInterface.OnClickListener()
+            dialog.setTitle("The GPS is Off");
+            dialog.setMessage("GPS Activation necessary for Accurate Tracking.");
+            dialog.setPositiveButton("ACTIVATE", new DialogInterface.OnClickListener()
 
             {
                 @Override
@@ -145,7 +144,7 @@ public class userType extends AppCompatActivity
 
             });
 
-            dialog.setNegativeButton("Cancel", new DialogInterface.OnClickListener()
+            dialog.setNegativeButton("CANCEL", new DialogInterface.OnClickListener()
             {
 
                 @Override
@@ -171,8 +170,9 @@ public class userType extends AppCompatActivity
             mobileDataEnabled = false;
 
             //Notify User
-            AlertDialog.Builder dialog = new AlertDialog.Builder(userType.this);
-            dialog.setMessage("Mobile Data Disabled");
+            AlertDialog.Builder dialog = new AlertDialog.Builder(this);
+            dialog.setTitle("Mobile Data Turned Off");
+            dialog.setMessage("Internet Connection necessary for Functionality.");
             dialog.setPositiveButton("Enable", new DialogInterface.OnClickListener()
             {
                 @Override
@@ -200,11 +200,12 @@ public class userType extends AppCompatActivity
         }
     }
 
+
     public void openSavedUserTypeActivity()
     {
         if(mobileDataEnabled && gpsEnabled)
         {
-            if (registrationStatus == 1) //If user has already logged In Before
+            if (loginSuccessful)         //If user successfully logged in before
             {
                 userType = savedRegistrationComplete.getInt("usesType");
 
@@ -212,19 +213,19 @@ public class userType extends AppCompatActivity
                 {
                     Intent intent = new Intent(getBaseContext(), CustomerMapActivity.class);
                     startActivity(intent);
-                    return;   //Fucking exit
+                    return;
                 }
                 else if (userType == 2)  //If Driver Initially signed in
                 {
                     Intent intent = new Intent(getBaseContext(), DriverMapActivity.class);
                     startActivity(intent);
-                    return;   //Fucking exit
+                    return;
                 }
                 else   //Default
                 {
                     Intent intent = new Intent(getBaseContext(), CustomerMapActivity.class);
                     startActivity(intent);
-                    return;   //Fucking exit
+                    return;
                 }
             }
         }
@@ -238,7 +239,6 @@ public class userType extends AppCompatActivity
         startActivity(getIntent());
         overridePendingTransition(0, 0);
     }
-
 
 
     private boolean checkAndRequestPermission()
@@ -275,7 +275,6 @@ public class userType extends AppCompatActivity
     }
 
 
-
     @Override
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults)
     {
@@ -290,5 +289,4 @@ public class userType extends AppCompatActivity
             break;
         }
     }
-
 }

@@ -9,6 +9,7 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.google.android.gms.maps.model.LatLng;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -24,6 +25,7 @@ public class sendUserData
     public static void sendUserRegistrationCredentials(Context myContext, final String userType, final String userFullNames, final String userPhoneNumber, final String userConfirmedPassword)
     {
         final TinyDB saveRegistrationResponse = new TinyDB(myContext);
+        final TinyDB registrationStatus = new TinyDB(myContext);  //Will save a boolean value representing registration status
 
         final Context context= myContext;
         JSONObject jsonObj = new JSONObject();
@@ -47,7 +49,19 @@ public class sendUserData
                     @Override
                     public void onResponse(JSONObject response)
                     {
+                        boolean registrationSuccessful = false;          //Assume its false
+
                         String registrationResponse = response.toString();
+                        if(registrationResponse.matches("registration Successfuly Added"))
+                        {
+                            registrationSuccessful= true;                //Set boolean value
+                        }
+
+                        else if(registrationResponse.matches("registration unsuccessful"))
+                        {
+                            registrationSuccessful = false;
+                        }
+                        registrationStatus.putBoolean("registrationStatus", registrationSuccessful);  //Save registration Status in sharedPrefs
                         saveRegistrationResponse.putString("registrationResponse", registrationResponse);
 
                         Log.e("Response", response.toString());
@@ -65,6 +79,136 @@ public class sendUserData
 
         Volley.newRequestQueue(context).add(getRequest);
     }
+
+
+    //Send User Login Details
+    public static void sendLoginRequest (Context myContext,final String userId, final String userPassword)
+    {
+        final TinyDB loginStatus = new TinyDB(myContext);
+
+        final Context context= myContext;
+        JSONObject jsonObj = new JSONObject();
+        try
+        {
+            jsonObj.put("userID", userId);
+            jsonObj.put("userPassword", userPassword); // Set the first name/pair
+        }
+        catch (JSONException jse)
+        {
+            jse.printStackTrace();
+        }
+
+        String url= "http://46.101.73.84:8080/user/login";
+        JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.POST, url,jsonObj,   //url,jsonObj
+                new Response.Listener<JSONObject>()
+                {
+                    @Override
+                    public void onResponse(JSONObject response)
+                    {
+                        boolean booleanLogin = false;
+                        String loginResponse = response.toString();
+                        if(loginResponse.equals("loginSuccessful"))
+                        {
+                            booleanLogin = true;
+                        }
+
+                        else if(loginResponse.equals("userDoesNotExist"))
+                        {
+                            booleanLogin = false;
+                        }
+
+                        else if (loginResponse.equals("userAlreadyExists"))
+                        {
+                            booleanLogin = false;
+                        }
+
+                        else   //Do nothing for now
+                        {
+                            //booleanLogin = true;}
+                        }
+
+                        loginStatus.putBoolean("loginStatus",  booleanLogin);
+                        Log.e("Response", response.toString());
+                    }
+                },
+                new Response.ErrorListener()
+                {
+                    @Override
+                    public void onErrorResponse(VolleyError error)
+                    {
+                        Log.e("Error.Response", error.toString());
+                    }
+                }
+        );
+
+        Volley.newRequestQueue(context).add(getRequest);
+    }
+
+
+
+    //Send Event Data
+    public static void sendEventData(Context myContext, final String userId, final String eventID, LatLng customerPickUpLocation, LatLng customerDestination, LatLng driverCurrentLocation)
+    {
+        final Context context= myContext;
+        JSONObject jsonObj = new JSONObject();
+        try
+        {
+            jsonObj.put("userID", userId);
+            jsonObj.put("eventID", eventID); // Set the first name/pair
+            jsonObj.put("customerPickUpLocation", customerPickUpLocation);
+            jsonObj.put("customerDestination", customerDestination);
+            jsonObj.put("driverCurrentLocation", driverCurrentLocation);
+
+        }
+        catch (JSONException jse)
+        {
+            jse.printStackTrace();
+        }
+
+        String url= "http://date.jsontest.com";
+        JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.POST, url,jsonObj,   //url,jsonObj
+                new Response.Listener<JSONObject>()
+                {
+                    @Override
+                    public void onResponse(JSONObject response)
+                    {
+                        String serverResponse = response.toString();
+                        Log.e("Response", response.toString());
+                        if(userId.equals("taxiRequest"))                //If Taxi requested
+                        {
+                            if(serverResponse.equals("driverFound"))
+                            {
+
+                            }
+
+                            else
+                            {}
+                        }
+
+                        else if(userId.equals("cancelRequest"))
+                        {
+                            if(serverResponse.equals("cancelRequestSuccessful"))
+                            {
+
+                            }
+
+                            else
+                            {}
+                        }
+                    }
+                },
+                new Response.ErrorListener()
+                {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.e("Error.Response", error.toString());
+                    }
+                }
+        );
+
+        Volley.newRequestQueue(context).add(getRequest);
+    }
+
 
 
     //Send Driver Registration Details
@@ -113,87 +257,6 @@ public class sendUserData
     }
 
 */
-    //Send User Login Details
-    public static void sendLoginRequest (Context myContext,final String userId, final String userPassword)
-    {
-        final TinyDB saveLoginRequestResponse = new TinyDB(myContext);
-
-        final Context context= myContext;
-        JSONObject jsonObj = new JSONObject();
-        try
-        {
-            jsonObj.put("userID", userId);
-            jsonObj.put("userPassword", userPassword); // Set the first name/pair
-        }
-        catch (JSONException jse)
-        {
-            jse.printStackTrace();
-        }
-
-        String url= "http://46.101.73.84:8080/user/login";
-        JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.POST, url,jsonObj,   //url,jsonObj
-                new Response.Listener<JSONObject>()
-                {
-                    @Override
-                    public void onResponse(JSONObject response)
-                    {
-                        String loginResponse = response.toString();
-                        saveLoginRequestResponse.putString("loginResponse", loginResponse);
-                        Log.e("Response", response.toString());
-                    }
-                },
-                new Response.ErrorListener()
-                {
-                    @Override
-                    public void onErrorResponse(VolleyError error)
-                    {
-                        Log.e("Error.Response", error.toString());
-                    }
-                }
-        );
-
-        Volley.newRequestQueue(context).add(getRequest);
-    }
-
-
-
-    //Send Event Data
-    public static void sendEventData(Context myContext,final String userId, final String eventID)
-    {
-        final Context context= myContext;
-        JSONObject jsonObj = new JSONObject();
-        try
-        {
-            jsonObj.put("userID", userId);
-            jsonObj.put("eventID", eventID); // Set the first name/pair
-        }
-        catch (JSONException jse)
-        {
-            jse.printStackTrace();
-        }
-
-        String url= "http://date.jsontest.com";
-        JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.POST, url,jsonObj,   //url,jsonObj
-                new Response.Listener<JSONObject>()
-                {
-                    @Override
-                    public void onResponse(JSONObject response)
-                    {
-                        String serverResponse = response.toString();
-                        Log.e("Response", response.toString());
-                    }
-                },
-                new Response.ErrorListener()
-                {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Log.e("Error.Response", error.toString());
-                    }
-                }
-        );
-
-        Volley.newRequestQueue(context).add(getRequest);
-    }
 
 }
 

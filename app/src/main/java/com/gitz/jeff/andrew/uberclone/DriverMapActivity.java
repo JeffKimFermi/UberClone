@@ -1,18 +1,22 @@
 package com.gitz.jeff.andrew.uberclone;
 
 import android.Manifest;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Handler;
+import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -66,13 +70,18 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
     TextView customerDestination, customerName, customerPhoneNumber;  //Assigned Customer Name and Phone Number
     private List<Polyline> polylines;
     private static final int[] COLORS = new int[]{R.color.primary_dark,R.color.primary,R.color.primary_light,R.color.accent,R.color.primary_dark_material_light};
-    boolean customerAssigned = false;   //Customer not assigned by default
     private static final int MY_PERMISSIONS_REQUEST_ACCOUNTS = 1;
     final int LOCATION_REQUEST_CODE = 1;
     ImageView callCustomer;
     Marker pickUpMarker;
     public LatLng pickUpLocation;   //Will Hold Pick Up Location Co-ordinates
-    Button readyForCustomer;
+    Button activityManagementButton;
+    Button cancelRequest;
+    public boolean customerAssigned = true;   //Customer not assigned by default
+    public boolean customerFound = true;
+    TinyDB savedUserPhoneNumber;
+    String userPhoneNumber;
+    public boolean rideInSession = false;
 
 
 
@@ -80,7 +89,8 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_driver_map);
-
+        savedUserPhoneNumber = new TinyDB(getBaseContext());
+        userPhoneNumber = savedUserPhoneNumber.getString("userPhoneNumber");
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         polylines = new ArrayList<>();
@@ -102,13 +112,16 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
         customerPhoneNumber = (TextView) findViewById(R.id.customerPhoneNumber);
         customerDestination = (TextView) findViewById(R.id.customerDestination);
         callCustomer = (ImageView) findViewById(R.id.callCustomer);
-        readyForCustomer = (Button)findViewById(R.id.readyForCustomer);
+        activityManagementButton = (Button)findViewById(R.id.readyForCustomer);
+        cancelRequest  = (Button)findViewById(R.id.cancelRequest);
+        cancelRequest.setVisibility(View.INVISIBLE);
 
         getAssignedCustomer(); //Update Driver UI Appropriately
         callCustomer.setOnClickListener(new View.OnClickListener()    //Call Customer Listener
         {
             @Override
             public void onClick(View v) {
+                String eventID = "driverCalledDriver";
                 String customerNumber = "0735555255";
                 Intent callIntent = new Intent(Intent.ACTION_CALL);
                 callIntent.setData(Uri.parse("tel:" + customerNumber));
@@ -119,6 +132,7 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
                     return;
                 }
                 startActivity(callIntent);
+                sendUserData.sendEventData(getBaseContext(), userPhoneNumber, eventID,  null, null, null);
 
             }
         });
@@ -137,12 +151,67 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
             pickUpLocation = new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude());   //Get Customer Pickup Location Co-ordinates
             pickUpMarker = mMap.addMarker(new MarkerOptions().position(pickUpLocation).title("Pick Me Up Here"));  //Add Marker, and Set Title of Marker
         }
+
         if(customerAssigned)
         {
            customerInformation.setVisibility(View.VISIBLE);
            customerDestination.setText(destination);
            customerName.setText(name);
            customerPhoneNumber.setText(phoneNumber);
+
+            new Handler().postDelayed(new Runnable()
+            {
+                @Override
+                public void run()
+                {
+
+                    //Prompt user to Accept or Reject request
+                    final AlertDialog.Builder dialog = new AlertDialog.Builder(DriverMapActivity.this);
+                    dialog.setMessage("New Customer Found");
+                    dialog.setPositiveButton("ACCEPT", new DialogInterface.OnClickListener()
+
+                    {
+                        @Override
+                        public void onClick(DialogInterface paramDialogInterface, int paramInt)
+                        {
+                            String eventID = "customerRideRequestAccepted";
+                            sendUserData.sendEventData(getBaseContext(), userPhoneNumber, eventID,  null, null, null);
+
+                            rideInSession = true;
+                            activityManagementButton.setText("Ride in Session");
+                            activityManagementButton.setBackgroundColor(Color.RED);
+                            activityManagementButton.setTextColor(Color.WHITE);
+
+                            cancelRequest.setVisibility(View.VISIBLE);
+                            cancelRequest.setBackgroundColor(Color.BLUE);
+                            cancelRequest.setTextColor(Color.WHITE);
+                        }
+
+                    });
+
+                    dialog.setNegativeButton("REJECT", new DialogInterface.OnClickListener()
+                    {
+
+                        @Override
+                        public void onClick(DialogInterface paramDialogInterface, int paramInt)
+                        {
+                            String eventID = "customerRideRequestRejected";
+                            sendUserData.sendEventData(getBaseContext(), userPhoneNumber, eventID,  null, null, null);
+
+                            activityManagementButton.setBackgroundColor(Color.RED);
+                            activityManagementButton.setTextColor(Color.WHITE);
+                            activityManagementButton.setText("I need a Customer");
+                            cancelRequest.setText("Cancel Request Successful");
+                            //sendUserData.sendEventData(getBaseContext(),userPhoneNumber, customerRejected);   //Send Customer Rejected Event
+                        }
+                    });
+
+                    dialog.show();
+
+                }
+            }, 20000);
+
+
         }
 
         else
@@ -151,7 +220,6 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
             customerName.setText("");
             customerPhoneNumber.setText("");
         }
-
     }
 
 
@@ -232,11 +300,44 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
         LocationServices.FusedLocationApi.requestLocationUpdates(googleApiClient, locationRequest, this);
     }
 
-    public void readyForCustomer(View view)
+    public void activityManagementButton(View view)    //Manage driver Activity Events
     {
-        readyForCustomer.setText("Checking For Customers");
-        readyForCustomer.setBackgroundColor(Color.RED);
-        readyForCustomer.setTextColor(Color.WHITE);
+        String eventID = "driverAvailable";
+        sendUserData.sendEventData(getBaseContext(), userPhoneNumber, eventID,  null, null, null);
+        activityManagementButton.setText("Checking For Customers");
+        activityManagementButton.setBackgroundColor(Color.RED);
+        activityManagementButton.setTextColor(Color.WHITE);
+    }
+
+
+    public void cancelRequest(View view)
+    {
+        final int displayTime = 1200;
+        if(!rideInSession)  //If Cancel Button Pressed while Driver has Already been Found
+        {
+            String eventID = "driverCanceledRideRequest";
+            sendUserData.sendEventData(getBaseContext(), userPhoneNumber, eventID,  null, null, null);
+            activityManagementButton.setBackgroundColor(Color.RED);
+            activityManagementButton.setTextColor(Color.WHITE);
+            activityManagementButton.setText("I need a Customer");
+            cancelRequest.setText("Cancel Request Successful");
+
+            new Handler().postDelayed(new Runnable()
+            {
+                @Override
+                public void run()
+                {
+                    cancelRequest.setVisibility(View.INVISIBLE);
+                }
+            }, displayTime);
+
+        }
+
+        if(rideInSession)
+        {
+            String eventID = "endOfRideSession";
+            sendUserData.sendEventData(getBaseContext(), userPhoneNumber, eventID,  null, null, null);
+        }
     }
 
 /*
@@ -350,7 +451,6 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
         menuInflater.inflate(R.menu.main_activity_menu, menu);
         return super.onCreateOptionsMenu(menu);
     }
-
 
 
     @Override

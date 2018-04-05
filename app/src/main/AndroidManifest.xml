@@ -12,6 +12,7 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.CALL_PHONE" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.SEND_SMS"/>
 
 
     <application
@@ -22,7 +23,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         tools:replace="android:label">
-        <activity android:name=".userType">
+        <activity android:name=".splashActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -46,14 +47,12 @@
             android:name=".DriverMapActivity"
             android:label="@string/title_activity_driver_map" />
         <activity android:name=".CustomerMapActivity" />
+        <activity android:name=".userType" />
         <activity android:name=".driverRegister" />
-        <activity android:name=".registerActivity"/>
+        <activity android:name=".customerRegister" />
         <activity android:name=".About" />
         <activity android:name=".Help" />
-        <activity android:name=".settingsApp">
-
-        </activity>
-
+        <activity android:name=".settingsApp"></activity>
     </application>
 
 </manifest>

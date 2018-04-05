@@ -13,25 +13,24 @@ import android.widget.Toast;
 import java.util.ArrayList;
 import dmax.dialog.SpotsDialog;
 
-public class registerActivity extends AppCompatActivity
+public class customerRegister extends AppCompatActivity
 {
-
-    EditText userName;      //User Name
-    EditText phoneNumber;   //User Phone Number
-    EditText emailAddress;  //User Email Address
-    EditText passWord1;     //User Password
-    EditText passWord2;     //Password Confirmation
+    EditText userName;                            //User Name
+    EditText phoneNumber;                         //User Phone Number
+    EditText emailAddress;                        //User Email Address
+    EditText passWord1;                           //User Password
+    EditText passWord2;                           //Password Confirmation
     ArrayList<String> userCredentials = new ArrayList<>(); //ArrayList to Hold User Data
-    TinyDB saveUserPhoneNumber;  //Save User Phone Number within the App
+    TinyDB saveUserPhoneNumber;                   //Save User Phone Number within the App
     TinyDB saveRegistrationComplete;
-    int registrationStatus = 1; //Registration Done Successfully
+    int registrationStatus = 1;                   //Registration Done Successfully
     private final static int displayTime = 3500;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_register_activity);
+        setContentView(R.layout.activity_customer_register);
         saveUserPhoneNumber = new TinyDB(getBaseContext());
         saveRegistrationComplete = new TinyDB(getBaseContext());
     }
@@ -40,7 +39,8 @@ public class registerActivity extends AppCompatActivity
     public native String stringFromJNI();
 
     // Used to load the 'native-lib' library on application startup.
-    static {
+    static
+    {
         System.loadLibrary("native-lib");
     }
 
@@ -52,34 +52,33 @@ public class registerActivity extends AppCompatActivity
         passWord1 = (EditText)findViewById(R.id.passWord1);
         passWord2 = (EditText)findViewById(R.id.passWord2);
 
-
-
-        String pass1 = passWord1.getText().toString();    //First Password
-        String pass2 = passWord2.getText().toString();     //Second Password/Password confirmation
+        String pass1 = passWord1.getText().toString();           //First Password
+        String pass2 = passWord2.getText().toString();           //Second Password/Password confirmation
 
         /*Perform Error Handling*/
-        if(pass1.matches("") || pass2.matches(""))        //If No Input Entered
+        if(pass1.matches("") || pass2.matches(""))               //If No Input Entered
         {
            Toast.makeText(getBaseContext(), "Missing Input", Toast.LENGTH_LONG).show();  //Toast Error Message
         }
 
-        else                                              //Acceptable Input
+        else                                                     //Acceptable Input
         {
             if (pass1.equals(pass2))
             {
-                String userType = "Customer";                                         //Customer
-                String userNames = userName.getText().toString().trim();                   //User's Name
-                String userPhone = phoneNumber.getText().toString().trim();              //User Mobile Number
-                String userPassword = pass1;                                              //Std name for user password
-                String email = emailAddress.getText().toString().trim();              //User Email Address
-                saveUserPhoneNumber.putString("userPhoneNumber", userPhone);             //Save User Phone Number in Shared Prefs
+                String userType = "Customer";                                           //Customer
+                String userNames = userName.getText().toString().trim();                //User's Name
+                String userPhone = phoneNumber.getText().toString().trim();             //User Mobile Number
+                String userPassword = pass1;                                            //Std name for user password
+                String email = emailAddress.getText().toString().trim();                //User Email Address
+                saveUserPhoneNumber.putString("userPhoneNumber", userPhone);            //Save User Phone Number in Shared Prefs
 
                 ConnectivityManager cm = (ConnectivityManager) getBaseContext().getSystemService(Context.CONNECTIVITY_SERVICE);
                 NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
                 if (activeNetwork != null  && activeNetwork.isAvailable() && activeNetwork.isConnected())
 
                 {
-                    final AlertDialog alertDialog = new SpotsDialog(registerActivity.this, R.style.customCustomerRegister); //Show a Dialog Box
+                   // final AlertDialog alertDialog = new SpotsDialog(customerRegister.this, R.style.customCustomerRegister); //Show a Dialog Box
+                    final AlertDialog alertDialog = new SpotsDialog(customerRegister.this); //Show a Dialog Box
                     alertDialog.show();
 
 
@@ -90,7 +89,7 @@ public class registerActivity extends AppCompatActivity
                         sendUserData.sendUserRegistrationCredentials(getBaseContext(), userType, userNames, userPhone, userPassword);     //Send Bloody Data
                     }
 
-                    new android.os.Handler().postDelayed(new Runnable()   //Display AlertDialog Box for 4 Seconds before Opening next Activity
+                    new android.os.Handler().postDelayed(new Runnable()                     //Display AlertDialog Box for 4 Seconds before Opening next Activity
                     {
                         @Override
                         public void run()

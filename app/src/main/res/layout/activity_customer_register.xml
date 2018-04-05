@@ -7,7 +7,7 @@
     android:background="#ffffffff"
     android:orientation="vertical"
     android:padding="16dp"
-    tools:context="com.gitz.jeff.andrew.uberclone.registerActivity">
+    tools:context="com.gitz.jeff.andrew.uberclone.customerRegister">
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

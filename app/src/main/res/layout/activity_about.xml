@@ -9,8 +9,8 @@
     android:paddingLeft="20dp"
     android:paddingRight="20dp"
     android:paddingTop="20dp"
-    tools:context="com.gitz.jeff.andrew.uberclone.About"
-    android:gravity="center_horizontal">
+    android:gravity="center_horizontal"
+    tools:context="com.gitz.jeff.andrew.uberclone.About">
 
     <TextView
         android:layout_width="wrap_content"
@@ -27,7 +27,7 @@
         android:id="@+id/about_txt1"
         android:textSize="16dp"
         android:layout_below="@+id/about_txt"
-        android:text="This Software was Written by Jeff, Andrew and Daniel."/>
+        android:text="This Software was Written by Jeff Woz and Andrew Eastman."/>
 
     <TextView
         android:layout_width="wrap_content"
