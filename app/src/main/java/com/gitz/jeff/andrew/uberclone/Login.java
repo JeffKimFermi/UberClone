@@ -52,6 +52,7 @@ public class Login extends AppCompatActivity
         userType = savedUserType.getInt("usesType");
 
         final String enteredPhoneNumber = loginPhone.getText().toString().trim();
+
         String enteredPassword = loginPassword.getText().toString().trim();
 
         sendUserData.sendLoginRequest(getBaseContext(), enteredPhoneNumber, enteredPassword);  //Use Phone Number as ID and Password

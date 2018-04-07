@@ -77,8 +77,7 @@ public class customerRegister extends AppCompatActivity
                 if (activeNetwork != null  && activeNetwork.isAvailable() && activeNetwork.isConnected())
 
                 {
-                   // final AlertDialog alertDialog = new SpotsDialog(customerRegister.this, R.style.customCustomerRegister); //Show a Dialog Box
-                    final AlertDialog alertDialog = new SpotsDialog(customerRegister.this); //Show a Dialog Box
+                    final AlertDialog alertDialog = new SpotsDialog(customerRegister.this, R.style.customCustomerRegister); //Show a Dialog Box
                     alertDialog.show();
 
 

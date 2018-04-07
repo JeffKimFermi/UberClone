@@ -90,7 +90,7 @@ public class sendUserData
         JSONObject jsonObj = new JSONObject();
         try
         {
-            jsonObj.put("userID", userId);
+            jsonObj.put("userPhone", userId);
             jsonObj.put("userPassword", userPassword); // Set the first name/pair
         }
         catch (JSONException jse)
@@ -107,24 +107,24 @@ public class sendUserData
                     {
                         boolean booleanLogin = false;
                         String loginResponse = response.toString();
-                        if(loginResponse.equals("loginSuccessful"))
+                        if(loginResponse.equals("User Added"))
                         {
                             booleanLogin = true;
                         }
 
-                        else if(loginResponse.equals("userDoesNotExist"))
+                        else if(loginResponse.equals("Login unsuccessful"))
                         {
                             booleanLogin = false;
                         }
 
-                        else if (loginResponse.equals("userAlreadyExists"))
+                        else if (loginResponse.equals("User already exists"))
                         {
                             booleanLogin = false;
                         }
 
                         else   //Do nothing for now
                         {
-                            //booleanLogin = true;}
+                            booleanLogin = true;
                         }
 
                         loginStatus.putBoolean("loginStatus",  booleanLogin);

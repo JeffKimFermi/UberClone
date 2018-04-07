@@ -18,6 +18,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -72,8 +73,8 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
     private List<Polyline> polylines;
     //private static final int[] COLORS = new int[]{R.color.primary_dark,R.color.primary,R.color.primary_light,R.color.accent,R.color.primary_dark_material_light};
     private static final int[] COLORS = new int[]{R.color.primary,};
-    private PlaceAutocompleteFragment autocompleteFragmentPickup;
-    private PlaceAutocompleteFragment autocompleteFragmentDestination;
+    public PlaceAutocompleteFragment autocompleteFragmentPickup;
+    public PlaceAutocompleteFragment autocompleteFragmentDestination;
     LinearLayout driverInformation;
     ImageView driverProfileImage;   //Assigned Customer Profile Image
     TextView driverCar, driverName, driverPhoneNumber;  //Assigned Customer Name and Phone Number
@@ -161,8 +162,8 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
 
                 autocompleteFragmentPickup.setHint("Enter Pickup Point");  //Change Hint. More Efficient instead of having two activities
                 //getRouteToMarker(latlngDestinationCoordinates);
-                autocompleteFragmentPickup.getView().setVisibility(View.GONE);
-                autocompleteFragmentDestination.getView().setVisibility(View.VISIBLE);
+                //autocompleteFragmentPickup.getView().setVisibility(View.GONE);
+                //autocompleteFragmentDestination.getView().setVisibility(View.VISIBLE);
             }
 
             @Override
@@ -172,10 +173,11 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
             }
         });
 
-        autocompleteFragmentDestination= (PlaceAutocompleteFragment) getFragmentManager().findFragmentById(R.id.place_autocomplete_fragment_pickup);
+        autocompleteFragmentDestination= (PlaceAutocompleteFragment) getFragmentManager().findFragmentById(R.id.place_autocomplete_fragment_destination);
         autocompleteFragmentDestination.setHint("Choose Destination");
-        autocompleteFragmentDestination.isVisible();
-        autocompleteFragmentDestination.getView().setVisibility(View.GONE);
+
+        //autocompleteFragmentDestination.isVisible();
+       // autocompleteFragmentDestination.getView().setVisibility(View.GONE);
         autocompleteFragmentDestination.setOnPlaceSelectedListener(new PlaceSelectionListener()
         {
             @Override
@@ -193,8 +195,8 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
                 mMap.animateCamera(CameraUpdateFactory.zoomTo(12), 2000, null);
                 getRouteToMarker(latlngPickUpLocationCoordinates, latlngDestinationCoordinates);  //Draw Route from PickUp Point to dstination
 
-                autocompleteFragmentPickup.getView().setVisibility(View.VISIBLE);
-                autocompleteFragmentDestination.getView().setVisibility(View.GONE);
+                //autocompleteFragmentPickup.getView().setVisibility(View.VISIBLE);
+                //autocompleteFragmentDestination.getView().setVisibility(View.GONE);
 
             }
 
@@ -289,6 +291,8 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
                     cancelRequest.setBackgroundColor(Color.BLUE);
                     cancelRequest.setTextColor(Color.WHITE);
                     cancelRequest.setText("Ride in Session");
+                    autocompleteFragmentDestination.getView().setVisibility(View.GONE);
+                    autocompleteFragmentPickup.getView().setVisibility(View.GONE);
 
                 }
 

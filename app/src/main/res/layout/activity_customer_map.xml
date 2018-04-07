@@ -33,7 +33,9 @@
         <android.support.v7.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_margin="15sp"
+            android:layout_marginLeft="15sp"
+            android:layout_marginRight="15sp"
+            android:layout_marginBottom="5sp"
             android:id="@+id/pickup"
             android:layout_below="@+id/cancelRequest">
 
@@ -41,7 +43,7 @@
 
                 android:id="@+id/place_autocomplete_fragment_pickup"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_height="40sp"
                 android:name="com.google.android.gms.location.places.ui.PlaceAutocompleteFragment"/>
 
         </android.support.v7.widget.CardView>
@@ -51,7 +53,10 @@
         <android.support.v7.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_margin="15sp"
+            android:layout_marginLeft="15sp"
+            android:layout_marginRight="15sp"
+            android:layout_marginBottom="5sp"
+            android:layout_marginTop="5sp"
             android:id="@+id/destination"
             android:layout_below="@+id/pickup">
 
@@ -59,7 +64,7 @@
 
                 android:id="@+id/place_autocomplete_fragment_destination"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_height="40sp"
                 android:name="com.google.android.gms.location.places.ui.PlaceAutocompleteFragment"/>
 
         </android.support.v7.widget.CardView>
