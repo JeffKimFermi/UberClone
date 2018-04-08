@@ -2,16 +2,19 @@ package com.gitz.jeff.andrew.uberclone;
 
 
 import android.Manifest;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Handler;
+import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.os.Bundle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -145,6 +148,7 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
 
         autocompleteFragmentPickup = (PlaceAutocompleteFragment) getFragmentManager().findFragmentById(R.id.place_autocomplete_fragment_pickup);
         autocompleteFragmentPickup.setHint("Choose Pick Up Point");
+        ((EditText)autocompleteFragmentPickup.getView().findViewById(R.id.place_autocomplete_search_input)).setTextSize(17.0f);
 
         autocompleteFragmentPickup.setOnPlaceSelectedListener(new PlaceSelectionListener()
         {
@@ -175,6 +179,7 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
 
         autocompleteFragmentDestination= (PlaceAutocompleteFragment) getFragmentManager().findFragmentById(R.id.place_autocomplete_fragment_destination);
         autocompleteFragmentDestination.setHint("Choose Destination");
+        ((EditText)autocompleteFragmentDestination.getView().findViewById(R.id.place_autocomplete_search_input)).setTextSize(17.0f);
 
         //autocompleteFragmentDestination.isVisible();
        // autocompleteFragmentDestination.getView().setVisibility(View.GONE);
@@ -273,6 +278,7 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
 
                     //float distanceBtwnCustomerAndDriver = customerLocation.distanceTo(driverLocation);         //Distance in Metres
                     float distanceBtwnCustomerAndDriver = 5324;  //Use Dummy Data for the Time Being
+                    float distanceInKms = distanceBtwnCustomerAndDriver/1000;
                     if(distanceBtwnCustomerAndDriver < 100)  //If Distance Btwn Driver and Customer is less than 100m
                     {
                         request.setBackgroundColor(Color.RED);
@@ -282,17 +288,25 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
 
                     else                                     //If Distance Btwn Driver and Customer is more than 100m
                     {
+                        //int backgroundColour = Color.parseColor("#F5F5F5");
+                        //request.setBackgroundColor(backgroundColour);
                         request.setBackgroundColor(Color.RED);
                         request.setTextColor(Color.WHITE);
-                        request.setText("Driver Found: " + String.valueOf(distanceBtwnCustomerAndDriver) + " m");  //Change Button Appropriately
+                        request.setText("Driver Found: " + String.valueOf(distanceInKms) + " km");  //Change Button Appropriately
                     }
 
+                    request.setClickable(false);
                     cancelRequest.setVisibility(View.VISIBLE);
                     cancelRequest.setBackgroundColor(Color.BLUE);
                     cancelRequest.setTextColor(Color.WHITE);
-                    cancelRequest.setText("Ride in Session");
+                    cancelRequest.setText("Ride in Session. End Ride?");
+                    autocompleteFragmentDestination.setText("");
                     autocompleteFragmentDestination.getView().setVisibility(View.GONE);
+                    autocompleteFragmentDestination.getView().setClickable(false);
+
+                    autocompleteFragmentPickup.setText("");
                     autocompleteFragmentPickup.getView().setVisibility(View.GONE);
+                    autocompleteFragmentPickup.getView().setClickable(false);
 
                 }
 
@@ -312,33 +326,63 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
     public void cancelRequest(View view)
     {
         final int displayTime = 1200;
-        String eventID = "customerCanceledRideRequest";
+        final String eventID = "customerCanceledRideRequest";
 
         if(driverFound)  //If Cancel Button Pressed while Driver has Already been Found
         {
-            sendUserData.sendEventData(getBaseContext(), userPhoneNumber, eventID,  null, null, null);  //Send Data
-
-            request.setBackgroundColor(Color.RED);
-            request.setTextColor(Color.WHITE);
-            request.setText("Call Queencia");
-            cancelRequest.setText("Cancel Request Successful");
-
-            if(markerPickUp != null && markerDestination != null)
-            {
-                markerPickUp.remove();            //Clear Pick Up Point Marker
-                markerDestination.remove();       //Clear the Marker for the Destination previously chosen
-                clearRouteFromMap();   //Clear Route From Map
-            }
-
-
-            new Handler().postDelayed(new Runnable()
+            //Pop up an Alert Dialog to confirm End of ride
+            AlertDialog.Builder dialog = new AlertDialog.Builder(this);
+            dialog.setTitle("End Session?");
+            dialog.setMessage("Confirm you want to end Session?");
+            dialog.setPositiveButton("Yes", new DialogInterface.OnClickListener()
             {
                 @Override
-                public void run()
+                public void onClick(DialogInterface paramDialogInterface, int paramInt)
                 {
-                    cancelRequest.setVisibility(View.INVISIBLE);
+                    sendUserData.sendEventData(getBaseContext(), userPhoneNumber, eventID,  null, null, null);  //Send Data
+
+                    request.setBackgroundColor(Color.RED);
+                    request.setTextColor(Color.WHITE);
+                    request.setText("Call Queencia");
+                    cancelRequest.setText("Cancel Request Successful");
+                    request.setClickable(true);
+
+                    if(markerPickUp != null && markerDestination != null)
+                    {
+                        markerPickUp.remove();            //Clear Pick Up Point Marker
+                        markerDestination.remove();       //Clear the Marker for the Destination previously chosen
+                        clearRouteFromMap();   //Clear Route From Map
+                    }
+
+
+                    new Handler().postDelayed(new Runnable()
+                    {
+                        @Override
+                        public void run()
+                        {
+                            cancelRequest.setVisibility(View.INVISIBLE);
+                            autocompleteFragmentDestination.getView().setVisibility(View.VISIBLE);
+                            autocompleteFragmentDestination.getView().setClickable(true);
+                            autocompleteFragmentPickup.getView().setVisibility(View.VISIBLE);
+                            autocompleteFragmentPickup.getView().setClickable(true);
+
+                        }
+                    }, displayTime);
                 }
-            }, displayTime);
+            });
+
+            dialog.setNegativeButton("No", new DialogInterface.OnClickListener()
+            {
+
+                @Override
+                public void onClick(DialogInterface paramDialogInterface, int paramInt)
+                {
+                    //Do Nothing
+                }
+            });
+
+            dialog.show();
+
 
         }
     }
