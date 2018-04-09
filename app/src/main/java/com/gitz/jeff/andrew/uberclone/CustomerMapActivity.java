@@ -125,8 +125,7 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
         cancelRequest = (Button)findViewById(R.id.cancelRequest);
         cancelRequest.setVisibility(View.INVISIBLE);
         callDriver = (ImageView) findViewById(R.id.callDriver);
-
-        getAssignedDriver();   //Display Driver Details
+        driverInformation.setVisibility(View.GONE);
 
         callDriver.setOnClickListener(new View.OnClickListener()    //Call Customer Listener
         {
@@ -199,7 +198,7 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
                 }
                 markerDestination = mMap.addMarker(new MarkerOptions().position(latlngDestinationCoordinates).title("Destination: " + destination));
                 mMap.animateCamera(CameraUpdateFactory.zoomTo(12), 2000, null);
-                getRouteToMarker(latlngPickUpLocationCoordinates, latlngDestinationCoordinates);  //Draw Route from PickUp Point to dstination
+                drawRouteToMarker(latlngPickUpLocationCoordinates, latlngDestinationCoordinates);  //Draw Route from PickUp Point to dstination
 
                 //autocompleteFragmentPickup.getView().setVisibility(View.VISIBLE);
                 //autocompleteFragmentDestination.getView().setVisibility(View.GONE);
@@ -297,6 +296,7 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
                         request.setText("Driver Found: " + String.valueOf(distanceInKms) + " km");  //Change Button Appropriately
                     }
 
+                    showAssignedDriverDetails();    //Show Driver Details
                     request.setClickable(false);
                     cancelRequest.setVisibility(View.VISIBLE);
                     cancelRequest.setBackgroundColor(Color.BLUE);
@@ -310,6 +310,14 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
                     autocompleteFragmentPickup.getView().setVisibility(View.GONE);
                     autocompleteFragmentPickup.getView().setClickable(false);
 
+                   new Handler().postDelayed(new Runnable()
+                   {
+                       @Override
+                       public void run()
+                       {
+                           hideAssignedDriverDetails();   //Hide Driver Details
+                       }
+                   }, 15000);
                 }
 
                 if(!driverFound)   //If Driver not found
@@ -391,25 +399,22 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
 
 
 
-    public void getAssignedDriver()
+    public void showAssignedDriverDetails()
     {
         String vehicleNumberPlate = "KAV 587V";
         String name = "Tony Almeida";  //Dummy Data
         String phoneNumber = "0728648142";  //Dummy Data
-        if(driverAssigned)   //If Driver Assigned Successfully
-        {
-            driverInformation.setVisibility(View.VISIBLE);
-            driverName.setText(name);
-            driverPhoneNumber.setText(phoneNumber);
-            driverCar.setText(vehicleNumberPlate);
-        }
 
-        else
-        {
-            driverInformation.setVisibility(View.GONE);
-            driverName.setText("");
-            driverCar.setText("");
-        }
+        driverName.setText(name);
+        driverPhoneNumber.setText(phoneNumber);
+        driverCar.setText(vehicleNumberPlate);
+        driverInformation.setVisibility(View.VISIBLE);
+    }
+
+
+    public void hideAssignedDriverDetails()
+    {
+        driverInformation.setVisibility(View.GONE);
     }
 
 
@@ -480,8 +485,8 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
     public void onConnected(@Nullable Bundle bundle)
     {
         locationRequest = new LocationRequest();
-        locationRequest.setInterval(5000);    //Refresh rate
-        locationRequest.setFastestInterval(5000);
+        locationRequest.setInterval(2500);    //Refresh rate
+        locationRequest.setFastestInterval(2500);
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);  //Highest Accuracy, However drains a lot of battery power
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED)
@@ -493,7 +498,7 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
     }
 
 
-    public void getRouteToMarker(LatLng pickUpPointCoordinates, LatLng destinationCoordinates)
+    public void drawRouteToMarker(LatLng pickUpPointCoordinates, LatLng destinationCoordinates)
     {
         Routing routing = new Routing.Builder()
                 .travelMode(AbstractRouting.TravelMode.DRIVING)

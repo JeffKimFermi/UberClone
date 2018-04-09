@@ -81,6 +81,10 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
     TinyDB savedUserPhoneNumber;
     String userPhoneNumber;
     public boolean rideInSession = false;
+    boolean locationDataCopied = false;
+    Marker markerCustomerLocaton;  //Destination Marker
+    Marker markerCurrentLocation; //My Current Locaton Marker
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -113,8 +117,6 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
         endOfSession  = (Button)findViewById(R.id.endOfSession);
         endOfSession.setVisibility(View.INVISIBLE);
         customerInformation.setVisibility(View.GONE);
-
-        getAssignedCustomer(); //Update Driver UI Appropriately
 
 
         driverMainButton.setOnClickListener(new View.OnClickListener()    //Main Driver Functionality Button
@@ -159,34 +161,26 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
 
 
 
-    public void getAssignedCustomer()
+    public void showAssignedCustomerDetails()
     {
-        String pickup = "Pickup Point: Upper Hill";
+        String pickup = "Upper Hill";
         String name = "Lisa Randall";  //Dummy Data
         String phoneNumber = "0728648142";  //Dummy Data
 
-        if(lastLocation!= null && lastLocation!= null)
-        {
-            pickUpLocation = new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude());   //Get Customer Pickup Location Co-ordinates
-            pickUpMarker = mMap.addMarker(new MarkerOptions().position(pickUpLocation).title("Pick Me Up Here"));  //Add Marker, and Set Title of Marker
-        }
+        // pickUpLocation = new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude());   //Get Customer Pickup Location Co-ordinates
+        // pickUpMarker = mMap.addMarker(new MarkerOptions().position(pickUpLocation).title("Pick Me Up Here"));  //Add Marker, and Set Title of Marker
 
-        if(customerAssigned)
-        {
-           //customerInformation.setVisibility(View.VISIBLE);
-           customerPickup.setText(pickup);
-           customerName.setText(name);
-           customerPhoneNumber.setText(phoneNumber);
+        customerPickup.setText(pickup);
+        customerName.setText(name);
+        customerPhoneNumber.setText(phoneNumber);
+        customerInformation.setVisibility(View.VISIBLE);
 
-           //newCustomerAlert();
-        }
+    }
 
-        else
-        {
-            customerInformation.setVisibility(View.GONE);
-            customerName.setText("");
-            customerPhoneNumber.setText("");
-        }
+
+    public void  hideAssignedCustomerDetails()
+    {
+        customerInformation.setVisibility(View.GONE);
     }
 
 
@@ -217,16 +211,22 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
                     {
                         String eventID = "customerRideRequestAccepted";
                         sendUserData.sendEventData(getBaseContext(), userPhoneNumber, eventID,  null, null, null);
-                        customerInformation.setVisibility(View.VISIBLE);
+                        showAssignedCustomerDetails();
                         rideInSession = true;
 
-                        //activityManagementButton.setText("Ride in Session");
-                        //activityManagementButton.setBackgroundColor(Color.RED);
-                        //activityManagementButton.setTextColor(Color.WHITE);
 
                         endOfSession.setVisibility(View.VISIBLE);
                         endOfSession.setBackgroundColor(Color.BLUE);
                         endOfSession.setTextColor(Color.WHITE);
+
+                        new Handler().postDelayed(new Runnable()
+                        {
+                            @Override
+                            public void run()
+                            {
+                                hideAssignedCustomerDetails();
+                            }
+                        }, 15000);
                     }
 
                 });
@@ -294,18 +294,42 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
     @Override
     public void onLocationChanged(Location location)  //Will be called every second
     {
-        lastLocation = location;
-        LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
+
+        if(!locationDataCopied)
+        {
+            lastLocation = location;  //Copy the Data
+            LatLng initLatLang = new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude());
+            markerCurrentLocation = mMap.addMarker(new MarkerOptions().position(initLatLang).title("My Current Location"));  //Add Marker, and Set Title of Marker
+            locationDataCopied = true;
+            mMap.moveCamera(CameraUpdateFactory.newLatLng(initLatLang));
+
+        }
+
+        else if(lastLocation != location)
+        {
+            if(rideInSession)  //Only recentre when Driver is in Motion
+            {
+                markerCurrentLocation.remove();
+                lastLocation = location;
+                LatLng currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
+                markerCurrentLocation = mMap.addMarker(new MarkerOptions().position(currentLatLng).title("My Current Location"));  //Add Marker, and Set Title of Marker
+                mMap.moveCamera(CameraUpdateFactory.newLatLng(currentLatLng));
+            }
+        }
+
+        //markerCurrentLocation = mMap.addMarker(new MarkerOptions().position(latLng).title("My Current Location"));  //Add Marker, and Set Title of Marker
+        // mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
 
         mMap.animateCamera(CameraUpdateFactory.zoomTo(myZoomLevel), new GoogleMap.CancelableCallback() {
             @Override
-            public void onFinish() {
+            public void onFinish()
+            {
                 myZoomLevel = mMap.getCameraPosition().zoom;
             }
 
             @Override
-            public void onCancel() {
+            public void onCancel()
+            {
 
             }
         });
@@ -320,8 +344,8 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
     public void onConnected(@Nullable Bundle bundle)
     {
         locationRequest = new LocationRequest();
-        locationRequest.setInterval(5000);    //Refresh rate
-        locationRequest.setFastestInterval(5000);
+        locationRequest.setInterval(2500);    //Refresh rate
+        locationRequest.setFastestInterval(2500);
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);  //Highest Accuracy, However drains a lot of battery power
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED)
@@ -391,17 +415,17 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
         clearRouteFromMap();   //Clear Route From Map
     }
 
-    public void getRouteToMarker(LatLng pickUpLatLang)
+
+    public void drawRouteToMarker(LatLng pickUpPointCoordinates, LatLng destinationCoordinates)
     {
         Routing routing = new Routing.Builder()
                 .travelMode(AbstractRouting.TravelMode.DRIVING)
                 .withListener(this)
                 .alternativeRoutes(false)  //Disable Alternative Routes for Now
-                .waypoints(new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude() ), pickUpLatLang)     //end is pickUpLatLang, start will be last latlong coordininates
+                .waypoints(pickUpPointCoordinates, destinationCoordinates)     //end is pickUpLatLang, start will be last latlong coordininates
                 .build();
         routing.execute();
     }
-
 
     public void clearRouteFromMap()
     {

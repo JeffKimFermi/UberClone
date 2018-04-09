@@ -8,7 +8,7 @@ import java.util.logging.Handler;
 
 public class splashActivity extends AppCompatActivity
 {
-    private static int splashTimeOut = 450;   //500mS Timeout
+    private static int splashTimeOut = 700;   //500mS Timeout
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
