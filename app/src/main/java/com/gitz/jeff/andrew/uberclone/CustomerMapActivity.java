@@ -87,6 +87,7 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
     private static final int MY_PERMISSIONS_REQUEST_ACCOUNTS = 1;
     final int LOCATION_REQUEST_CODE = 1;
     boolean locationDataCopied = false;
+    boolean taxiRequestMade = false;
     TinyDB savedUserPhoneNumber;
     String userPhoneNumber;
 
@@ -245,6 +246,7 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
             markerOrigin = mMap.addMarker(new MarkerOptions().position(pickUpLocation).title("Pick Me Up Here"));  //Add Marker, and Set Title of Marker
         }
         */
+        taxiRequestMade = true;
         int delayTime = 4000;
         String eventID = "taxiRequest";
 
@@ -325,6 +327,7 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
 
     public void cancelRequest(View view)
     {
+        taxiRequestMade = false;
         final int displayTime = 1200;
         final String eventID = "customerCanceledRideRequest";
 
@@ -383,7 +386,6 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
 
             dialog.show();
 
-
         }
     }
 
@@ -427,32 +429,42 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
     public void onLocationChanged(Location location)  //Will be called every second
     {
 
-        LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
         if(!locationDataCopied)
         {
             lastLocation = location;  //Copy the Data
+            LatLng initLatLang = new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude());
+            markerCurrentLocation = mMap.addMarker(new MarkerOptions().position(initLatLang).title("My Current Location"));  //Add Marker, and Set Title of Marker
             locationDataCopied = true;
+            mMap.moveCamera(CameraUpdateFactory.newLatLng(initLatLang));
+
         }
 
-        if(lastLocation != location)
+        else if(lastLocation != location)
         {
-            markerCurrentLocation.remove();
-            lastLocation = location;
+            if(taxiRequestMade)  //If Either Driver of Customer in Motion, Always recenter periodically(4Secs)
+            {
+                markerCurrentLocation.remove();
+                lastLocation = location;
+                LatLng currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
+                markerCurrentLocation = mMap.addMarker(new MarkerOptions().position(currentLatLng).title("My Current Location"));  //Add Marker, and Set Title of Marker
+                mMap.moveCamera(CameraUpdateFactory.newLatLng(currentLatLng));
+
+            }
         }
 
-        markerCurrentLocation = mMap.addMarker(new MarkerOptions().position(latLng).title("My Current Location"));  //Add Marker, and Set Title of Marker
-
-
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
+        //markerCurrentLocation = mMap.addMarker(new MarkerOptions().position(latLng).title("My Current Location"));  //Add Marker, and Set Title of Marker
+       // mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
 
         mMap.animateCamera(CameraUpdateFactory.zoomTo(myZoomLevel), new GoogleMap.CancelableCallback() {
             @Override
-            public void onFinish() {
+            public void onFinish()
+            {
                 myZoomLevel = mMap.getCameraPosition().zoom;
             }
 
             @Override
-            public void onCancel() {
+            public void onCancel()
+            {
 
             }
         });
@@ -491,6 +503,8 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
                 .build();
         routing.execute();
     }
+
+
 
 
     public void clearRouteFromMap()

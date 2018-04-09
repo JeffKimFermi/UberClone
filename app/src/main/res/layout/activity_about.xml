@@ -27,7 +27,7 @@
         android:id="@+id/about_txt1"
         android:textSize="16dp"
         android:layout_below="@+id/about_txt"
-        android:text="This Software was Written by Jeff Woz and Andrew Eastman."/>
+        android:text="This Software was Written by Daniel Gitz."/>
 
     <TextView
         android:layout_width="wrap_content"
@@ -36,7 +36,7 @@
         android:textSize="16dp"
         android:layout_below="@+id/about_txt1"
         android:layout_marginBottom="5dp"
-        android:text="EastmanDanielJeff@gmail.com"/>
+        android:text="GitzEastWoz@gmail.com"/>
 
 
     <TextView
@@ -47,24 +47,6 @@
         android:layout_below="@+id/about_txt2"
         android:layout_marginBottom="5dp"
         android:text="+254 721512564"/>
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/about_txt3"
-        android:textSize="16dp"
-        android:layout_below="@+id/about_txt2"
-        android:layout_marginBottom="5dp"
-        android:text="+254 728648142"/>
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/about_txt7"
-        android:textSize="16dp"
-        android:layout_below="@+id/about_txt2"
-        android:layout_marginBottom="5dp"
-        android:text="+254 720844920"/>
 
 
     <TextView

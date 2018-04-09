@@ -64,6 +64,24 @@
         android:textAllCaps="false"
         android:textColor="#fff" />
 
+    <TextView
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:layout_marginTop="16dp"
+        android:gravity="center_horizontal"
+        android:text="Problem Login In?"
+        android:textSize="14sp" />
+
+    <Button
+        android:layout_width="fill_parent"
+        android:layout_height="36dp"
+        android:background="#3b5998"
+        android:onClick="Support"
+        android:text="Contact Support"
+        android:textAllCaps="false"
+        android:textColor="#fff" />
+
     <steelkiwi.com.library.DotsLoaderView
         android:layout_width="match_parent"
         android:layout_height="match_parent"

@@ -21,9 +21,9 @@
         <Button
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/cancelRequest"
-            android:text="End Session"
-            android:onClick="cancelRequest"
+            android:id="@+id/endOfSession"
+            android:text="Ride in Session. End Ride?"
+            android:onClick="endRideSession"
             android:textAllCaps="false"
             android:layout_marginRight="15sp"
             android:layout_marginLeft="15sp"
@@ -73,7 +73,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:id="@+id/customerDestination"
+                    android:id="@+id/customerPickup"
                     android:paddingBottom="5sp"
                     android:paddingTop="15sp"/>
 
@@ -106,9 +106,8 @@
         <Button
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/readyForCustomer"
-            android:text="I need a Customer"
-            android:onClick="activityManagementButton"
+            android:id="@+id/driverMainButton"
+            android:text="Available"
             android:layout_gravity="bottom"
             android:textAllCaps="false"
             android:layout_marginRight="15sp"
