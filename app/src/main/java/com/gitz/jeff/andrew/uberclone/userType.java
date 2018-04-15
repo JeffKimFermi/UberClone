@@ -59,7 +59,8 @@ public class userType extends AppCompatActivity
         saveUserType= new TinyDB(getBaseContext());
         savedRegistrationComplete = new TinyDB(getBaseContext());
         loginStatus = new TinyDB(getBaseContext());
-        loginSuccessful = loginStatus.getBoolean("loginStatus");                           //Get True or false
+        //loginSuccessful = loginStatus.getBoolean("loginStatus");                           //Get True or false
+        loginSuccessful = true;
 
         openSavedUserTypeActivity();   //Open Saved User Activity
 

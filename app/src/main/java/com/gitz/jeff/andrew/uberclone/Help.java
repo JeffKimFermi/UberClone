@@ -20,7 +20,7 @@ public class Help extends AppCompatActivity {
     Button sendBtn;
     EditText txtphone_no;
     EditText txtmsg;
-    String phone_No = "0721512564";   //Gitz Number
+    String phone_No = "0722833083";   //Gitz Number
     ImageView callCustomerSupport;
 
     @Override
@@ -39,7 +39,7 @@ public class Help extends AppCompatActivity {
         {
             @Override
             public void onClick(View v) {
-                String customerNumber = "0735555255";
+                String customerNumber = "0722833083";
                 Intent callIntent = new Intent(Intent.ACTION_CALL);
                 callIntent.setData(Uri.parse("tel:" + customerNumber));
 

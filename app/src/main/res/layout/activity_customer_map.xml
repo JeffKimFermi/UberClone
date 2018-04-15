@@ -22,7 +22,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:id="@+id/cancelRequest"
-            android:text="Cancel Request?"
+            android:text="Cancel Ride Request?"
+            android:background="#40E0D0"
+            android:textColor="#ffffff"
             android:onClick="cancelRequest"
             android:textAllCaps="false"
             android:layout_marginRight="15sp"
@@ -91,8 +93,8 @@
 
 
             <ImageView
-                android:layout_width="75sp"
-                android:layout_height="75sp"
+                android:layout_width="70sp"
+                android:layout_height="70sp"
                 android:onClick="callAssignedDriver"
                 android:id="@+id/callDriver"
                 android:src="@drawable/ic_call_customer"
@@ -133,8 +135,8 @@
 
 
             <ImageView
-                android:layout_width="90sp"
-                android:layout_height="90sp"
+                android:layout_width="80sp"
+                android:layout_height="80sp"
                 android:id="@+id/driverProfileImage"
                 android:src="@drawable/ic_customer_profile_picture"
                 android:padding="15sp"/>
@@ -149,10 +151,10 @@
             android:layout_marginRight="15sp"
             android:layout_marginLeft="15sp"
             android:layout_marginBottom="10sp"
-            android:text="Call Queencie"
+            android:text="Call Taxi"
             android:onClick="requestUber"
             android:layout_gravity="bottom"
-            android:background="#b45705"
+            android:background="#40E0D0"
             android:textColor="#ffffff"
             android:textAllCaps="false"
             />

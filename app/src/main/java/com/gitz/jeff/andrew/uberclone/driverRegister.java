@@ -16,7 +16,7 @@ import dmax.dialog.SpotsDialog;
 
 public class driverRegister extends AppCompatActivity {
 
-    EditText userName;      //User Name
+    EditText userNames;      //User Name
     EditText phoneNumber;   //User Phone Number
     EditText vehicleRegistration;  //User Email Address
     EditText passWord1;     //User Password
@@ -43,7 +43,7 @@ public class driverRegister extends AppCompatActivity {
 
     public void register(View view)
     {
-        userName = (EditText)findViewById(R.id.userName);
+        userNames = (EditText)findViewById(R.id.userName);
         phoneNumber = (EditText)findViewById(R.id.phoneNumber);
         vehicleRegistration= (EditText)findViewById(R.id.vehicleRegistration);
         passWord1 = (EditText)findViewById(R.id.passWord1);
@@ -63,12 +63,12 @@ public class driverRegister extends AppCompatActivity {
             if (pass1.equals(pass2))
             {
                 String userType = "Driver";                                           //Customer
-                String userNames = userName.getText().toString().trim();                   //User's Name
-                String userId = phoneNumber.getText().toString().trim();              //User Mobile Number
+                String userName = userNames.getText().toString().trim();                   //User's Name
+                String userPhone = phoneNumber.getText().toString().trim();              //User Mobile Number
                 String userPassword = pass1;                                              //Std name for user password
                 String registration = vehicleRegistration.getText().toString().trim();              //User Email Address
 
-                saveUserPhoneNumber.putString("userPhoneNumber", userId);            //Save User Phone Number in Shared Prefs
+                saveUserPhoneNumber.putString("userPhoneNumber", userPhone);            //Save User Phone Number in Shared Prefs
 
                 ConnectivityManager cm = (ConnectivityManager) getBaseContext().getSystemService(Context.CONNECTIVITY_SERVICE);
                 NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
@@ -81,7 +81,7 @@ public class driverRegister extends AppCompatActivity {
                     //IF Connected to Network either via Mobile Data or Wifi
                     if (activeNetwork.getType() == ConnectivityManager.TYPE_MOBILE || activeNetwork.getType() == ConnectivityManager.TYPE_WIFI)
                     {
-                        sendUserData.sendUserRegistrationCredentials(getBaseContext(), userType, userNames,userId, userPassword);     //Send Bloody Data
+                        sendUserData.sendDriverRegistrationCredentials(getBaseContext(), userPhone, userName, userPassword, userType, registration);     //Send Bloody Data
                     }
 
                     new Handler().postDelayed(new Runnable()
@@ -94,7 +94,7 @@ public class driverRegister extends AppCompatActivity {
                             Intent intent = new Intent(getBaseContext(), Login.class);  //Open Login Activity upon Successfully Registration
                             startActivity(intent);
 
-                            userName.setText("");   //Clear all Edit Text Boxes
+                            userNames.setText("");   //Clear all Edit Text Boxes
                             phoneNumber.setText("");
                             vehicleRegistration.setText("");
                             passWord1.setText("");

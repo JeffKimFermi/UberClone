@@ -15,7 +15,7 @@ import dmax.dialog.SpotsDialog;
 
 public class customerRegister extends AppCompatActivity
 {
-    EditText userName;                            //User Name
+    EditText userNames;                            //User Name
     EditText phoneNumber;                         //User Phone Number
     EditText emailAddress;                        //User Email Address
     EditText passWord1;                           //User Password
@@ -46,7 +46,7 @@ public class customerRegister extends AppCompatActivity
 
     public void register(View view)
     {
-        userName = (EditText)findViewById(R.id.userName);
+        userNames = (EditText)findViewById(R.id.userName);
         phoneNumber = (EditText)findViewById(R.id.phoneNumber);
         emailAddress = (EditText)findViewById(R.id.userEmail);
         passWord1 = (EditText)findViewById(R.id.passWord1);
@@ -66,7 +66,7 @@ public class customerRegister extends AppCompatActivity
             if (pass1.equals(pass2))
             {
                 String userType = "Customer";                                           //Customer
-                String userNames = userName.getText().toString().trim();                //User's Name
+                String userName = userNames.getText().toString().trim();                //User's Name
                 String userPhone = phoneNumber.getText().toString().trim();             //User Mobile Number
                 String userPassword = pass1;                                            //Std name for user password
                 String email = emailAddress.getText().toString().trim();                //User Email Address
@@ -77,7 +77,7 @@ public class customerRegister extends AppCompatActivity
                 if (activeNetwork != null  && activeNetwork.isAvailable() && activeNetwork.isConnected())
 
                 {
-                    final AlertDialog alertDialog = new SpotsDialog(customerRegister.this, R.style.customCustomerRegister); //Show a Dialog Box
+                    final AlertDialog alertDialog = new SpotsDialog(customerRegister.this); //Show a Dialog Box
                     alertDialog.show();
 
 
@@ -85,7 +85,7 @@ public class customerRegister extends AppCompatActivity
                     if (activeNetwork.getType() == ConnectivityManager.TYPE_MOBILE || activeNetwork.getType() == ConnectivityManager.TYPE_WIFI)
                     {
 
-                        sendUserData.sendUserRegistrationCredentials(getBaseContext(), userType, userNames, userPhone, userPassword);     //Send Bloody Data
+                        sendUserData.sendCustomerRegistrationCredentials(getBaseContext(), userPhone, userName, userPassword, userType);     //Send Bloody Data
                     }
 
                     new android.os.Handler().postDelayed(new Runnable()                     //Display AlertDialog Box for 4 Seconds before Opening next Activity
@@ -98,7 +98,7 @@ public class customerRegister extends AppCompatActivity
                             Intent intent = new Intent(getBaseContext(), Login.class);  //Open Login Activity upon Successfully Registration
                             startActivity(intent);
 
-                            userName.setText("");   //Clear all Edit Text Boxes
+                            userNames.setText("");   //Clear all Edit Text Boxes
                             phoneNumber.setText("");
                             emailAddress.setText("");
                             passWord1.setText("");

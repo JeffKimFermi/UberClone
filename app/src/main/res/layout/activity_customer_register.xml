@@ -13,7 +13,7 @@
         android:layout_height="wrap_content"
         android:gravity="center_horizontal"
         android:text="Sign Up"
-        android:textColor="#90c40909"
+        android:textColor="#40E0D0"
         android:textSize="33dp"
         android:textStyle="bold" />
 
@@ -100,7 +100,7 @@
         android:layout_width="fill_parent"
         android:layout_height="36dp"
         android:layout_marginTop="16dp"
-        android:background="#b45705"
+        android:background="#40E0D0"
         android:onClick="register"
         android:text="Sign Up"
         android:textAllCaps="false"
@@ -118,7 +118,7 @@
     <Button
         android:layout_width="fill_parent"
         android:layout_height="36dp"
-        android:background="#3b5998"
+        android:background="#40E0D0"
         android:onClick="login"
         android:text="Login"
         android:textAllCaps="false"

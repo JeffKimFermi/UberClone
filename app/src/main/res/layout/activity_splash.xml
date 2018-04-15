@@ -11,12 +11,14 @@
 
 
     <ImageButton
-        android:layout_width="70dp"
-        android:layout_height="70dp"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
         android:scaleType="centerInside"
         android:adjustViewBounds="true"
         android:id="@+id/splash"
-        android:src="@drawable/loading"
+        android:src="@drawable/queencia"
+        android:paddingTop="20sp"
+        android:paddingBottom="20sp"
         android:background="#ffffffff"
         android:layout_marginBottom="20dp"
         />
@@ -24,8 +26,8 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Queencia"
-        android:textSize="16dp"
+        android:text="Secure, Convenient and Affordable"
+        android:textSize="15dp"
         />
 
 

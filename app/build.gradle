@@ -48,4 +48,7 @@ dependencies {
     compile 'com.steelkiwi:dots-loader-view:1.0.0'
     compile 'com.github.d-max:spots-dialog:0.7@aar'
     testCompile 'junit:junit:4.12'
+    dependencies {
+    compile 'com.pusher:pusher-java-client:1.5.0'
+    }
 }

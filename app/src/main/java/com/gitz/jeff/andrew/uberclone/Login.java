@@ -62,7 +62,9 @@ public class Login extends AppCompatActivity
             @Override
             public void run()
             {
-                booleanLogin = loginStatus.getBoolean("loginStatus");                           //Get True or false
+                //booleanLogin = loginStatus.getBoolean("loginStatus");                           //Get True or false
+                booleanLogin = true;                           //Get True or false
+
 
                 if(booleanLogin)                   //If valid credentials
                 {

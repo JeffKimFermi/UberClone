@@ -21,8 +21,72 @@ import org.json.JSONObject;
 public class sendUserData
 {
 
+    //Send Event Data
+    public static void sendRideRequest(Context myContext, final String userId, LatLng customerPickUpLocation, LatLng customerDestination, final String customerPickUpLocationDescription, final String customerDestinationDescription)
+    {
+        final Context context= myContext;
+        JSONObject jsonObj = new JSONObject();
+        try
+        {
+            jsonObj.put("userPhone", userId);
+            jsonObj.put("sourceLatitudeLongitude", customerPickUpLocation);
+            jsonObj.put("destinationLatitudeLongitude", customerDestination);
+            jsonObj.put("sourceDescription", customerPickUpLocationDescription);
+            jsonObj.put("destinationDescription", customerDestinationDescription);
+
+        }
+        catch (JSONException jse)
+        {
+            jse.printStackTrace();
+        }
+
+        String url= "http://46.101.73.84:8080/request/add";
+        JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.POST, url,jsonObj,   //url,jsonObj
+                new Response.Listener<JSONObject>()
+                {
+                    @Override
+                    public void onResponse(JSONObject response)
+                    {
+                        String rideRequestResponse = "";
+
+                        try
+                        {
+                            rideRequestResponse = response.getString("response");
+                        }
+
+                        catch (Exception e)
+                        {
+                            e.printStackTrace();
+                        }
+
+                        if(rideRequestResponse.equals("User Added"))
+                        {
+                            registrationSuccessful= true;                //Set boolean value
+                        }
+
+                        else if(rideRequestResponse.equals("User Already Exists"))
+                        {
+                            registrationSuccessful = false;
+                        }
+
+                        Log.e("Response", response.toString());
+
+                    }
+                },
+                new Response.ErrorListener()
+                {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.e("Error.Response", error.toString());
+                    }
+                }
+        );
+
+        Volley.newRequestQueue(context).add(getRequest);
+    }
+
     //Send Customer Registration Details
-    public static void sendUserRegistrationCredentials(Context myContext, final String userType, final String userFullNames, final String userPhoneNumber, final String userConfirmedPassword)
+    public static void sendCustomerRegistrationCredentials(Context myContext, final String userPhoneNumber, final String userFullNames,  final String userConfirmedPassword, final String userType)
     {
         final TinyDB saveRegistrationResponse = new TinyDB(myContext);
         final TinyDB registrationStatus = new TinyDB(myContext);  //Will save a boolean value representing registration status
@@ -31,11 +95,10 @@ public class sendUserData
         JSONObject jsonObj = new JSONObject();
         try
         {
-
-            jsonObj.put("userType", userType);
-            jsonObj.put("userName", userFullNames); // Set the first name/pair
             jsonObj.put("userPhone", userPhoneNumber);
+            jsonObj.put("userName", userFullNames); // Set the first name/pair
             jsonObj.put("userPassword", userConfirmedPassword);
+            jsonObj.put("userType", userType);
         }
         catch (JSONException jse)
         {
@@ -51,16 +114,26 @@ public class sendUserData
                     {
                         boolean registrationSuccessful = false;          //Assume its false
 
-                        String registrationResponse = response.toString();
-                        if(registrationResponse.matches("registration Successfuly Added"))
+                        String registrationResponse = "";
+                        try
+                        {
+                            registrationResponse = response.getString("response");
+                        }
+                        catch (Exception e)
+                        {
+                            e.printStackTrace();
+                        }
+
+                        if(registrationResponse.equals("User Added"))
                         {
                             registrationSuccessful= true;                //Set boolean value
                         }
 
-                        else if(registrationResponse.matches("registration unsuccessful"))
+                        else if(registrationResponse.equals("User Already Exists"))
                         {
                             registrationSuccessful = false;
                         }
+
                         registrationStatus.putBoolean("registrationStatus", registrationSuccessful);  //Save registration Status in sharedPrefs
                         saveRegistrationResponse.putString("registrationResponse", registrationResponse);
 
@@ -79,6 +152,78 @@ public class sendUserData
 
         Volley.newRequestQueue(context).add(getRequest);
     }
+
+
+    //Send Customer Registration Details
+    public static void sendDriverRegistrationCredentials(Context myContext, final String userPhoneNumber, final String userFullNames,  final String userConfirmedPassword, final String userType, final String vehicleRegistration)
+    {
+        final TinyDB saveRegistrationResponse = new TinyDB(myContext);
+        final TinyDB registrationStatus = new TinyDB(myContext);  //Will save a boolean value representing registration status
+
+        final Context context= myContext;
+        JSONObject jsonObj = new JSONObject();
+        try
+        {
+            jsonObj.put("userPhone", userPhoneNumber);
+            jsonObj.put("userName", userFullNames); // Set the first name/pair
+            jsonObj.put("userPassword", userConfirmedPassword);
+            jsonObj.put("userType", userType);
+            jsonObj.put("registration", vehicleRegistration);
+        }
+        catch (JSONException jse)
+        {
+            jse.printStackTrace();
+        }
+
+        String url= "http://46.101.73.84:8080/user/add";
+        JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.POST, url,jsonObj,   //url,jsonObj
+                new Response.Listener<JSONObject>()
+                {
+                    @Override
+                    public void onResponse(JSONObject response)
+                    {
+                        boolean registrationSuccessful = false;          //Assume its false
+
+                        String registrationResponse = "";
+                        try
+                        {
+                            registrationResponse = response.getString("response");
+                        }
+                        catch (Exception e)
+                        {
+                            e.printStackTrace();
+                        }
+
+                        if(registrationResponse.equals("User Added"))
+                        {
+                            registrationSuccessful= true;                //Set boolean value
+                        }
+
+                        else if(registrationResponse.equals("User Already Exists"))
+                        {
+                            registrationSuccessful = false;
+                        }
+
+                        registrationStatus.putBoolean("registrationStatus", registrationSuccessful);  //Save registration Status in sharedPrefs
+                        saveRegistrationResponse.putString("registrationResponse", registrationResponse);
+
+                        Log.e("Response", response.toString());
+                    }
+                },
+                new Response.ErrorListener()
+                {
+                    @Override
+                    public void onErrorResponse(VolleyError error)
+                    {
+                        Log.e("Error.Response", error.toString());
+                    }
+                }
+        );
+
+        Volley.newRequestQueue(context).add(getRequest);
+    }
+
+
 
 
     //Send User Login Details
@@ -106,18 +251,35 @@ public class sendUserData
                     public void onResponse(JSONObject response)
                     {
                         boolean booleanLogin = false;
-                        String loginResponse = response.toString();
-                        if(loginResponse.equals("User Added"))
+
+                        String loginResponse = "";
+                        try
+                        {
+                            loginResponse = response.getString("response");
+                        }
+                        catch (Exception e)
+                        {
+                            e.printStackTrace();
+                        }
+
+
+                        if(loginResponse.equals("Login Successful"))
                         {
                             booleanLogin = true;
                         }
 
-                        else if(loginResponse.equals("Login unsuccessful"))
+                        else if(loginResponse.equals("Invalid Password"))
                         {
                             booleanLogin = false;
                         }
 
-                        else if (loginResponse.equals("User already exists"))
+                        else if (loginResponse.equals("User does not Exist"))
+                        {
+                            booleanLogin = false;
+                        }
+
+
+                        else if (loginResponse.equals("Login Unsuccessful, user does not Exist"))
                         {
                             booleanLogin = false;
                         }
@@ -147,7 +309,7 @@ public class sendUserData
 
 
     //Send Event Data
-    public static void sendEventData(Context myContext, final String userId, final String eventID, LatLng customerPickUpLocation, LatLng customerDestination, LatLng driverCurrentLocation)
+    public static void sendEventData(Context myContext, final String userId, final String eventID, LatLng customerPickUpLocation, LatLng customerDestination)
     {
         final Context context= myContext;
         JSONObject jsonObj = new JSONObject();
@@ -157,7 +319,6 @@ public class sendUserData
             jsonObj.put("eventID", eventID); // Set the first name/pair
             jsonObj.put("customerPickUpLocation", customerPickUpLocation);
             jsonObj.put("customerDestination", customerDestination);
-            jsonObj.put("driverCurrentLocation", driverCurrentLocation);
 
         }
         catch (JSONException jse)
@@ -172,8 +333,18 @@ public class sendUserData
                     @Override
                     public void onResponse(JSONObject response)
                     {
-                        String serverResponse = response.toString();
-                        Log.e("Response", response.toString());
+                        String serverResponse = "";
+
+                        try
+                        {
+                            serverResponse = response.getString("response");
+                        }
+
+                        catch (Exception e)
+                        {
+                            e.printStackTrace();
+                        }
+
                         if(userId.equals("taxiRequest"))                //If Taxi requested
                         {
                             if(serverResponse.equals("driverFound"))
@@ -195,52 +366,53 @@ public class sendUserData
                             else
                             {}
                         }
-                    }
-                },
-                new Response.ErrorListener()
-                {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Log.e("Error.Response", error.toString());
-                    }
-                }
-        );
 
-        Volley.newRequestQueue(context).add(getRequest);
-    }
+                        else if(userId.equals("startSession"))
+                        {
+                            if(serverResponse.equals("sessionStarted"))
+                            {
 
+                            }
 
+                            else
+                            {}
+                        }
 
-    //Send Driver Registration Details
-    /*
-    public static void sendDriverRegestrationCredentials(Context myContext,final String userType, final String userFullNames, final String userPhoneNumber, final String userConfirmedPassword)
-    {
-        final Context context= myContext;
-        JSONObject jsonObj = new JSONObject();
-        try
-        {
+                        else if(userId.equals("endSession"))
+                        {
+                            if(serverResponse.equals("sessionEnded"))
+                            {
 
-            jsonObj.put("userType", userType);
-            jsonObj.put("userName", userFullNames); // Set the first name/pair
-            jsonObj.put("userPhone", userPhoneNumber);
-            jsonObj.put("userPassword", userConfirmedPassword);
-        }
-        catch (JSONException jse)
-        {
-            jse.printStackTrace();
-        }
+                            }
 
-        String url= "http://46.101.73.84:8080/user/add";
-        JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.POST, url,jsonObj,   //url,jsonObj
-                new Response.Listener<JSONObject>()
-                {
-                    @Override
-                    public void onResponse(JSONObject response)
-                    {
-                        //Get Response
-                        String serverResponse = response.toString());
-                        // display response
+                            else
+                            {}
+                        }
+
+                        else if(userId.equals("callCustomer"))
+                        {
+                            if(serverResponse.equals("ok"))
+                            {
+
+                            }
+
+                            else
+                            {}
+                        }
+
+                        else if(userId.equals("callDriver"))
+                        {
+                            if(serverResponse.equals("ok"))
+                            {
+
+                            }
+
+                            else
+                            {}
+                        }
+
                         Log.e("Response", response.toString());
+
                     }
                 },
                 new Response.ErrorListener()
@@ -253,10 +425,7 @@ public class sendUserData
         );
 
         Volley.newRequestQueue(context).add(getRequest);
-
     }
-
-*/
 
 }
 

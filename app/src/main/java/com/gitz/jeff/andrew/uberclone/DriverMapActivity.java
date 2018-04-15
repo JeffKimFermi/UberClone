@@ -1,21 +1,19 @@
 package com.gitz.jeff.andrew.uberclone;
 
 import android.Manifest;
+import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.location.Location;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Handler;
-import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
@@ -41,15 +39,15 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
-
-import org.w3c.dom.Text;
-
+import com.pusher.client.Pusher;
+import com.pusher.client.PusherOptions;
+import com.pusher.client.channel.Channel;
+import com.pusher.client.channel.SubscriptionEventListener;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -59,7 +57,6 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
 
     private GoogleMap mMap;
     GoogleApiClient googleApiClient;
-    Location lastLocation;
     LocationRequest locationRequest;
     TinyDB getSavedUserPhoneNumber; //Get user Driver User Phone Number to act as ID
     String driverUserId = null;
@@ -84,12 +81,20 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
     boolean locationDataCopied = false;
     Marker markerCustomerLocaton;  //Destination Marker
     Marker markerCurrentLocation; //My Current Locaton Marker
-
+    boolean driverAvailable = false;  //Set When Driver is Available
+    LatLng currentLocation;
+    LatLng previousLocation;
+  //  Location currentLocation;
+    Location lastLocation;
+    boolean readyToStartRide = false;
+    Dialog myDialog;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState)
+    {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_driver_map);
+        myDialog = new Dialog(this);
         savedUserPhoneNumber = new TinyDB(getBaseContext());
         userPhoneNumber = savedUserPhoneNumber.getString("userPhoneNumber");
 
@@ -118,24 +123,38 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
         endOfSession.setVisibility(View.INVISIBLE);
         customerInformation.setVisibility(View.GONE);
 
+       // checkForPushMessagesFromServer();
 
         driverMainButton.setOnClickListener(new View.OnClickListener()    //Main Driver Functionality Button
         {
             @Override
             public void onClick(View v)
             {
-                String eventID = "driverAvailable";
-                sendUserData.sendEventData(getBaseContext(), userPhoneNumber, eventID,  null, null, null);
+                if(readyToStartRide)
+                {
+                    endOfSession.setVisibility(View.VISIBLE);
+                    endOfSession.setText("End Session?");
+                    driverMainButton.setText("Status: Ride In Session");
+                    driverMainButton.setClickable(false);
+                    readyToStartRide = false;
+                }
 
-                driverMainButton.setText("Checking For Customers");
-                driverMainButton.setBackgroundColor(Color.RED);
-                driverMainButton.setTextColor(Color.WHITE);
+                else
+                {
+                    String eventID = "driverAvailable";
+                    sendUserData.sendEventData(getBaseContext(), userPhoneNumber, eventID, currentLocation, null);   //currentLatitudeLongitude is current Driver Location
+                    driverAvailable = true;
 
-                newCustomerAlert();
+                    driverMainButton.setText("Checking For Customers");
+                    driverMainButton.setBackgroundColor(Color.RED);
+                    driverMainButton.setTextColor(Color.WHITE);
 
+                    newCustomerAlert();
+                }
+
+                //checkIfLocationHasChangedConsiderably();
             }
         });
-
 
 
         callCustomer.setOnClickListener(new View.OnClickListener()    //Call Customer Listener
@@ -143,7 +162,7 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
             @Override
             public void onClick(View v) {
                 String eventID = "driverCalledDriver";
-                String customerNumber = "0735555255";
+                String customerNumber = "0722833083";
                 Intent callIntent = new Intent(Intent.ACTION_CALL);
                 callIntent.setData(Uri.parse("tel:" + customerNumber));
 
@@ -153,10 +172,50 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
                     return;
                 }
                 startActivity(callIntent);
-                sendUserData.sendEventData(getBaseContext(), userPhoneNumber, eventID,  null, null, null);
+                sendUserData.sendEventData(getBaseContext(), userPhoneNumber, eventID,  null, null);
 
             }
         });
+    }
+
+
+    public void checkForPushMessagesFromServer()
+    {
+        PusherOptions options = new PusherOptions();
+        options.setCluster("ap2");
+        Pusher pusher = new Pusher("830d3e455fd9cfbcec39", options);
+
+        Channel channel = pusher.subscribe("my-channel");
+
+        channel.bind("my-event", new SubscriptionEventListener()
+        {
+            @Override
+            public void onEvent(String channelName, String eventName, final String data)
+            {
+                //Received Messages From Server
+
+                final String pushedMessages = data;
+
+
+                /*
+                new Thread()
+                {
+                    public void run()
+                    {
+                        DriverMapActivity.this.runOnUiThread(new Runnable()
+                        {
+                            public void run()
+                            {
+                                Toast.makeText(getBaseContext(), "Received Data: " + pushedMessages, Toast.LENGTH_LONG).show();
+                            }
+                        });
+                    }
+                }.start();
+                */
+            }
+        });
+
+        pusher.connect();
     }
 
 
@@ -164,8 +223,8 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
     public void showAssignedCustomerDetails()
     {
         String pickup = "Upper Hill";
-        String name = "Lisa Randall";  //Dummy Data
-        String phoneNumber = "0728648142";  //Dummy Data
+        String name = "Madam Lucy";  //Dummy Data
+        String phoneNumber = "0722833083";  //Dummy Data
 
         // pickUpLocation = new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude());   //Get Customer Pickup Location Co-ordinates
         // pickUpMarker = mMap.addMarker(new MarkerOptions().position(pickUpLocation).title("Pick Me Up Here"));  //Add Marker, and Set Title of Marker
@@ -182,7 +241,6 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
     {
         customerInformation.setVisibility(View.GONE);
     }
-
 
 
     public void newCustomerAlert()
@@ -210,14 +268,14 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
                     public void onClick(DialogInterface paramDialogInterface, int paramInt)
                     {
                         String eventID = "customerRideRequestAccepted";
-                        sendUserData.sendEventData(getBaseContext(), userPhoneNumber, eventID,  null, null, null);
+                        sendUserData.sendEventData(getBaseContext(), userPhoneNumber, eventID,  null, null);
                         showAssignedCustomerDetails();
                         rideInSession = true;
 
 
                         endOfSession.setVisibility(View.VISIBLE);
-                        endOfSession.setBackgroundColor(Color.BLUE);
-                        endOfSession.setTextColor(Color.WHITE);
+                        //endOfSession.setBackgroundColor(Color.BLUE);
+                        //endOfSession.setTextColor(Color.WHITE);
 
                         new Handler().postDelayed(new Runnable()
                         {
@@ -225,8 +283,14 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
                             public void run()
                             {
                                 hideAssignedCustomerDetails();
+                                driverMainButton.setVisibility(View.VISIBLE);
+                                driverMainButton.setClickable(true);
+                                driverMainButton.setText("START SESSION");
+                                endOfSession.setVisibility(View.GONE);
+                                readyToStartRide = true;
+
                             }
-                        }, 15000);
+                        }, 10000);
                     }
 
                 });
@@ -238,10 +302,12 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
                     public void onClick(DialogInterface paramDialogInterface, int paramInt)
                     {
                         String eventID = "customerRideRequestRejected";
-                        sendUserData.sendEventData(getBaseContext(), userPhoneNumber, eventID,  null, null, null);
+                        sendUserData.sendEventData(getBaseContext(), userPhoneNumber, eventID,  null, null);
 
-                        driverMainButton.setBackgroundColor(Color.RED);
-                        driverMainButton.setTextColor(Color.WHITE);
+                        int backgroundColour = Color.parseColor("#40E0D0");
+                        driverMainButton.setBackgroundColor(backgroundColour);
+                        //driverMainButton.setBackgroundColor(Color.RED);
+                        //driverMainButton.setTextColor(Color.WHITE);
                         driverMainButton.setText("Available");
                         driverMainButton.setVisibility(View.VISIBLE); //Not Visible
                         driverMainButton.setClickable(true);
@@ -253,7 +319,27 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
                 dialog.show();
 
             }
-        }, 10000);
+        }, 7000);
+    }
+
+
+    public void showNewCustomerFoundCustomPopup()
+    {
+        TextView txtclose;
+        Button btnFollow;
+        myDialog.setContentView(R.layout.custompopup_driver_details);
+        txtclose =(TextView) myDialog.findViewById(R.id.txtclose);
+        txtclose.setText("M");
+        txtclose.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                myDialog.dismiss();
+            }
+        });
+        myDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        myDialog.show();
     }
 
     @Override
@@ -298,8 +384,11 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
         if(!locationDataCopied)
         {
             lastLocation = location;  //Copy the Data
+
             LatLng initLatLang = new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude());
+           // markerCurrentLocation = mMap.addMarker(new MarkerOptions().position(initLatLang).title("My Current Location").icon(BitmapDescriptorFactory.fromResource(R.mipmap.car)));  //Add Marker, and Set Title of Marker
             markerCurrentLocation = mMap.addMarker(new MarkerOptions().position(initLatLang).title("My Current Location"));  //Add Marker, and Set Title of Marker
+
             locationDataCopied = true;
             mMap.moveCamera(CameraUpdateFactory.newLatLng(initLatLang));
 
@@ -314,11 +403,13 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
                 LatLng currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
                 markerCurrentLocation = mMap.addMarker(new MarkerOptions().position(currentLatLng).title("My Current Location"));  //Add Marker, and Set Title of Marker
                 mMap.moveCamera(CameraUpdateFactory.newLatLng(currentLatLng));
+
             }
         }
 
-        //markerCurrentLocation = mMap.addMarker(new MarkerOptions().position(latLng).title("My Current Location"));  //Add Marker, and Set Title of Marker
-        // mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
+
+
+
 
         mMap.animateCamera(CameraUpdateFactory.zoomTo(myZoomLevel), new GoogleMap.CancelableCallback() {
             @Override
@@ -334,9 +425,31 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
             }
         });
 
-        // Log.e("ZOOM_LEVEL",""+myZoomLevel);
-        Double currentLatitudeAddress = location.getLatitude();     //Get current Latitude coordinates
-        Double currentLongitudeAddress = location.getLongitude();   //Get current Longitude coordinates
+    }
+
+
+    public void checkIfLocationHasChangedConsiderably()
+    {
+        Location previousLoc = new Location("");
+
+        previousLoc.setLatitude(previousLocation.latitude);
+        previousLoc.setLongitude(previousLocation.longitude);
+
+        Location currentLoc = new Location("");
+
+        currentLoc.setLatitude(currentLocation.latitude);
+        currentLoc.setLongitude(currentLocation.longitude);
+
+        float differenceInDistance = 0;
+
+        differenceInDistance = previousLoc.distanceTo(currentLoc);
+
+        if(differenceInDistance > 200)
+        {
+            String eventID = "driverAvailable";
+            sendUserData.sendEventData(getBaseContext(), userPhoneNumber, eventID,  currentLocation, null);   //currentLatitudeLongitude is current Driver Location
+        }
+
     }
 
 
@@ -384,9 +497,11 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
             @Override
             public void onClick(DialogInterface paramDialogInterface, int paramInt)
             {
-                sendUserData.sendEventData(getBaseContext(), userPhoneNumber, eventID,  null, null, null);
+                sendUserData.sendEventData(getBaseContext(), userPhoneNumber, eventID,  null, null);
                 endOfSession.setVisibility(View.GONE);
                 customerInformation.setVisibility(View.GONE);
+                int backgroundColour = Color.parseColor("#40E0D0");
+                driverMainButton.setBackgroundColor(backgroundColour);
                 driverMainButton.setVisibility(View.VISIBLE);
                 driverMainButton.setClickable(true);
                 driverMainButton.setText("Available");
