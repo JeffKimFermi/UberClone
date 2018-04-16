@@ -21,26 +21,23 @@ import org.json.JSONObject;
 public class sendUserData
 {
 
-    //Send Event Data
-    public static void sendRideRequest(Context myContext, final String userId, LatLng customerPickUpLocation, LatLng customerDestination, final String customerPickUpLocationDescription, final String customerDestinationDescription)
+
+    //Send Notification that Ride has Started
+    public static void sendRideStartedNotification(Context myContext, final int requestId, final String userId)
     {
         final Context context= myContext;
         JSONObject jsonObj = new JSONObject();
         try
         {
-            jsonObj.put("userPhone", userId);
-            jsonObj.put("sourceLatitudeLongitude", customerPickUpLocation);
-            jsonObj.put("destinationLatitudeLongitude", customerDestination);
-            jsonObj.put("sourceDescription", customerPickUpLocationDescription);
-            jsonObj.put("destinationDescription", customerDestinationDescription);
-
+            jsonObj.put("requestId", requestId);   //Unique ID of the Transaction
+            jsonObj.put("driverPhone", userId);    //User ID which is the Driver Phone
         }
         catch (JSONException jse)
         {
             jse.printStackTrace();
         }
 
-        String url= "http://46.101.73.84:8080/request/add";
+        String url= "http://46.101.73.84:8080/start/ride";
         JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.POST, url,jsonObj,   //url,jsonObj
                 new Response.Listener<JSONObject>()
                 {
@@ -59,14 +56,56 @@ public class sendUserData
                             e.printStackTrace();
                         }
 
-                        if(rideRequestResponse.equals("User Added"))
+                        Log.e("Response", response.toString());
+
+                    }
+                },
+                new Response.ErrorListener()
+                {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.e("Error.Response", error.toString());
+                    }
+                }
+        );
+
+        Volley.newRequestQueue(context).add(getRequest);
+    }
+
+
+
+    //Send Notification that Ride has Started
+    public static void sendRideEndedNotification(Context myContext, final int requestId, final String userId)
+    {
+        final Context context= myContext;
+        JSONObject jsonObj = new JSONObject();
+        try
+        {
+            jsonObj.put("requestId", requestId);   //Unique ID of the Transaction
+            jsonObj.put("driverPhone", userId);    //User ID which is the Driver Phone
+        }
+        catch (JSONException jse)
+        {
+            jse.printStackTrace();
+        }
+
+        String url= "http://46.101.73.84:8080/end/ride";
+        JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.POST, url,jsonObj,   //url,jsonObj
+                new Response.Listener<JSONObject>()
+                {
+                    @Override
+                    public void onResponse(JSONObject response)
+                    {
+                        String rideRequestResponse = "";
+
+                        try
                         {
-                            registrationSuccessful= true;                //Set boolean value
+                            rideRequestResponse = response.getString("response");
                         }
 
-                        else if(rideRequestResponse.equals("User Already Exists"))
+                        catch (Exception e)
                         {
-                            registrationSuccessful = false;
+                            e.printStackTrace();
                         }
 
                         Log.e("Response", response.toString());
@@ -84,6 +123,168 @@ public class sendUserData
 
         Volley.newRequestQueue(context).add(getRequest);
     }
+
+
+
+    //Send Ride Request
+    public static void sendRideRequest(Context myContext, final String userId, LatLng customerPickUpLocation, LatLng customerDestination, final String customerPickUpLocationDescription, final String customerDestinationDescription)
+    {
+        final Context context= myContext;
+        JSONObject jsonObj = new JSONObject();
+        try
+        {
+            jsonObj.put("userPhone", userId);
+            jsonObj.put("sourceLatitudeLongitude", customerPickUpLocation);
+            jsonObj.put("destinationLatitudeLongitude", customerDestination);
+            jsonObj.put("sourceDescription", customerPickUpLocationDescription);
+            jsonObj.put("destinationDescription", customerDestinationDescription);
+
+        }
+        catch (JSONException jse)
+        {
+            jse.printStackTrace();
+        }
+
+        String url= "http://46.101.73.84:8080/request/new";
+        JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.POST, url,jsonObj,   //url,jsonObj
+                new Response.Listener<JSONObject>()
+                {
+                    @Override
+                    public void onResponse(JSONObject response)
+                    {
+                        String rideRequestResponse = "";
+
+                        try
+                        {
+                            rideRequestResponse = response.getString("response");
+                        }
+
+                        catch (Exception e)
+                        {
+                            e.printStackTrace();
+                        }
+
+                        Log.e("Response", response.toString());
+
+                    }
+                },
+                new Response.ErrorListener()
+                {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.e("Error.Response", error.toString());
+                    }
+                }
+        );
+
+        Volley.newRequestQueue(context).add(getRequest);
+    }
+
+
+
+
+    //Send Notification Driver Accepted Ride Request
+    public static void sendRideRequestAccepted(Context myContext, final int requestId, final String userId)
+    {
+        final Context context= myContext;
+        JSONObject jsonObj = new JSONObject();
+        try
+        {
+            jsonObj.put("requestId", requestId);   //Unique ID of the Transaction
+            jsonObj.put("driverPhone", userId);    //User ID which is the Driver Phone
+        }
+        catch (JSONException jse)
+        {
+            jse.printStackTrace();
+        }
+
+        String url= "http://46.101.73.84:8080/driver/accept";
+        JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.POST, url,jsonObj,   //url,jsonObj
+                new Response.Listener<JSONObject>()
+                {
+                    @Override
+                    public void onResponse(JSONObject response)
+                    {
+                        String rideRequestResponse = "";
+
+                        try
+                        {
+                            rideRequestResponse = response.getString("response");
+                        }
+
+                        catch (Exception e)
+                        {
+                            e.printStackTrace();
+                        }
+
+                        Log.e("Response", response.toString());
+
+                    }
+                },
+                new Response.ErrorListener()
+                {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.e("Error.Response", error.toString());
+                    }
+                }
+        );
+
+        Volley.newRequestQueue(context).add(getRequest);
+    }
+
+
+
+    //Send Notification Driver Rejected Ride Request
+    public static void sendRideRequestRejected(Context myContext, final int requestId, final String userId)
+    {
+        final Context context= myContext;
+        JSONObject jsonObj = new JSONObject();
+        try
+        {
+            jsonObj.put("requestId", requestId);   //Unique ID of the Transaction
+            jsonObj.put("driverPhone", userId);    //User ID which is the Driver Phone
+        }
+        catch (JSONException jse)
+        {
+            jse.printStackTrace();
+        }
+
+        String url= "http://46.101.73.84:8080/driver/reject";
+        JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.POST, url,jsonObj,   //url,jsonObj
+                new Response.Listener<JSONObject>()
+                {
+                    @Override
+                    public void onResponse(JSONObject response)
+                    {
+                        String rideRequestResponse = "";
+
+                        try
+                        {
+                            rideRequestResponse = response.getString("response");
+                        }
+
+                        catch (Exception e)
+                        {
+                            e.printStackTrace();
+                        }
+
+                        Log.e("Response", response.toString());
+
+                    }
+                },
+                new Response.ErrorListener()
+                {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.e("Error.Response", error.toString());
+                    }
+                }
+        );
+
+        Volley.newRequestQueue(context).add(getRequest);
+    }
+
 
     //Send Customer Registration Details
     public static void sendCustomerRegistrationCredentials(Context myContext, final String userPhoneNumber, final String userFullNames,  final String userConfirmedPassword, final String userType)
@@ -298,127 +499,6 @@ public class sendUserData
                     @Override
                     public void onErrorResponse(VolleyError error)
                     {
-                        Log.e("Error.Response", error.toString());
-                    }
-                }
-        );
-
-        Volley.newRequestQueue(context).add(getRequest);
-    }
-
-
-
-    //Send Event Data
-    public static void sendEventData(Context myContext, final String userId, final String eventID, LatLng customerPickUpLocation, LatLng customerDestination)
-    {
-        final Context context= myContext;
-        JSONObject jsonObj = new JSONObject();
-        try
-        {
-            jsonObj.put("userID", userId);
-            jsonObj.put("eventID", eventID); // Set the first name/pair
-            jsonObj.put("customerPickUpLocation", customerPickUpLocation);
-            jsonObj.put("customerDestination", customerDestination);
-
-        }
-        catch (JSONException jse)
-        {
-            jse.printStackTrace();
-        }
-
-        String url= "http://date.jsontest.com";
-        JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.POST, url,jsonObj,   //url,jsonObj
-                new Response.Listener<JSONObject>()
-                {
-                    @Override
-                    public void onResponse(JSONObject response)
-                    {
-                        String serverResponse = "";
-
-                        try
-                        {
-                            serverResponse = response.getString("response");
-                        }
-
-                        catch (Exception e)
-                        {
-                            e.printStackTrace();
-                        }
-
-                        if(userId.equals("taxiRequest"))                //If Taxi requested
-                        {
-                            if(serverResponse.equals("driverFound"))
-                            {
-
-                            }
-
-                            else
-                            {}
-                        }
-
-                        else if(userId.equals("cancelRequest"))
-                        {
-                            if(serverResponse.equals("cancelRequestSuccessful"))
-                            {
-
-                            }
-
-                            else
-                            {}
-                        }
-
-                        else if(userId.equals("startSession"))
-                        {
-                            if(serverResponse.equals("sessionStarted"))
-                            {
-
-                            }
-
-                            else
-                            {}
-                        }
-
-                        else if(userId.equals("endSession"))
-                        {
-                            if(serverResponse.equals("sessionEnded"))
-                            {
-
-                            }
-
-                            else
-                            {}
-                        }
-
-                        else if(userId.equals("callCustomer"))
-                        {
-                            if(serverResponse.equals("ok"))
-                            {
-
-                            }
-
-                            else
-                            {}
-                        }
-
-                        else if(userId.equals("callDriver"))
-                        {
-                            if(serverResponse.equals("ok"))
-                            {
-
-                            }
-
-                            else
-                            {}
-                        }
-
-                        Log.e("Response", response.toString());
-
-                    }
-                },
-                new Response.ErrorListener()
-                {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
                         Log.e("Error.Response", error.toString());
                     }
                 }

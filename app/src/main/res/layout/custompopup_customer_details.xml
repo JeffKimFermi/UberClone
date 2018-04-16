@@ -124,6 +124,7 @@
         <ImageView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:id="@+id/callbutton"
             android:src="@drawable/callbutton3"
             android:paddingLeft="15dp"/>
 
@@ -189,10 +190,9 @@
         <ImageButton
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:id="@+id/send_btn"
+            android:id="@+id/sendSms"
             android:textColor="#fff"
             android:background="@drawable/sms"
-            android:onClick="send_msg"
             android:textSize="14sp"
             android:layout_weight="1"
             android:foregroundGravity="center_horizontal"

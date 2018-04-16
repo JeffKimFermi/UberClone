@@ -16,11 +16,13 @@ import android.support.v4.app.ActivityCompat;
 import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.telephony.SmsManager;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -137,19 +139,21 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
                     driverMainButton.setText("Status: Ride In Session");
                     driverMainButton.setClickable(false);
                     readyToStartRide = false;
+
+                    int requestId = 1;
+                    sendUserData.sendRideStartedNotification(getBaseContext(), requestId, userPhoneNumber);   //currentLatitudeLongitude is current Driver Location
                 }
 
                 else
                 {
-                    String eventID = "driverAvailable";
-                    sendUserData.sendEventData(getBaseContext(), userPhoneNumber, eventID, currentLocation, null);   //currentLatitudeLongitude is current Driver Location
                     driverAvailable = true;
 
                     driverMainButton.setText("Checking For Customers");
                     driverMainButton.setBackgroundColor(Color.RED);
                     driverMainButton.setTextColor(Color.WHITE);
 
-                    newCustomerAlert();
+                    newCustomerAlertPopup();
+                    //newCustomerAlert();
                 }
 
                 //checkIfLocationHasChangedConsiderably();
@@ -161,7 +165,6 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
         {
             @Override
             public void onClick(View v) {
-                String eventID = "driverCalledDriver";
                 String customerNumber = "0722833083";
                 Intent callIntent = new Intent(Intent.ACTION_CALL);
                 callIntent.setData(Uri.parse("tel:" + customerNumber));
@@ -172,7 +175,6 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
                     return;
                 }
                 startActivity(callIntent);
-                sendUserData.sendEventData(getBaseContext(), userPhoneNumber, eventID,  null, null);
 
             }
         });
@@ -267,15 +269,10 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
                     @Override
                     public void onClick(DialogInterface paramDialogInterface, int paramInt)
                     {
-                        String eventID = "customerRideRequestAccepted";
-                        sendUserData.sendEventData(getBaseContext(), userPhoneNumber, eventID,  null, null);
-                        showAssignedCustomerDetails();
+                        int rideID = 1;
+                        sendUserData.sendRideRequestAccepted(getBaseContext(), rideID, userPhoneNumber);
+                        showAssignedCustomerPopup();
                         rideInSession = true;
-
-
-                        endOfSession.setVisibility(View.VISIBLE);
-                        //endOfSession.setBackgroundColor(Color.BLUE);
-                        //endOfSession.setTextColor(Color.WHITE);
 
                         new Handler().postDelayed(new Runnable()
                         {
@@ -286,7 +283,6 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
                                 driverMainButton.setVisibility(View.VISIBLE);
                                 driverMainButton.setClickable(true);
                                 driverMainButton.setText("START SESSION");
-                                endOfSession.setVisibility(View.GONE);
                                 readyToStartRide = true;
 
                             }
@@ -301,18 +297,15 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
                     @Override
                     public void onClick(DialogInterface paramDialogInterface, int paramInt)
                     {
-                        String eventID = "customerRideRequestRejected";
-                        sendUserData.sendEventData(getBaseContext(), userPhoneNumber, eventID,  null, null);
-
+                        int rideID = 1;
+                        sendUserData.sendRideRequestRejected(getBaseContext(), rideID, userPhoneNumber);
                         int backgroundColour = Color.parseColor("#40E0D0");
                         driverMainButton.setBackgroundColor(backgroundColour);
-                        //driverMainButton.setBackgroundColor(Color.RED);
-                        //driverMainButton.setTextColor(Color.WHITE);
+
                         driverMainButton.setText("Available");
                         driverMainButton.setVisibility(View.VISIBLE); //Not Visible
                         driverMainButton.setClickable(true);
                         rideInSession = false;
-                        //sendUserData.sendEventData(getBaseContext(),userPhoneNumber, customerRejected);   //Send Customer Rejected Event
                     }
                 });
 
@@ -323,13 +316,21 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
     }
 
 
-    public void showNewCustomerFoundCustomPopup()
+    public void  showAssignedCustomerPopup()
     {
+        final String customerNumber = "0722833083";
         TextView txtclose;
-        Button btnFollow;
-        myDialog.setContentView(R.layout.custompopup_driver_details);
+        ImageView callBtn;
+        ImageView sendSms;
+        final EditText textMessage;
+        myDialog.setContentView(R.layout.custompopup_customer_details);
+
         txtclose =(TextView) myDialog.findViewById(R.id.txtclose);
-        txtclose.setText("M");
+        callBtn = (ImageView)myDialog.findViewById(R.id.callbutton);
+        sendSms = (ImageView)myDialog.findViewById(R.id.sendSms);
+        textMessage = (EditText)myDialog.findViewById(R.id.message);
+
+        txtclose.setText("X");
         txtclose.setOnClickListener(new View.OnClickListener()
         {
             @Override
@@ -338,6 +339,118 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
                 myDialog.dismiss();
             }
         });
+
+        callBtn.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                Intent callIntent = new Intent(Intent.ACTION_CALL);
+                callIntent.setData(Uri.parse("tel:" + customerNumber));
+
+                if (ActivityCompat.checkSelfPermission(DriverMapActivity.this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED)
+                {
+
+                    return;
+                }
+                startActivity(callIntent);
+            }
+        });
+
+        sendSms.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                String Message = textMessage.getText().toString();
+
+                try {
+                    SmsManager sms_manager = SmsManager.getDefault();
+                    sms_manager.sendTextMessage(customerNumber, null, Message, null, null);
+                    textMessage.setText("");
+                    Toast.makeText(getApplicationContext(), "Message sent", Toast.LENGTH_LONG).show();
+                }
+                catch (Exception ex){
+                    Toast.makeText(getApplicationContext(), ex.getMessage().toString(), Toast.LENGTH_LONG).show();
+                }
+            }
+        });
+
+
+
+        myDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        myDialog.show();
+    }
+
+
+    public void newCustomerAlertPopup()
+    {
+        TextView txtclose;
+        Button acceptRequest;
+        Button rejectRequest;
+
+        myDialog.setContentView(R.layout.newcustomeralert);
+        txtclose = (TextView) myDialog.findViewById(R.id.txtclose);
+        acceptRequest = (Button)myDialog.findViewById(R.id.accept);
+        rejectRequest = (Button)myDialog.findViewById(R.id.reject);
+
+        txtclose.setText("X");
+        txtclose.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                myDialog.dismiss();
+            }
+        });
+
+        acceptRequest.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                int rideID = 1;
+                sendUserData.sendRideRequestAccepted(getBaseContext(), rideID, userPhoneNumber);
+                showAssignedCustomerDetails();
+                rideInSession = true;
+
+                showAssignedCustomerDetails();
+
+                new Handler().postDelayed(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        hideAssignedCustomerDetails();
+                        driverMainButton.setVisibility(View.VISIBLE);
+                        driverMainButton.setClickable(true);
+                        driverMainButton.setText("START SESSION");
+                        readyToStartRide = true;
+
+                    }
+                }, 10000);
+
+            }
+        });
+
+
+        rejectRequest.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                int rideID = 1;
+                sendUserData.sendRideRequestRejected(getBaseContext(), rideID, userPhoneNumber);
+                int backgroundColour = Color.parseColor("#40E0D0");
+                driverMainButton.setBackgroundColor(backgroundColour);
+                driverMainButton.setText("Available");
+                driverMainButton.setVisibility(View.VISIBLE); //Not Visible
+                driverMainButton.setClickable(true);
+                rideInSession = false;
+            }
+        });
+
+
         myDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         myDialog.show();
     }
@@ -386,7 +499,7 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
             lastLocation = location;  //Copy the Data
 
             LatLng initLatLang = new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude());
-           // markerCurrentLocation = mMap.addMarker(new MarkerOptions().position(initLatLang).title("My Current Location").icon(BitmapDescriptorFactory.fromResource(R.mipmap.car)));  //Add Marker, and Set Title of Marker
+           // markerCurrentLocation = mMap.addMarker(new MarkerOptions().position(initLatLang).title("My Current Location").icon(BitmapDescriptorFactory.fromResource(R.mipmap.car)));
             markerCurrentLocation = mMap.addMarker(new MarkerOptions().position(initLatLang).title("My Current Location"));  //Add Marker, and Set Title of Marker
 
             locationDataCopied = true;
@@ -447,7 +560,7 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
         if(differenceInDistance > 200)
         {
             String eventID = "driverAvailable";
-            sendUserData.sendEventData(getBaseContext(), userPhoneNumber, eventID,  currentLocation, null);   //currentLatitudeLongitude is current Driver Location
+            //sendUserData.sendEventData(getBaseContext(), userPhoneNumber, eventID,  currentLocation, null);   //currentLatitudeLongitude is current Driver Location
         }
 
     }
@@ -497,8 +610,9 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
             @Override
             public void onClick(DialogInterface paramDialogInterface, int paramInt)
             {
-                sendUserData.sendEventData(getBaseContext(), userPhoneNumber, eventID,  null, null);
-                endOfSession.setVisibility(View.GONE);
+                int requestId = 1;
+                sendUserData.sendRideEndedNotification(getBaseContext(), requestId, userPhoneNumber);   //currentLatitudeLongitude is current Driver Location
+
                 customerInformation.setVisibility(View.GONE);
                 int backgroundColour = Color.parseColor("#40E0D0");
                 driverMainButton.setBackgroundColor(backgroundColour);
@@ -567,7 +681,6 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
     protected void onStop()  //If Driver gets out of this activity, Notify Db, for Him to be removed as Hes is no longer Active
     {
         super.onStop();
-        //sendUserData.sendUserID(getBaseContext(), "driverLoggedOut", driverUserId);     //Send Driver ID that End of Activity
     }
 
     @Override
@@ -599,6 +712,7 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
         }
 
         polylines = new ArrayList<>();
+
         //add route(s) to the map.
         for (int i = 0; i <route.size(); i++) {
 

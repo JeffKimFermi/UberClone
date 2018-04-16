@@ -17,6 +17,7 @@ import android.support.v4.app.ActivityCompat;
 import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.telephony.SmsManager;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -68,8 +69,8 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
     Button request;   //Request for a Taxi
     Button cancelRequest;    //Cancel Taxi Request
     public LatLng pickUpLocation;   //Will Hold Pick Up Location Co-ordinates
-    String pickUpPoint;  //Select where to be Picked
-    String destination;     //Select your Destination
+    String pickUpPointDescription;  //Select where to be Picked
+    String destinationDescription;     //Select your Destination
     Marker markerPickUp;    //Pickup Location Marker
     Marker markerDestination;  //Destination Marker
     Marker markerCurrentLocation; //My Current Locaton Marker
@@ -133,6 +134,7 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
         callDriver = (ImageView) findViewById(R.id.callDriver);
         driverInformation.setVisibility(View.GONE);
 
+        /*
         callDriver.setOnClickListener(new View.OnClickListener()    //Call Customer Listener
         {
             @Override
@@ -148,9 +150,10 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
                     return;
                 }
                 startActivity(callIntent);
-                sendUserData.sendEventData(getBaseContext(), userPhoneNumber, eventID,  null, null);
+               // sendUserData.sendEventData(getBaseContext(), userPhoneNumber, eventID,  null, null);
             }
         });
+        */
 
         autocompleteFragmentPickup = (PlaceAutocompleteFragment) getFragmentManager().findFragmentById(R.id.place_autocomplete_fragment_pickup);
         autocompleteFragmentPickup.setHint("Choose Pick Up Point");
@@ -161,13 +164,13 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
             @Override
             public void onPlaceSelected(Place place)
             {
-                pickUpPoint =  place.getName().toString();
+                pickUpPointDescription =  place.getName().toString();
                 latlngPickUpLocationCoordinates = place.getLatLng(); //Get Longitude and Latitude Coordinates
                 if(markerPickUp != null)
                 {
                     markerPickUp.remove();
                 }
-                markerPickUp= mMap.addMarker(new MarkerOptions().position(latlngPickUpLocationCoordinates).title("Pick Up Point: " + pickUpPoint));  //Pick Up Point
+                markerPickUp= mMap.addMarker(new MarkerOptions().position(latlngPickUpLocationCoordinates).title("Pick Up Point: " + pickUpPointDescription));  //Pick Up Point
                 mMap.animateCamera(CameraUpdateFactory.zoomTo(12), 2000, null);
 
                 autocompleteFragmentPickup.setHint("Enter Pickup Point");  //Change Hint. More Efficient instead of having two activities
@@ -195,14 +198,14 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
             public void onPlaceSelected(Place place)
             {
 
-                destination =  place.getName().toString();
+                destinationDescription =  place.getName().toString();
                 latlngDestinationCoordinates = place.getLatLng(); //Get Longitude and Latitude Coordinates
 
                 if(markerDestination != null)
                 {
                     markerDestination.remove();
                 }
-                markerDestination = mMap.addMarker(new MarkerOptions().position(latlngDestinationCoordinates).title("Destination: " + destination));
+                markerDestination = mMap.addMarker(new MarkerOptions().position(latlngDestinationCoordinates).title("Destination: " + destinationDescription));
                 mMap.animateCamera(CameraUpdateFactory.zoomTo(12), 2000, null);
                 drawRouteToMarker(latlngPickUpLocationCoordinates, latlngDestinationCoordinates);  //Draw Route from PickUp Point to dstination
 
@@ -255,7 +258,7 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
         int delayTime = 4000;
         String eventID = "taxiRequest";
 
-        sendUserData.sendEventData(getBaseContext(), userPhoneNumber, eventID,  latlngPickUpLocationCoordinates, latlngDestinationCoordinates);
+        sendUserData.sendRideRequest(getBaseContext(), userPhoneNumber, latlngPickUpLocationCoordinates, latlngDestinationCoordinates, pickUpPointDescription, destinationDescription);
         request.setText("Getting you a Driver...");
 
 
@@ -339,13 +342,21 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
 
     }
 
-    public void showNewCustomerFoundCustomPopup()
+    public void showAssignedDriverPopup()
     {
+        final String customerNumber = "0722833083";
         TextView txtclose;
-        Button btnFollow;
+        ImageView callBtn;
+        ImageView sendSms;
+        final EditText textMessage;
         myDialog.setContentView(R.layout.custompopup_driver_details);
+
         txtclose =(TextView) myDialog.findViewById(R.id.txtclose);
-        txtclose.setText("M");
+        callBtn = (ImageView)myDialog.findViewById(R.id.callbutton);
+        sendSms = (ImageView)myDialog.findViewById(R.id.sendSms);
+        textMessage = (EditText)myDialog.findViewById(R.id.message);
+
+        txtclose.setText("X");
         txtclose.setOnClickListener(new View.OnClickListener()
         {
             @Override
@@ -354,6 +365,48 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
                 myDialog.dismiss();
             }
         });
+
+        callBtn.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                //String eventID = "customerCalledDriver";
+                Intent callIntent = new Intent(Intent.ACTION_CALL);
+                callIntent.setData(Uri.parse("tel:" + customerNumber));
+
+                if (ActivityCompat.checkSelfPermission(CustomerMapActivity.this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED)
+                {
+
+                    return;
+                }
+                startActivity(callIntent);
+                // sendUserData.sendEventData(getBaseContext(), userPhoneNumber, eventID,  null, null);
+
+            }
+        });
+
+        sendSms.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                String Message = textMessage.getText().toString();
+
+                try {
+                    SmsManager sms_manager = SmsManager.getDefault();
+                    sms_manager.sendTextMessage(customerNumber, null, Message, null, null);
+                    textMessage.setText("");
+                    Toast.makeText(getApplicationContext(), "Message sent", Toast.LENGTH_LONG).show();
+                }
+                catch (Exception ex){
+                    Toast.makeText(getApplicationContext(), ex.getMessage().toString(), Toast.LENGTH_LONG).show();
+                }
+            }
+        });
+
+
+
         myDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         myDialog.show();
     }
@@ -375,12 +428,9 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
                 @Override
                 public void onClick(DialogInterface paramDialogInterface, int paramInt)
                 {
-                    sendUserData.sendEventData(getBaseContext(), userPhoneNumber, eventID,  null, null);  //Send Data
 
                     int backgroundColour = Color.parseColor("#40E0D0");
                     request.setBackgroundColor(backgroundColour);
-                    //request.setBackgroundColor(Color.RED);
-                    //request.setTextColor(Color.WHITE);
                     request.setText("Call Taxi");
                     cancelRequest.setText("Cancel Request Successful");
                     request.setClickable(true);
@@ -435,8 +485,7 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
         driverName.setText(name);
         driverPhoneNumber.setText(phoneNumber);
         driverCar.setText(vehicleNumberPlate);
-        showNewCustomerFoundCustomPopup();
-       // driverInformation.setVisibility(View.VISIBLE);
+        showAssignedDriverPopup();
     }
 
 
@@ -453,7 +502,7 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
         {
            markerDriverLocation.remove();
         }
-        markerDriverLocation = mMap.addMarker(new MarkerOptions().position(latlngPickUpLocationCoordinates).title("Driver Location: " + pickUpPoint).icon(BitmapDescriptorFactory.fromResource(R.mipmap.car)));  //Pick Up Point
+        markerDriverLocation = mMap.addMarker(new MarkerOptions().position(latlngPickUpLocationCoordinates).title("Driver Location: " + pickUpPointDescription));  //Pick Up Point
         mMap.animateCamera(CameraUpdateFactory.zoomTo(12), 2000, null);
     }
 
@@ -495,8 +544,6 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
             }
         }
 
-        //markerCurrentLocation = mMap.addMarker(new MarkerOptions().position(latLng).title("My Current Location"));  //Add Marker, and Set Title of Marker
-       // mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
 
         mMap.animateCamera(CameraUpdateFactory.zoomTo(myZoomLevel), new GoogleMap.CancelableCallback() {
             @Override
@@ -512,7 +559,6 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
             }
         });
 
-        // Log.e("ZOOM_LEVEL",""+myZoomLevel);
         Double currentLatitudeAddress = location.getLatitude();     //Get current Latitude coordinates
         Double currentLongitudeAddress = location.getLongitude();   //Get current Longitude coordinates
 
@@ -674,6 +720,5 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
     protected void onStop()  //If Driver gets out of this activity, Notify Db, for Him to be removed as Hes is no longer Active
     {
         super.onStop();
-        //sendUserData.sendDriverID(getBaseContext(), driverUserId);     //Send Driver ID that End of Activity
     }
 }
