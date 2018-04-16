@@ -73,92 +73,21 @@
 
     </RelativeLayout>
 
-    <LinearLayout
+
+
+    <Button
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:layout_gravity="bottom">
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/driverInfo"
-            android:layout_gravity="bottom"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:background="#F5F5F5"
-            android:layout_marginLeft="15sp"
-            android:layout_marginRight="15sp"
-            android:visibility="visible">
-
-
-            <ImageView
-                android:layout_width="70sp"
-                android:layout_height="70sp"
-                android:onClick="callAssignedDriver"
-                android:id="@+id/callDriver"
-                android:src="@drawable/ic_call_customer"
-                android:padding="15sp"/>
-
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:layout_gravity="center_vertical"
-                android:gravity="center_horizontal"
-                android:paddingLeft="40sp"
-                android:paddingRight="40sp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:id="@+id/driverName"
-                    android:paddingBottom="5sp"
-                    android:paddingTop="15sp"/>
-
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:id="@+id/driverPhoneNumber"
-                    android:paddingBottom="5sp"
-                    android:paddingTop="5sp"/>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:id="@+id/driverCar"
-                    android:paddingBottom="15sp"
-                    android:paddingTop="5sp"/>
-
-            </LinearLayout>
-
-
-            <ImageView
-                android:layout_width="80sp"
-                android:layout_height="80sp"
-                android:id="@+id/driverProfileImage"
-                android:src="@drawable/ic_customer_profile_picture"
-                android:padding="15sp"/>
-
-        </LinearLayout>
-
-
-        <Button
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/requestUber"
-            android:layout_marginRight="15sp"
-            android:layout_marginLeft="15sp"
-            android:layout_marginBottom="10sp"
-            android:text="Call Taxi"
-            android:onClick="requestUber"
-            android:layout_gravity="bottom"
-            android:background="#40E0D0"
-            android:textColor="#ffffff"
-            android:textAllCaps="false"
-            />
-
-    </LinearLayout>
+        android:id="@+id/requestUber"
+        android:layout_marginRight="15sp"
+        android:layout_marginLeft="15sp"
+        android:layout_marginBottom="10sp"
+        android:text="Call Taxi"
+        android:onClick="requestUber"
+        android:layout_gravity="bottom"
+        android:background="#40E0D0"
+        android:textColor="#ffffff"
+        android:textAllCaps="false"
+        />
 
 </FrameLayout>

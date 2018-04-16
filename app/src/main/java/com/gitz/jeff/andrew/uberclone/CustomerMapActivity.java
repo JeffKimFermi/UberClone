@@ -82,7 +82,6 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
     private static final int[] COLORS = new int[]{R.color.primary,};
     public PlaceAutocompleteFragment autocompleteFragmentPickup;
     public PlaceAutocompleteFragment autocompleteFragmentDestination;
-    LinearLayout driverInformation;
     ImageView driverProfileImage;   //Assigned Customer Profile Image
     TextView driverCar, driverName, driverPhoneNumber;  //Assigned Customer Name and Phone Number
     public boolean driverAssigned = false;   //Driver has been successfully assigned
@@ -120,40 +119,11 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
             mapFragment.getMapAsync(this);
         }
 
-        driverInformation = (LinearLayout)findViewById(R.id.driverInfo);
-        driverProfileImage = (ImageView)findViewById(R.id.driverProfileImage);
-        driverName = (TextView)findViewById(R.id.driverName);
-        driverPhoneNumber = (TextView)findViewById(R.id.driverPhoneNumber);
-        driverCar = (TextView)findViewById(R.id.driverCar);
-
         getSavedUserPhoneNumber = new TinyDB(getBaseContext());
         customerUserId = getSavedUserPhoneNumber.getString("userPhoneNumber");  //Get Saved Phone Number to act as User ID
         request = (Button)findViewById(R.id.requestUber);
         cancelRequest = (Button)findViewById(R.id.cancelRequest);
         cancelRequest.setVisibility(View.INVISIBLE);
-        callDriver = (ImageView) findViewById(R.id.callDriver);
-        driverInformation.setVisibility(View.GONE);
-
-        /*
-        callDriver.setOnClickListener(new View.OnClickListener()    //Call Customer Listener
-        {
-            @Override
-            public void onClick(View v) {
-                String eventID = "customerCalledDriver";
-                String customerNumber = "0722833083";
-                Intent callIntent = new Intent(Intent.ACTION_CALL);
-                callIntent.setData(Uri.parse("tel:" + customerNumber));
-
-                if (ActivityCompat.checkSelfPermission(CustomerMapActivity.this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED)
-                {
-
-                    return;
-                }
-                startActivity(callIntent);
-               // sendUserData.sendEventData(getBaseContext(), userPhoneNumber, eventID,  null, null);
-            }
-        });
-        */
 
         autocompleteFragmentPickup = (PlaceAutocompleteFragment) getFragmentManager().findFragmentById(R.id.place_autocomplete_fragment_pickup);
         autocompleteFragmentPickup.setHint("Choose Pick Up Point");
@@ -174,9 +144,6 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
                 mMap.animateCamera(CameraUpdateFactory.zoomTo(12), 2000, null);
 
                 autocompleteFragmentPickup.setHint("Enter Pickup Point");  //Change Hint. More Efficient instead of having two activities
-                //getRouteToMarker(latlngDestinationCoordinates);
-                //autocompleteFragmentPickup.getView().setVisibility(View.GONE);
-                //autocompleteFragmentDestination.getView().setVisibility(View.VISIBLE);
             }
 
             @Override
@@ -190,8 +157,6 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
         autocompleteFragmentDestination.setHint("Choose Destination");
         ((EditText)autocompleteFragmentDestination.getView().findViewById(R.id.place_autocomplete_search_input)).setTextSize(17.0f);
 
-        //autocompleteFragmentDestination.isVisible();
-       // autocompleteFragmentDestination.getView().setVisibility(View.GONE);
         autocompleteFragmentDestination.setOnPlaceSelectedListener(new PlaceSelectionListener()
         {
             @Override
@@ -208,10 +173,6 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
                 markerDestination = mMap.addMarker(new MarkerOptions().position(latlngDestinationCoordinates).title("Destination: " + destinationDescription));
                 mMap.animateCamera(CameraUpdateFactory.zoomTo(12), 2000, null);
                 drawRouteToMarker(latlngPickUpLocationCoordinates, latlngDestinationCoordinates);  //Draw Route from PickUp Point to dstination
-
-                //autocompleteFragmentPickup.getView().setVisibility(View.VISIBLE);
-                //autocompleteFragmentDestination.getView().setVisibility(View.GONE);
-
             }
 
             @Override
@@ -310,8 +271,7 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
                     showAssignedDriverDetails();    //Show Driver Details
                     request.setClickable(false);
                     cancelRequest.setVisibility(View.VISIBLE);
-                   // cancelRequest.setBackgroundColor(Color.BLUE);
-                    //cancelRequest.setTextColor(Color.WHITE);
+
                     cancelRequest.setText("Cancel Ride Request?");
                     autocompleteFragmentDestination.setText("");
                     autocompleteFragmentDestination.getView().setVisibility(View.GONE);
@@ -321,14 +281,6 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
                     autocompleteFragmentPickup.getView().setVisibility(View.GONE);
                     autocompleteFragmentPickup.getView().setClickable(false);
 
-                   new Handler().postDelayed(new Runnable()
-                   {
-                       @Override
-                       public void run()
-                       {
-                           hideAssignedDriverDetails();   //Hide Driver Details
-                       }
-                   }, 45000);
                 }
 
                 if(!driverFound)   //If Driver not found
@@ -371,7 +323,6 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
             @Override
             public void onClick(View v)
             {
-                //String eventID = "customerCalledDriver";
                 Intent callIntent = new Intent(Intent.ACTION_CALL);
                 callIntent.setData(Uri.parse("tel:" + customerNumber));
 
@@ -381,7 +332,6 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
                     return;
                 }
                 startActivity(callIntent);
-                // sendUserData.sendEventData(getBaseContext(), userPhoneNumber, eventID,  null, null);
 
             }
         });
@@ -491,7 +441,6 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
 
     public void hideAssignedDriverDetails()
     {
-        driverInformation.setVisibility(View.GONE);
     }
 
 
