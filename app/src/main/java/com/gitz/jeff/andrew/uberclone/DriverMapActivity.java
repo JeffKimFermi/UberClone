@@ -132,7 +132,7 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
                 {
                     endOfSession.setVisibility(View.VISIBLE);
                     endOfSession.setText("End Session?");
-                    customerInformation.setVisibility(View.INVISIBLE);
+                    customerInformation.setVisibility(View.GONE);
                     driverMainButton.setText("Status: Ride In Session");
                     driverMainButton.setClickable(false);
                     readyToStartRide = false;
@@ -195,9 +195,39 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
         options.setCluster("ap2");
         Pusher pusher = new Pusher("830d3e455fd9cfbcec39", options);
 
-        Channel channel = pusher.subscribe("my-channel");
+        Channel channel = pusher.subscribe(userPhoneNumber);   //use Phone Number as Channel
 
-        channel.bind("my-event", new SubscriptionEventListener()
+        channel.bind("noDriver", new SubscriptionEventListener()   //Events
+        {
+            @Override
+            public void onEvent(String channelName, String eventName, final String data)
+            {
+                //Received Messages From Server
+
+                final String pushedMessages = data;
+
+                final String noDriverFound = "No Driver Currently Available";
+
+                new Thread()
+                {
+                    public void run()
+                    {
+                        DriverMapActivity.this.runOnUiThread(new Runnable()
+                        {
+                            public void run()
+                            {
+                                Toast.makeText(getBaseContext(), noDriverFound, Toast.LENGTH_LONG).show();
+                            }
+                        });
+                    }
+                }.start();
+
+            }
+        });
+
+
+
+        channel.bind("rideRequest", new SubscriptionEventListener()   //Events
         {
             @Override
             public void onEvent(String channelName, String eventName, final String data)
@@ -207,7 +237,24 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
                 final String pushedMessages = data;
 
 
-                /*
+            }
+        });
+
+
+
+        channel.bind("driverAccepted", new SubscriptionEventListener()   //Events
+        {
+            @Override
+            public void onEvent(String channelName, String eventName, final String data)
+            {
+                //Received Messages From Server
+
+                final String pushedMessages = data;
+
+                //Act on Response
+                //Act on Response
+                final String driverFound = "You've been assigned a Driver Successful";
+
                 new Thread()
                 {
                     public void run()
@@ -216,12 +263,25 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
                         {
                             public void run()
                             {
-                                Toast.makeText(getBaseContext(), "Received Data: " + pushedMessages, Toast.LENGTH_LONG).show();
+                                Toast.makeText(getBaseContext(), driverFound, Toast.LENGTH_LONG).show();
                             }
                         });
                     }
                 }.start();
-                */
+            }
+        });
+
+
+        channel.bind("rideStarted", new SubscriptionEventListener()   //Events
+        {
+            @Override
+            public void onEvent(String channelName, String eventName, final String data)
+            {
+                //Received Messages From Server
+
+                final String pushedMessages = data;
+
+                //Act on Response
             }
         });
 
@@ -255,14 +315,6 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
             @Override
             public void onClick(View v)
             {
-                int backgroundColour = Color.parseColor("#40E0D0");
-                driverMainButton.setBackgroundColor(backgroundColour);
-                driverMainButton.setText("Available");
-                driverMainButton.setVisibility(View.VISIBLE); //Not Visible
-                driverMainButton.setClickable(true);
-                myDialog.dismiss();
-                rideInSession = false;
-
                 myDialog.dismiss();
             }
         });
@@ -342,7 +394,15 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
             @Override
             public void onClick(View v)
             {
+                int rideID = 1;
+                sendUserData.sendRideRequestRejected(getBaseContext(), rideID, userPhoneNumber);
+                int backgroundColour = Color.parseColor("#40E0D0");
+                driverMainButton.setBackgroundColor(backgroundColour);
+                driverMainButton.setText("Available");
+                driverMainButton.setVisibility(View.VISIBLE); //Not Visible
+                driverMainButton.setClickable(true);
                 myDialog.dismiss();
+                rideInSession = false;
             }
         });
 
@@ -363,7 +423,6 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
                 endOfSession.setText("Cancel Request?");
                 customerInformation.setVisibility(View.VISIBLE);
                 readyToStartRide = true;
-
             }
         });
 
@@ -537,7 +596,10 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
                 driverMainButton.setVisibility(View.VISIBLE);
                 driverMainButton.setClickable(true);
                 driverMainButton.setText("Available");
+                endOfSession.setVisibility(View.INVISIBLE);
+                customerInformation.setVisibility(View.INVISIBLE);
                 rideInSession = false;
+                readyToStartRide = false;
             }
         });
 
@@ -579,7 +641,10 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
                 driverMainButton.setVisibility(View.VISIBLE);
                 driverMainButton.setClickable(true);
                 driverMainButton.setText("Available");
+                customerInformation.setVisibility(View.GONE);
+                endOfSession.setVisibility(View.GONE);
                 rideInSession = false;
+                readyToStartRide = false;
             }
         });
 
