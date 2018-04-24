@@ -74,9 +74,9 @@ public class customerRegister extends AppCompatActivity
 
     public void handleRegistrationProcess()
     {
-        boolean registration = getRegistration.getBoolean("registrationStatus");
-        if(registration == true)
-        {
+       // boolean registration = getRegistration.getBoolean("registrationStatus");
+       // if(registration == true)
+       // {
             userNames = (EditText) findViewById(R.id.userName);
             phoneNumber = (EditText) findViewById(R.id.phoneNumber);
             emailAddress = (EditText) findViewById(R.id.userEmail);
@@ -153,16 +153,16 @@ public class customerRegister extends AppCompatActivity
             }
         }
 
-        else
-        {
-            displayToast(getBaseContext(), "Error, User Already Exists");
+       // else
+        //{
+         //   displayToast(getBaseContext(), "Error, User Already Exists");
 
-            userNames.setText("");
-            phoneNumber.setText("");
-            emailAddress.setText("");
-            passWord1.setText("");
-        }
-    }
+            //userNames.setText("");
+            //phoneNumber.setText("");
+            //emailAddress.setText("");
+            //passWord1.setText("");
+      //  }
+   // }
 
     public void displayToast(Context myContext, String displayToastMessage)
     {

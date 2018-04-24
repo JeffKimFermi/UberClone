@@ -68,9 +68,9 @@ public class driverRegister extends AppCompatActivity {
 
     public void handleRegistrationProcess()
     {
-        boolean registration = getRegistration.getBoolean("registrationStatus");
-        if(registration == true)
-        {
+       // boolean registration = getRegistration.getBoolean("registrationStatus");
+        //if(registration == true)
+       // {
             userNames = (EditText) findViewById(R.id.userName);
             phoneNumber = (EditText) findViewById(R.id.phoneNumber);
             vehicleRegistration = (EditText) findViewById(R.id.vehicleRegistration);
@@ -145,17 +145,17 @@ public class driverRegister extends AppCompatActivity {
                     passWord2.setText("");
                 }
             }
-        }
+       // }
 
-        else
-        {
-            displayToast(getBaseContext(), "Error, User Already Exists");
+        //else
+       //{
+          //  displayToast(getBaseContext(), "Error, User Already Exists");
 
-            userNames.setText("");
-            phoneNumber.setText("");
-            vehicleRegistration.setText("");
-            passWord1.setText("");
-        }
+          //  userNames.setText("");
+          //  phoneNumber.setText("");
+           // vehicleRegistration.setText("");
+           // passWord1.setText("");
+       // }
     }
 
 
