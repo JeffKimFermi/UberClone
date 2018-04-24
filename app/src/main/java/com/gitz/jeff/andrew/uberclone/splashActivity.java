@@ -4,8 +4,6 @@ import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 
-import java.util.logging.Handler;
-
 public class splashActivity extends AppCompatActivity
 {
     private static int splashTimeOut = 1200;   //500mS Timeout

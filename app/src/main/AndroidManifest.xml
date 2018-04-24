@@ -17,9 +17,9 @@
 
     <application
         android:allowBackup="true"
-        android:icon="@mipmap/iconstartup"
+        android:icon="@mipmap/taxi"
         android:label="Queencia"
-        android:roundIcon="@mipmap/iconstartup"
+        android:roundIcon="@mipmap/taxi"
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         tools:replace="android:label">

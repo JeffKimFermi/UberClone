@@ -2,6 +2,7 @@ package com.gitz.jeff.andrew.uberclone;
 
 import android.content.Context;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.android.volley.Request;
 import com.android.volley.Response;
@@ -21,11 +22,10 @@ import org.json.JSONObject;
 public class sendUserData
 {
 
-
     //Send Notification that Ride has Started
     public static void sendRideStartedNotification(Context myContext, final int requestId, final String userId)
     {
-        final Context context= myContext;
+        final Context context = myContext;
         JSONObject jsonObj = new JSONObject();
         try
         {
@@ -129,6 +129,8 @@ public class sendUserData
     //Send Ride Request
     public static void sendRideRequest(Context myContext, final String userId, LatLng customerPickUpLocation, LatLng customerDestination, final String customerPickUpLocationDescription, final String customerDestinationDescription)
     {
+        final TinyDB saveRideRequestResponse = new TinyDB(myContext);  //Will save a boolean value representing registration status
+
         final Context context= myContext;
         JSONObject jsonObj = new JSONObject();
         try
@@ -164,6 +166,7 @@ public class sendUserData
                             e.printStackTrace();
                         }
 
+                        saveRideRequestResponse.putString("rideRequestResponse", rideRequestResponse);
                         Log.e("Response", response.toString());
 
                     }
@@ -289,7 +292,6 @@ public class sendUserData
     //Send Customer Registration Details
     public static void sendCustomerRegistrationCredentials(Context myContext, final String userPhoneNumber, final String userFullNames,  final String userConfirmedPassword, final String userType)
     {
-        final TinyDB saveRegistrationResponse = new TinyDB(myContext);
         final TinyDB registrationStatus = new TinyDB(myContext);  //Will save a boolean value representing registration status
 
         final Context context= myContext;
@@ -313,7 +315,7 @@ public class sendUserData
                     @Override
                     public void onResponse(JSONObject response)
                     {
-                        boolean registrationSuccessful = false;          //Assume its false
+                        boolean registration = false;          //Assume its false
 
                         String registrationResponse = "";
                         try
@@ -327,16 +329,16 @@ public class sendUserData
 
                         if(registrationResponse.equals("User Added"))
                         {
-                            registrationSuccessful= true;                //Set boolean value
+                            registration = true;                //Set boolean value
                         }
 
                         else if(registrationResponse.equals("User Already Exists"))
                         {
-                            registrationSuccessful = false;
+                            registration = false;
+                            //displayToast(context, "Error, User Already Exists");
                         }
 
-                        registrationStatus.putBoolean("registrationStatus", registrationSuccessful);  //Save registration Status in sharedPrefs
-                        saveRegistrationResponse.putString("registrationResponse", registrationResponse);
+                        registrationStatus.putBoolean("registrationStatus", registration);  //Save registration Status in sharedPrefs
 
                         Log.e("Response", response.toString());
                     }
@@ -358,7 +360,6 @@ public class sendUserData
     //Send Customer Registration Details
     public static void sendDriverRegistrationCredentials(Context myContext, final String userPhoneNumber, final String userFullNames,  final String userConfirmedPassword, final String userType, final String vehicleRegistration)
     {
-        final TinyDB saveRegistrationResponse = new TinyDB(myContext);
         final TinyDB registrationStatus = new TinyDB(myContext);  //Will save a boolean value representing registration status
 
         final Context context= myContext;
@@ -383,7 +384,7 @@ public class sendUserData
                     @Override
                     public void onResponse(JSONObject response)
                     {
-                        boolean registrationSuccessful = false;          //Assume its false
+                        boolean registration = false;          //Assume its false
 
                         String registrationResponse = "";
                         try
@@ -397,16 +398,16 @@ public class sendUserData
 
                         if(registrationResponse.equals("User Added"))
                         {
-                            registrationSuccessful= true;                //Set boolean value
+                            registration = true;                //Set boolean value
                         }
 
                         else if(registrationResponse.equals("User Already Exists"))
                         {
-                            registrationSuccessful = false;
+                            registration = false;
+                            displayToast(context, "Error, User Already Exists");
                         }
 
-                        registrationStatus.putBoolean("registrationStatus", registrationSuccessful);  //Save registration Status in sharedPrefs
-                        saveRegistrationResponse.putString("registrationResponse", registrationResponse);
+                        registrationStatus.putBoolean("registrationStatus", registration);  //Save registration Status in sharedPrefs
 
                         Log.e("Response", response.toString());
                     }
@@ -474,12 +475,6 @@ public class sendUserData
                             booleanLogin = false;
                         }
 
-                        else if (loginResponse.equals("User does not Exist"))
-                        {
-                            booleanLogin = false;
-                        }
-
-
                         else if (loginResponse.equals("Login Unsuccessful, user does not Exist"))
                         {
                             booleanLogin = false;
@@ -487,7 +482,7 @@ public class sendUserData
 
                         else   //Do nothing for now
                         {
-                            booleanLogin = true;
+                           // booleanLogin = true;
                         }
 
                         loginStatus.putBoolean("loginStatus",  booleanLogin);
@@ -505,6 +500,12 @@ public class sendUserData
         );
 
         Volley.newRequestQueue(context).add(getRequest);
+    }
+
+    public static  void displayToast(Context myContext, String displayToastMessage)
+    {
+        Context context = myContext;
+        Toast.makeText(myContext, displayToastMessage, Toast.LENGTH_LONG).show();
     }
 
 }

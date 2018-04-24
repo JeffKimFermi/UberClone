@@ -1,5 +1,6 @@
 package com.gitz.jeff.andrew.uberclone;
 
+import android.content.Context;
 import android.content.Intent;
 
 import android.os.Handler;
@@ -21,7 +22,7 @@ public class Login extends AppCompatActivity
     EditText loginPassword;
     TinyDB savedUserType;
     int userType = 0;    //Whether Use is a Customer or a Driver
-    Button login;
+    Button loginButton;
     private static final int  displayTime = 2200;  //Alert DialogBox Display Time
     TinyDB loginStatus;  //Will save a boolean value representing registration status
     TinyDB savedUserPhoneNumber;
@@ -34,14 +35,23 @@ public class Login extends AppCompatActivity
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
-        login = (Button)findViewById(R.id.login);
+        loginButton = (Button)findViewById(R.id.login);
         savedUserType = new TinyDB(getBaseContext());
         loginStatus = new TinyDB(getBaseContext());
         savedUserPhoneNumber = new TinyDB(getBaseContext());
+
+        loginButton.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                handleLoginProcess();
+            }
+        });
     }
 
 
-    public void login(View view)
+    public void handleLoginProcess()
     {
         //final AlertDialog alertDialog = new SpotsDialog(Login.this, R.style.customLogin);  //Display Alert for 4 Seconds before going to next Activity
         final AlertDialog alertDialog = new SpotsDialog(Login.this);  //Display Alert for 4 Seconds before going to next Activity
@@ -62,9 +72,7 @@ public class Login extends AppCompatActivity
             @Override
             public void run()
             {
-                //booleanLogin = loginStatus.getBoolean("loginStatus");                           //Get True or false
-                booleanLogin = true;                           //Get True or false
-
+                booleanLogin = loginStatus.getBoolean("loginStatus");                           //Get True or false
 
                 if(booleanLogin)                   //If valid credentials
                 {
@@ -88,11 +96,13 @@ public class Login extends AppCompatActivity
 
                 else                               //If invalid credentials
                 {
-                    Toast.makeText(getBaseContext(), "Invalid Login Details", Toast.LENGTH_LONG).show();
+                    displayToast(getBaseContext(), "Error, Invalid Phone Number or Password");
+                    alertDialog.dismiss();    //Dismiss it after 4 seconds
+                    loginPassword.setText("");
+                    loginPhone.setText("");
                 }
             }
         }, displayTime);
-
     }
 
 
@@ -100,6 +110,12 @@ public class Login extends AppCompatActivity
     {
         Intent intent = new Intent(getBaseContext(), Help.class);
         startActivity(intent);
+    }
+
+    public void displayToast(Context myContext, String displayToastMessage)
+    {
+        Context context = myContext;
+        Toast.makeText(myContext, displayToastMessage, Toast.LENGTH_LONG).show();
     }
 
 }

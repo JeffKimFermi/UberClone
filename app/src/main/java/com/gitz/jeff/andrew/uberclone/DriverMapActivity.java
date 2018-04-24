@@ -61,34 +61,29 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
     GoogleApiClient googleApiClient;
     LocationRequest locationRequest;
     TinyDB getSavedUserPhoneNumber; //Get user Driver User Phone Number to act as ID
+    Location lastLocation;
+    LatLng currentLocation;
+    LatLng previousLocation;
+    Marker markerCurrentLocation; //My Current Locaton Marker
+
     String driverUserId = null;
     public static float myZoomLevel = 14;
-    ImageView customerProfileImage;   //Assigned Customer Profile Image
-    TextView customerPickup, customerName, customerPhoneNumber;  //Assigned Customer Name and Phone Number
     private List<Polyline> polylines;
     private static final int[] COLORS = new int[]{R.color.primary_dark,R.color.primary,R.color.primary_light,R.color.accent,R.color.primary_dark_material_light};
-    private static final int MY_PERMISSIONS_REQUEST_ACCOUNTS = 1;
     final int LOCATION_REQUEST_CODE = 1;
-    ImageView callCustomer;
-    Marker pickUpMarker;
-    public LatLng pickUpLocation;   //Will Hold Pick Up Location Co-ordinates
+
     Button driverMainButton;
     Button endOfSession;
     Button customerInformation;
-    public boolean customerAssigned = true;   //Customer not assigned by default
-    public boolean customerFound = true;
+
     TinyDB savedUserPhoneNumber;
     String userPhoneNumber;
-    public boolean rideInSession = false;
+
+    boolean rideInSession = false;
     boolean locationDataCopied = false;
-    Marker markerCustomerLocaton;  //Destination Marker
-    Marker markerCurrentLocation; //My Current Locaton Marker
     boolean driverAvailable = false;  //Set When Driver is Available
-    LatLng currentLocation;
-    LatLng previousLocation;
-  //  Location currentLocation;
-    Location lastLocation;
     boolean readyToStartRide = false;
+
     Dialog myDialog;
 
     @Override

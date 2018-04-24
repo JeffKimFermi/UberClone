@@ -103,7 +103,7 @@
     <Button
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/requestUber"
+        android:id="@+id/callTaxi"
         android:layout_marginRight="15sp"
         android:layout_marginLeft="15sp"
         android:layout_marginBottom="10sp"

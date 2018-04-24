@@ -50,10 +50,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:gravity="left"
+            android:gravity="center"
             android:layout_gravity="center_horizontal"
-            android:paddingTop="15dp"
-            android:layout_marginLeft="15dp">
+            android:paddingTop="25dp">
 
             <TextView
                 android:layout_width="wrap_content"
@@ -78,10 +77,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:gravity="left"
+            android:gravity="center"
             android:layout_gravity="center_horizontal"
-            android:layout_marginTop="15dp"
-            android:layout_marginLeft="15dp">
+            android:layout_marginTop="15dp">
 
             <TextView
                 android:layout_width="wrap_content"
@@ -108,26 +106,27 @@
             android:paddingBottom="15sp">
 
             <Button
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="40sp"
                 android:id="@+id/accept"
                 android:text="Accept"
                 android:textAllCaps="false"
-                android:layout_marginRight="3dp"
+                android:layout_marginRight="5dp"
                 android:layout_marginLeft="15dp"
                 android:layout_weight="1"
                 android:layout_gravity="bottom"
                 android:background="@drawable/buttonstylecurved"
-                android:textColor="@color/white"/>
+                android:textColor="@color/white"
+                />
 
 
             <Button
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="40sp"
                 android:id="@+id/reject"
                 android:textAllCaps="false"
                 android:layout_marginRight="15dp"
-                android:layout_marginLeft="3dp"
+                android:layout_marginLeft="5dp"
                 android:text="Reject"
                 android:layout_weight="1"
                 android:layout_gravity="bottom"

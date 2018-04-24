@@ -3,6 +3,7 @@ package com.gitz.jeff.andrew.uberclone;
 
 import android.Manifest;
 import android.app.Dialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -25,10 +26,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import com.directions.route.AbstractRouting;
 import com.directions.route.Route;
 import com.directions.route.RouteException;
@@ -46,13 +45,11 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -61,39 +58,47 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
     private GoogleMap mMap;
     GoogleApiClient googleApiClient;
     Location lastLocation;
-    Location currentLocation;
     public static float myZoomLevel = 14;
     LocationRequest locationRequest;
-    TinyDB getSavedUserPhoneNumber; //Get user Driver User Phone Number to act as ID
+
     String customerUserId = null;
-    Button request;   //Request for a Taxi
-    Button cancelRequest;    //Cancel Taxi Request
-    public LatLng pickUpLocation;   //Will Hold Pick Up Location Co-ordinates
     String pickUpPointDescription;  //Select where to be Picked
     String destinationDescription;     //Select your Destination
+    String userPhoneNumber;
+
+    Button callTaxi;   //Request for a Taxi
+    Button cancelRequest;    //Cancel Taxi Request
+    Button driverInfo;
+
+    boolean locationDataCopied = false;
+    boolean taxiRequestMade = false;
+    boolean rideInSession = false;
+    boolean rideRequestAccepted = true;
+
+
+    TinyDB savedUserPhoneNumber;
+    TinyDB getSavedUserPhoneNumber; //Get user Driver User Phone Number to act as ID
+
     Marker markerPickUp;    //Pickup Location Marker
     Marker markerDestination;  //Destination Marker
     Marker markerCurrentLocation; //My Current Locaton Marker
     Marker markerDriverLocation;
+
     public LatLng latlngDestinationCoordinates;    //Longitude Latitude coordates of your destination
     public LatLng latlngPickUpLocationCoordinates;  //Longitude Latitude co-ordinates of your preferred Pickup Location
+    public LatLng pickUpLocation;   //Will Hold Pick Up Location Co-ordinates
+
     private List<Polyline> polylines;
-    //private static final int[] COLORS = new int[]{R.color.primary_dark,R.color.primary,R.color.primary_light,R.color.accent,R.color.primary_dark_material_light};
+
     private static final int[] COLORS = new int[]{R.color.primary,};
+    //private static final int[] COLORS = new int[]{R.color.primary_dark,R.color.primary,R.color.primary_light,R.color.accent,R.color.primary_dark_material_light};
+
     public PlaceAutocompleteFragment autocompleteFragmentPickup;
     public PlaceAutocompleteFragment autocompleteFragmentDestination;
-    ImageView driverProfileImage;   //Assigned Customer Profile Image
-    public boolean driverAssigned = false;   //Driver has been successfully assigned
-    public boolean driverFound = true;
-    ImageView callDriver;
-    private static final int MY_PERMISSIONS_REQUEST_ACCOUNTS = 1;
+
     final int LOCATION_REQUEST_CODE = 1;
-    boolean locationDataCopied = false;
-    boolean taxiRequestMade = false;
-    TinyDB savedUserPhoneNumber;
-    String userPhoneNumber;
+
     Dialog myDialog;
-    Button driverInfo;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -121,7 +126,7 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
 
         getSavedUserPhoneNumber = new TinyDB(getBaseContext());
         customerUserId = getSavedUserPhoneNumber.getString("userPhoneNumber");  //Get Saved Phone Number to act as User ID
-        request = (Button)findViewById(R.id.requestUber);
+        callTaxi = (Button)findViewById(R.id.callTaxi);
         cancelRequest = (Button)findViewById(R.id.cancelRequest);
         cancelRequest.setVisibility(View.INVISIBLE);
         driverInfo.setVisibility(View.INVISIBLE);
@@ -136,6 +141,7 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
             public void onPlaceSelected(Place place)
             {
                 pickUpPointDescription =  place.getName().toString();
+
                 latlngPickUpLocationCoordinates = place.getLatLng(); //Get Longitude and Latitude Coordinates
                 if(markerPickUp != null)
                 {
@@ -166,6 +172,8 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
 
                 destinationDescription =  place.getName().toString();
                 latlngDestinationCoordinates = place.getLatLng(); //Get Longitude and Latitude Coordinates
+
+               // displayToast(getBaseContext(), "Location: " +latlngDestinationCoordinates);
 
                 if(markerDestination != null)
                 {
@@ -198,9 +206,8 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
             public void onClick(View v)
             {
                 taxiRequestMade = false;
-                final String eventID = "customerCanceledRideRequest";
 
-                if(driverFound)  //If Cancel Button Pressed while Driver has Already been Found
+                if(rideRequestAccepted)  //If Cancel Button Pressed while Driver has Already been Found
                 {
                     //Pop up an Alert Dialog to confirm End of ride
                     AlertDialog.Builder dialog = new AlertDialog.Builder(CustomerMapActivity.this);
@@ -213,10 +220,12 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
                         {
 
                             int backgroundColour = Color.parseColor("#40E0D0");
-                            request.setBackgroundColor(backgroundColour);
-                            request.setText("Call Taxi");
+                            callTaxi.setBackgroundColor(backgroundColour);
+                            callTaxi.setText("Call Taxi");
                             cancelRequest.setText("Cancel Request Successful");
-                            request.setClickable(true);
+                            callTaxi.setClickable(true);
+                            rideRequestAccepted = true;
+                            rideInSession = false;
 
                             cancelRequest.setVisibility(View.INVISIBLE);
                             driverInfo.setVisibility(View.INVISIBLE);
@@ -224,7 +233,6 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
                             autocompleteFragmentDestination.getView().setClickable(true);
                             autocompleteFragmentPickup.getView().setVisibility(View.VISIBLE);
                             autocompleteFragmentPickup.getView().setClickable(true);
-
 
                             if(markerPickUp != null && markerDestination != null)
                             {
@@ -249,8 +257,236 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
                     dialog.show();
 
                 }
+
+                if(rideInSession)   //If Ride has Already Started
+                {
+                    //Pop up an Alert Dialog to confirm End of ride
+                    AlertDialog.Builder dialog = new AlertDialog.Builder(CustomerMapActivity.this);
+                    dialog.setTitle("End Ride Session?");
+                    dialog.setMessage("Confirm you want to End Session?");
+                    dialog.setPositiveButton("Yes", new DialogInterface.OnClickListener()
+                    {
+                        @Override
+                        public void onClick(DialogInterface paramDialogInterface, int paramInt)
+                        {
+
+                            int backgroundColour = Color.parseColor("#40E0D0");
+                            callTaxi.setBackgroundColor(backgroundColour);
+                            callTaxi.setText("Call Taxi");
+                            cancelRequest.setText("Session Ended Successfully");
+                            callTaxi.setClickable(true);
+                            rideRequestAccepted = true;
+                            rideInSession = false;
+
+                            cancelRequest.setVisibility(View.INVISIBLE);
+                            driverInfo.setVisibility(View.INVISIBLE);
+                            autocompleteFragmentDestination.getView().setVisibility(View.VISIBLE);
+                            autocompleteFragmentDestination.getView().setClickable(true);
+                            autocompleteFragmentPickup.getView().setVisibility(View.VISIBLE);
+                            autocompleteFragmentPickup.getView().setClickable(true);
+
+                            double currentFare = 734.54;
+                            cancelRequest.setText("End Session?");
+                            callTaxi.setText("Fare Payable: KSh" +currentFare);
+
+
+                            if(markerPickUp != null && markerDestination != null)
+                            {
+                                markerPickUp.remove();            //Clear Pick Up Point Marker
+                                markerDestination.remove();       //Clear the Marker for the Destination previously chosen
+                                clearRouteFromMap();   //Clear Route From Map
+                            }
+
+                        }
+                    });
+
+                    dialog.setNegativeButton("No", new DialogInterface.OnClickListener()
+                    {
+
+                        @Override
+                        public void onClick(DialogInterface paramDialogInterface, int paramInt)
+                        {
+                            //Do Nothing
+                        }
+                    });
+
+                    dialog.show();
+                }
             }
         });
+
+
+        callTaxi.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+
+            /*
+            if(lastLocation!= null && lastLocation!= null)
+            {
+                pickUpLocation = new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude());   //Get Customer Pickup Location Co-ordinates
+                markerOrigin = mMap.addMarker(new MarkerOptions().position(pickUpLocation).title("Pick Me Up Here"));  //Add Marker, and Set Title of Marker
+            }
+            */
+            if(pickUpPointDescription == null)
+            {
+                displayToast(getBaseContext(), "Error, Missing Pickup Point");
+            }
+
+            if(destinationDescription == null)
+            {
+                displayToast(getBaseContext(), "Error, Missing Pickup Point");
+            }
+
+            if(pickUpPointDescription != null && destinationDescription != null)
+            {
+                taxiRequestMade = true;
+                int delayTime = 3000;
+
+                sendUserData.sendRideRequest(getBaseContext(), userPhoneNumber, latlngPickUpLocationCoordinates, latlngDestinationCoordinates, pickUpPointDescription, destinationDescription);
+
+                callTaxi.setBackgroundColor(Color.RED);
+                callTaxi.setTextColor(Color.WHITE);
+                callTaxi.setText("Getting you a Driver...");
+
+                new Handler().postDelayed(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        TinyDB getRideRequestResponse = new TinyDB(getBaseContext());
+                        String rideRequestResponse = getRideRequestResponse.getString("rideRequestResponse");
+
+                        //Get Individual Components of the Response
+
+                        if (rideRequestResponse.contains(","))
+                        {
+                            String[] responseParts = rideRequestResponse.split(":");
+                            String statusString = responseParts[0];
+                            String messageString = responseParts[1];
+                            String requestIdString = responseParts[2];
+
+                            if(statusString.contains(":"))
+                            {
+                                String[] statusParts = statusString.split(":");
+                                String statusResponse = statusParts[1];
+                                displayToast(getBaseContext(), "Response: " +statusResponse);
+                                if(statusResponse.equals("Success"))
+                                {
+
+                                }
+
+                                else   //Error
+                                {
+
+                                }
+                            }
+
+                            if(messageString.contains(":"))
+                            {
+                                String[] messageParts = messageString.split(":");
+                                String messageResponse = messageParts[1];
+
+                                if(messageResponse.equals("Request Successfully made"))
+                                {
+
+                                }
+
+                                else if(messageResponse.equals("Customer does not exist"))
+                                {
+
+                                }
+
+                                else if(messageResponse.equals("Can't find driver"))
+                                {
+
+                                }
+                            }
+
+                            String rideIdStringValue = requestIdString.replaceAll("[^0-9]", ""); // returns 123
+                            int rideId = Integer.valueOf(rideIdStringValue);
+                            displayToast(getBaseContext(), "ID: " +rideId);
+                        }
+
+
+
+                        if(rideRequestAccepted) //If Appropriate Driver Has Been Found
+                        {
+                           /*
+                           Location customerLocation = new Location("");
+                           if(customerLocation != null)
+                           {
+                               customerLocation.setLatitude(pickUpLocation.latitude);
+                               customerLocation.setLongitude(pickUpLocation.longitude);
+                           }
+
+
+                           Location driverLocation = new Location("");  //Use Customer Location Till Driver Location Provided By Server System
+                           if(driverLocation != null)
+                           {
+                               driverLocation.setLatitude(pickUpLocation.latitude);
+                               driverLocation.setLongitude(pickUpLocation.longitude);
+                           }
+                           */
+
+                            //float distanceBtwnCustomerAndDriver = customerLocation.distanceTo(driverLocation);         //Distance in Metres
+                            float distanceBtwnCustomerAndDriver = 5324;  //Use Dummy Data for the Time Being
+                            float distanceInKms = distanceBtwnCustomerAndDriver/1000;
+                            if(distanceBtwnCustomerAndDriver < 100)  //If Distance Btwn Driver and Customer is less than 100m
+                            {
+                                callTaxi.setBackgroundColor(Color.RED);
+                                callTaxi.setTextColor(Color.WHITE);
+                                callTaxi.setText("Driver has Arrived");
+                            }
+
+                            else                                     //If Distance Btwn Driver and Customer is more than 100m
+                            {
+
+                                callTaxi.setBackgroundColor(Color.RED);
+                                callTaxi.setTextColor(Color.WHITE);
+                                callTaxi.setText("Driver Found: " + String.valueOf(distanceInKms) + " km");  //Change Button Appropriately
+                            }
+
+
+                            callTaxi.setClickable(false);
+                            cancelRequest.setVisibility(View.VISIBLE);
+                            driverInfo.setVisibility(View.VISIBLE);
+
+                            cancelRequest.setText("Cancel Ride Request?");
+                            autocompleteFragmentDestination.setText("");
+                            autocompleteFragmentDestination.getView().setVisibility(View.GONE);
+                            autocompleteFragmentDestination.getView().setClickable(false);
+
+                            autocompleteFragmentPickup.setText("");
+                            autocompleteFragmentPickup.getView().setVisibility(View.GONE);
+                            autocompleteFragmentPickup.getView().setClickable(false);
+
+                            new Handler().postDelayed(new Runnable()
+                            {
+                                @Override
+                                public void run()
+                                {
+                                    rideInSession = true;
+                                    rideRequestAccepted = false;
+                                    cancelRequest.setText("End Session?");
+                                }
+                            }, 15000);
+                        }
+                    }
+                }, delayTime);
+             }
+
+            }
+        });
+
+
+        if(rideInSession) //If Ride has Started
+        {
+            double currentFare = 400.54;
+            cancelRequest.setText("End Session?");
+            callTaxi.setText("Fare Estimate: KSh" +currentFare);
+        }
 
     }
 
@@ -277,94 +513,6 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
         });
     }
 
-    public void requestUber(View view)
-    {
-        /*
-        if(lastLocation!= null && lastLocation!= null)
-        {
-            pickUpLocation = new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude());   //Get Customer Pickup Location Co-ordinates
-            markerOrigin = mMap.addMarker(new MarkerOptions().position(pickUpLocation).title("Pick Me Up Here"));  //Add Marker, and Set Title of Marker
-        }
-        */
-        taxiRequestMade = true;
-        int delayTime = 3000;
-        String eventID = "taxiRequest";
-
-        sendUserData.sendRideRequest(getBaseContext(), userPhoneNumber, latlngPickUpLocationCoordinates, latlngDestinationCoordinates, pickUpPointDescription, destinationDescription);
-
-        request.setBackgroundColor(Color.RED);
-        request.setTextColor(Color.WHITE);
-        request.setText("Getting you a Driver...");
-
-
-        new Handler().postDelayed(new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                if(driverFound) //If Appropriate Driver Has Been Found
-                {
-                   /*
-                   Location customerLocation = new Location("");
-                   if(customerLocation != null)
-                   {
-                       customerLocation.setLatitude(pickUpLocation.latitude);
-                       customerLocation.setLongitude(pickUpLocation.longitude);
-                   }
-
-
-                   Location driverLocation = new Location("");  //Use Customer Location Till Driver Location Provided By Server System
-                   if(driverLocation != null)
-                   {
-                       driverLocation.setLatitude(pickUpLocation.latitude);
-                       driverLocation.setLongitude(pickUpLocation.longitude);
-                   }
-                   */
-
-                    //float distanceBtwnCustomerAndDriver = customerLocation.distanceTo(driverLocation);         //Distance in Metres
-                    float distanceBtwnCustomerAndDriver = 5324;  //Use Dummy Data for the Time Being
-                    float distanceInKms = distanceBtwnCustomerAndDriver/1000;
-                    if(distanceBtwnCustomerAndDriver < 100)  //If Distance Btwn Driver and Customer is less than 100m
-                    {
-                        request.setBackgroundColor(Color.RED);
-                        request.setTextColor(Color.WHITE);
-                        request.setText("Driver has Arrived");
-                    }
-
-                    else                                     //If Distance Btwn Driver and Customer is more than 100m
-                    {
-
-                        request.setBackgroundColor(Color.RED);
-                        request.setTextColor(Color.WHITE);
-                        request.setText("Driver Found: " + String.valueOf(distanceInKms) + " km");  //Change Button Appropriately
-                    }
-
-
-                    request.setClickable(false);
-                    cancelRequest.setVisibility(View.VISIBLE);
-                    driverInfo.setVisibility(View.VISIBLE);
-
-                    cancelRequest.setText("Cancel Ride Request?");
-                    autocompleteFragmentDestination.setText("");
-                    autocompleteFragmentDestination.getView().setVisibility(View.GONE);
-                    autocompleteFragmentDestination.getView().setClickable(false);
-
-                    autocompleteFragmentPickup.setText("");
-                    autocompleteFragmentPickup.getView().setVisibility(View.GONE);
-                    autocompleteFragmentPickup.getView().setClickable(false);
-
-                }
-
-                if(!driverFound)   //If Driver not found
-                {
-
-                }
-
-            }
-        }, delayTime);
-
-
-    }
 
     public void showAssignedDriverPopup()
     {
@@ -419,10 +567,10 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
                     SmsManager sms_manager = SmsManager.getDefault();
                     sms_manager.sendTextMessage(customerNumber, null, Message, null, null);
                     textMessage.setText("");
-                    Toast.makeText(getApplicationContext(), "Message sent", Toast.LENGTH_LONG).show();
+                    displayToast(getBaseContext(), "Message Sent");
                 }
                 catch (Exception ex){
-                    Toast.makeText(getApplicationContext(), ex.getMessage().toString(), Toast.LENGTH_LONG).show();
+                    displayToast(getBaseContext(), ex.getMessage().toString());
                 }
             }
         });
@@ -555,11 +703,11 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
     {
         if(e != null)
         {
-            Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            displayToast(getBaseContext(),"Error: " + e.getMessage() );
         }
         else
         {
-            Toast.makeText(this, "Something went wrong, Try again", Toast.LENGTH_SHORT).show();
+            displayToast(getBaseContext(), "Something went wrong, Try again");
         }
     }
 
@@ -595,7 +743,7 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
             Polyline polyline = mMap.addPolyline(polyOptions);
             polylines.add(polyline);
 
-            Toast.makeText(getApplicationContext(),"Route "+ (i+1) +": distance - "+ route.get(i).getDistanceValue()+": duration - "+ route.get(i).getDurationValue(),Toast.LENGTH_SHORT).show();
+            //displayToast(getBaseContext(), "Route "+ (i+1) +": distance - "+ route.get(i).getDistanceValue()+": duration - "+ route.get(i).getDurationValue());
         }
     }
 
@@ -664,5 +812,11 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
     protected void onStop()  //If Driver gets out of this activity, Notify Db, for Him to be removed as Hes is no longer Active
     {
         super.onStop();
+    }
+
+    public void displayToast(Context myContext, String displayToastMessage)
+    {
+        Context context = myContext;
+        Toast.makeText(myContext, displayToastMessage, Toast.LENGTH_LONG).show();
     }
 }

@@ -9,6 +9,7 @@ import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 import java.util.ArrayList;
@@ -21,8 +22,11 @@ public class driverRegister extends AppCompatActivity {
     EditText vehicleRegistration;  //User Email Address
     EditText passWord1;     //User Password
     EditText passWord2;     //Password Confirmation
+    Button loginButton;
+    Button registerButton;
     ArrayList<String> userCredentials = new ArrayList<>(); //ArrayList to Hold User Data
     TinyDB saveUserPhoneNumber;  //Save User Phone Number within the App
+    TinyDB getRegistration;
     TinyDB saveRegistrationComplete;
     int registrationStatus = 1; //Registration Done Successfully
     private final int displayTime = 3500;  //Alert Dialog Display Time
@@ -37,93 +41,128 @@ public class driverRegister extends AppCompatActivity {
 
         saveUserPhoneNumber = new TinyDB(getBaseContext());
         saveRegistrationComplete = new TinyDB(getBaseContext());
+        getRegistration = new TinyDB(getBaseContext());
+
+        loginButton = (Button)findViewById(R.id.login);
+
+        registerButton.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                handleRegistrationProcess();
+            }
+        });
+
+        loginButton.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                Intent intent = new Intent(getBaseContext(), Login.class);
+                startActivity(intent);
+            }
+        });
     }
 
 
-
-    public void register(View view)
+    public void handleRegistrationProcess()
     {
-        userNames = (EditText)findViewById(R.id.userName);
-        phoneNumber = (EditText)findViewById(R.id.phoneNumber);
-        vehicleRegistration= (EditText)findViewById(R.id.vehicleRegistration);
-        passWord1 = (EditText)findViewById(R.id.passWord1);
-        passWord2 = (EditText)findViewById(R.id.passWord2);
+        boolean registration = getRegistration.getBoolean("registrationStatus");
+        if(registration == true)
+        {
+            userNames = (EditText) findViewById(R.id.userName);
+            phoneNumber = (EditText) findViewById(R.id.phoneNumber);
+            vehicleRegistration = (EditText) findViewById(R.id.vehicleRegistration);
+            passWord1 = (EditText) findViewById(R.id.passWord1);
+            passWord2 = (EditText) findViewById(R.id.passWord2);
 
-        String pass1 = passWord1.getText().toString();    //First Password
-        String pass2 = passWord2.getText().toString();     //Second Password/Password confirmation
+            String pass1 = passWord1.getText().toString();    //First Password
+            String pass2 = passWord2.getText().toString();     //Second Password/Password confirmation
 
         /*Perform Error Handling*/
-        if(pass1.matches("") || pass2.matches(""))        //If No Input Entered
-        {
-            Toast.makeText(getBaseContext(), "Missing Input", Toast.LENGTH_LONG).show();  //Toast Error Message
-        }
-
-        else                                              //Acceptable Input
-        {
-            if (pass1.equals(pass2))
+            if (pass1.matches("") || pass2.matches(""))        //If No Input Entered
             {
-                String userType = "Driver";                                           //Customer
-                String userName = userNames.getText().toString().trim();                   //User's Name
-                String userPhone = phoneNumber.getText().toString().trim();              //User Mobile Number
-                String userPassword = pass1;                                              //Std name for user password
-                String registration = vehicleRegistration.getText().toString().trim();              //User Email Address
-
-                saveUserPhoneNumber.putString("userPhoneNumber", userPhone);            //Save User Phone Number in Shared Prefs
-
-                ConnectivityManager cm = (ConnectivityManager) getBaseContext().getSystemService(Context.CONNECTIVITY_SERVICE);
-                NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
-                if (activeNetwork != null  && activeNetwork.isAvailable() && activeNetwork.isConnected())
+                displayToast(getBaseContext(), "Missing Input");
+            } else                                              //Acceptable Input
+            {
+                if (pass1.equals(pass2))
                 {
-                    //final AlertDialog alertDialog = new SpotsDialog(driverRegister.this, R.style.customDriverRegister);  //Show a Dialog Box for 4 seconds
-                    final AlertDialog alertDialog = new SpotsDialog(driverRegister.this);  //Show a Dialog Box for 4 seconds
-                    alertDialog.show();
+                    String userType = "Driver";                                           //Customer
+                    String userName = userNames.getText().toString().trim();                   //User's Name
+                    String userPhone = phoneNumber.getText().toString().trim();              //User Mobile Number
+                    String userPassword = pass1;                                              //Std name for user password
+                    String registrationVehicle = vehicleRegistration.getText().toString().trim();              //User Email Address
 
-                    //IF Connected to Network either via Mobile Data or Wifi
-                    if (activeNetwork.getType() == ConnectivityManager.TYPE_MOBILE || activeNetwork.getType() == ConnectivityManager.TYPE_WIFI)
+                    saveUserPhoneNumber.putString("userPhoneNumber", userPhone);            //Save User Phone Number in Shared Prefs
+
+                    ConnectivityManager cm = (ConnectivityManager) getBaseContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+                    NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+                    if (activeNetwork != null && activeNetwork.isAvailable() && activeNetwork.isConnected())
                     {
-                        sendUserData.sendDriverRegistrationCredentials(getBaseContext(), userPhone, userName, userPassword, userType, registration);     //Send Bloody Data
+                        //final AlertDialog alertDialog = new SpotsDialog(driverRegister.this, R.style.customDriverRegister);  //Show a Dialog Box for 4 seconds
+                        final AlertDialog alertDialog = new SpotsDialog(driverRegister.this);  //Show a Dialog Box for 4 seconds
+                        alertDialog.show();
+
+                        //IF Connected to Network either via Mobile Data or Wifi
+                        if (activeNetwork.getType() == ConnectivityManager.TYPE_MOBILE || activeNetwork.getType() == ConnectivityManager.TYPE_WIFI)
+                        {
+                            sendUserData.sendDriverRegistrationCredentials(getBaseContext(), userPhone, userName, userPassword, userType, registrationVehicle);     //Send Bloody Data
+                        }
+
+                        new Handler().postDelayed(new Runnable()
+                        {
+                            @Override
+                            public void run()
+                            {
+                                saveRegistrationComplete.putInt("registrationStatus", registrationStatus);  //Save Integer that Registration Done Successfully
+                                displayToast(getBaseContext(), "Registration Successful");
+                                Intent intent = new Intent(getBaseContext(), Login.class);  //Open Login Activity upon Successfully Registration
+                                startActivity(intent);
+
+                                userNames.setText("");   //Clear all Edit Text Boxes
+                                phoneNumber.setText("");
+                                vehicleRegistration.setText("");
+                                passWord1.setText("");
+                                passWord2.setText("");
+                                alertDialog.dismiss(); //Dismiss it after 4 seconds
+                            }
+                        }, displayTime);
+
                     }
 
-                    new Handler().postDelayed(new Runnable()
+                    else                               //If not connected to network
                     {
-                        @Override
-                        public void run()
-                        {
-                            saveRegistrationComplete.putInt("registrationStatus", registrationStatus);  //Save Integer that Registration Done Successfully
-                            Toast.makeText(getBaseContext(), "Registration Successful", Toast.LENGTH_LONG).show();  //Give Reg successful Message
-                            Intent intent = new Intent(getBaseContext(), Login.class);  //Open Login Activity upon Successfully Registration
-                            startActivity(intent);
+                        displayToast(getBaseContext(), "Turn ON Mobile Data");
+                    }
 
-                            userNames.setText("");   //Clear all Edit Text Boxes
-                            phoneNumber.setText("");
-                            vehicleRegistration.setText("");
-                            passWord1.setText("");
-                            passWord2.setText("");
-                            alertDialog.dismiss(); //Dismiss it after 4 seconds
-                        }
-                    }, displayTime);
 
                 }
-
-                else                               //If not connected to network
+                else
                 {
-                    Toast.makeText(getBaseContext(), "Turn ON Mobile Data", Toast.LENGTH_LONG).show();
+                    displayToast(getBaseContext(), "Password Mismatch");
+                    passWord1.setText("");
+                    passWord2.setText("");
                 }
-
-
             }
-            else
-            {
-                Toast.makeText(getBaseContext(), "Password Mismatch", Toast.LENGTH_LONG).show();
-                passWord1.setText("");
-                passWord2.setText("");
-            }
+        }
+
+        else
+        {
+            displayToast(getBaseContext(), "Error, User Already Exists");
+
+            userNames.setText("");
+            phoneNumber.setText("");
+            vehicleRegistration.setText("");
+            passWord1.setText("");
         }
     }
 
-    public void login(View view)
+
+    public void displayToast(Context myContext, String displayToastMessage)
     {
-        Intent intent = new Intent(getBaseContext(), Login.class);
-        startActivity(intent);
+        Context context = myContext;
+        Toast.makeText(myContext, displayToastMessage, Toast.LENGTH_LONG).show();
     }
+
 }
