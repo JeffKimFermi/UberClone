@@ -17,6 +17,7 @@ import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.telephony.SmsManager;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -50,6 +51,9 @@ import com.pusher.client.Pusher;
 import com.pusher.client.PusherOptions;
 import com.pusher.client.channel.Channel;
 import com.pusher.client.channel.SubscriptionEventListener;
+
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -106,6 +110,8 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
         {
             mapFragment.getMapAsync(this);
         }
+
+        checkForPushMessagesFromServer();  //Check for Push Messages
 
         getSavedUserPhoneNumber = new TinyDB(getBaseContext());
         driverUserId = getSavedUserPhoneNumber.getString("userPhoneNumber");  //Get Saved Phone Number to act as User ID
@@ -186,13 +192,14 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
 
     public void checkForPushMessagesFromServer()
     {
+        String phone = "0720844920";
         PusherOptions options = new PusherOptions();
         options.setCluster("ap2");
         Pusher pusher = new Pusher("830d3e455fd9cfbcec39", options);
 
-        Channel channel = pusher.subscribe(userPhoneNumber);   //use Phone Number as Channel
+        Channel channel = pusher.subscribe(phone);   //use Phone Number as Channel
 
-        channel.bind("noDriver", new SubscriptionEventListener()   //Events
+        channel.bind("no_driver", new SubscriptionEventListener()   //Events
         {
             @Override
             public void onEvent(String channelName, String eventName, final String data)
@@ -222,22 +229,68 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
 
 
 
-        channel.bind("rideRequest", new SubscriptionEventListener()   //Events
+        channel.bind("ride_request", new SubscriptionEventListener()   //Events
         {
             @Override
             public void onEvent(String channelName, String eventName, final String data)
             {
                 //Received Messages From Server
-
+                Log.e("PushResponse", data);
                 final String pushedMessages = data;
 
+                JSONObject jsonObj = null;
+
+                try
+                {
+                    jsonObj = new JSONObject(pushedMessages);
+                }
+
+                catch (Exception e)
+                {
+                    e.printStackTrace();
+                }
+
+                try
+                {
+                    String statusResponse = jsonObj.getString("status");
+                }
+
+                catch (Exception e)
+                {
+                    e.printStackTrace();
+                }
+
+
+                try
+                {
+                    String messageResponse = jsonObj.getString("message");
+                }
+
+                catch (Exception e)
+                {
+                    e.printStackTrace();
+                }
+
+                new Thread()
+                {
+                    public void run()
+                    {
+                        DriverMapActivity.this.runOnUiThread(new Runnable()
+                        {
+                            public void run()
+                            {
+                                Toast.makeText(getBaseContext(), "R: "+pushedMessages, Toast.LENGTH_LONG).show();
+                            }
+                        });
+                    }
+                }.start();
 
             }
         });
 
 
 
-        channel.bind("driverAccepted", new SubscriptionEventListener()   //Events
+        channel.bind("driver_accepted", new SubscriptionEventListener()   //Events
         {
             @Override
             public void onEvent(String channelName, String eventName, final String data)

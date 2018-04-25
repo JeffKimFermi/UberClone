@@ -42,6 +42,7 @@ public class driverRegister extends AppCompatActivity {
         saveUserPhoneNumber = new TinyDB(getBaseContext());
         saveRegistrationComplete = new TinyDB(getBaseContext());
         getRegistration = new TinyDB(getBaseContext());
+        registerButton = (Button)findViewById(R.id.register);
 
         loginButton = (Button)findViewById(R.id.login);
 
