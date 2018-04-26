@@ -115,6 +115,19 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
     public String driverPhone = "0722833083";
     public String requestId;
 
+    private static CustomerMapActivity inst;
+    public static CustomerMapActivity instance()
+    {
+        return inst;
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        inst = this;
+    }
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -361,107 +374,8 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
 
            // if(pickUpPointDescription != null && destinationDescription != null)
            // {
-                new Handler().postDelayed(new Runnable()
-                {
-                    @Override
-                    public void run()
-                    {
-                        String rideRequestResponse = getRideRequestResponse.getString("rideRequestResponse");  //Response From Server
-                        JSONObject jsonObjResponse = null;
-                        String status;
-                        String requestId;
-                        try
-                        {
-                            jsonObjResponse = new JSONObject(rideRequestResponse);  //Create New Json Object
-                            status = jsonObjResponse.getString("status");
-                            requestId = jsonObjResponse.getString("requestId");
-
-                            if(status.equals("Success"))
-                            {
-                                //Do Nothing
-                                displayToast(getBaseContext(), "Successful Request");
-
-                            }
-
-                            else
-                            {
-                                defaultScreen();
-                                displayToast(getBaseContext(), "Request Error, Please Try Again");
-                            }
-                        }
-                        catch (Exception e)
-                        {
-                            e.printStackTrace();
-                        }
-                    }
-                },2000);
-
-
-                taxiRequestMade = true;
-                int delayTime = 3000;
 
                 sendUserData.sendRideRequest(getBaseContext(), userPhoneNumber, latlngPickUpLocationCoordinates, latlngDestinationCoordinates, pickUpPointDescription, destinationDescription);
-
-                callTaxi.setBackgroundColor(Color.RED);
-                callTaxi.setTextColor(Color.WHITE);
-                callTaxi.setText("Getting you a Driver...");
-
-                new Handler().postDelayed(new Runnable()
-                {
-
-                    @Override
-                    public void run()
-                    {
-                        TinyDB getRideRequestResponse = new TinyDB(getBaseContext());
-                        String rideRequestResponse = getRideRequestResponse.getString("rideRequestResponse");
-
-                        //Get Individual Components of the Response
-
-                        if (rideRequestAccepted) //If Appropriate Driver Has Been Found
-                        {
-                            //float distanceBtwnCustomerAndDriver = customerLocation.distanceTo(driverLocation);         //Distance in Metres
-                            float distanceBtwnCustomerAndDriver = 5324;  //Use Dummy Data for the Time Being
-                            float distanceInKms = distanceBtwnCustomerAndDriver / 1000;
-                            if (distanceBtwnCustomerAndDriver < 100)  //If Distance Btwn Driver and Customer is less than 100m
-                            {
-                                callTaxi.setBackgroundColor(Color.RED);
-                                callTaxi.setTextColor(Color.WHITE);
-                                callTaxi.setText("Driver has Arrived");
-                            } else                                     //If Distance Btwn Driver and Customer is more than 100m
-                            {
-
-                                callTaxi.setBackgroundColor(Color.RED);
-                                callTaxi.setTextColor(Color.WHITE);
-                                callTaxi.setText("Driver Found: " + String.valueOf(distanceInKms) + " km");  //Change Button Appropriately
-                            }
-
-
-                            callTaxi.setClickable(false);
-                            cancelRequest.setVisibility(View.VISIBLE);
-                            driverInfo.setVisibility(View.VISIBLE);
-
-                            cancelRequest.setText("Cancel Ride Request?");
-                            autocompleteFragmentDestination.setText("");
-                            autocompleteFragmentDestination.getView().setVisibility(View.GONE);
-                            autocompleteFragmentDestination.getView().setClickable(false);
-
-                            autocompleteFragmentPickup.setText("");
-                            autocompleteFragmentPickup.getView().setVisibility(View.GONE);
-                            autocompleteFragmentPickup.getView().setClickable(false);
-
-                            new Handler().postDelayed(new Runnable()
-                            {
-                                @Override
-                                public void run()
-                                {
-                                    rideInSession = true;
-                                    rideRequestAccepted = false;
-                                    cancelRequest.setText("End Session?");
-                                }
-                            }, 15000);
-                        }
-                    }
-                }, delayTime);
 
            //  }
 
@@ -578,7 +492,79 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
     }
 
 
+    public void handleRideRequest(final Context context)
+    {
+        taxiRequestMade = true;
+        int delayTime = 3000;
 
+
+        callTaxi.setBackgroundColor(Color.RED);
+        callTaxi.setTextColor(Color.WHITE);
+        callTaxi.setText("Getting you a Driver...");
+
+        new Handler().postDelayed(new Runnable()
+        {
+
+            @Override
+            public void run()
+            {
+                //float distanceBtwnCustomerAndDriver = customerLocation.distanceTo(driverLocation);         //Distance in Metres
+                float distanceBtwnCustomerAndDriver = 5324;  //Use Dummy Data for the Time Being
+                float distanceInKms = distanceBtwnCustomerAndDriver / 1000;
+                if (distanceBtwnCustomerAndDriver < 100)  //If Distance Btwn Driver and Customer is less than 100m
+                {
+                    callTaxi.setBackgroundColor(Color.RED);
+                    callTaxi.setTextColor(Color.WHITE);
+                    callTaxi.setText("Driver has Arrived");
+                }
+
+                else                                     //If Distance Btwn Driver and Customer is more than 100m
+                {
+
+                    callTaxi.setBackgroundColor(Color.RED);
+                    callTaxi.setTextColor(Color.WHITE);
+                    callTaxi.setText("Driver Found: " + String.valueOf(distanceInKms) + " km");  //Change Button Appropriately
+                }
+
+
+                callTaxi.setClickable(false);
+                cancelRequest.setVisibility(View.VISIBLE);
+                driverInfo.setVisibility(View.VISIBLE);
+
+                cancelRequest.setText("Cancel Ride Request?");
+                autocompleteFragmentDestination.setText("");
+                autocompleteFragmentDestination.getView().setVisibility(View.GONE);
+                autocompleteFragmentDestination.getView().setClickable(false);
+
+                autocompleteFragmentPickup.setText("");
+                autocompleteFragmentPickup.getView().setVisibility(View.GONE);
+                autocompleteFragmentPickup.getView().setClickable(false);
+
+                new Handler().postDelayed(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        rideInSession = true;
+                        rideRequestAccepted = false;
+                        cancelRequest.setText("End Session?");
+                    }
+                }, 15000);
+            }
+        }, delayTime);
+    }
+
+
+    public void defaultScreen(Context context)
+    {
+        int backgroundColour = Color.parseColor("#40E0D0");
+        callTaxi.setBackgroundColor(backgroundColour);
+        callTaxi.setText("Call Taxi");
+        cancelRequest.setText("Cancel Request Successful");
+        callTaxi.setClickable(true);
+        rideRequestAccepted = true;
+        rideInSession = false;
+    }
 
     public void checkForPushMessagesFromServer()
     {
@@ -681,16 +667,6 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
     {
     }
 
-    public void defaultScreen()
-    {
-        int backgroundColour = Color.parseColor("#40E0D0");
-        callTaxi.setBackgroundColor(backgroundColour);
-        callTaxi.setText("Call Taxi");
-        cancelRequest.setText("Cancel Request Successful");
-        callTaxi.setClickable(true);
-        rideRequestAccepted = true;
-        rideInSession = false;
-    }
 
     public void showDriverLocationMarker()
     {

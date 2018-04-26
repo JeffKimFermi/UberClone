@@ -127,7 +127,7 @@ public class sendUserData
 
 
     //Send Ride Request
-    public static void sendRideRequest(Context myContext, final String userId, LatLng customerPickUpLocation, LatLng customerDestination, final String customerPickUpLocationDescription, final String customerDestinationDescription)
+    public static  void sendRideRequest(Context myContext, final String userId, LatLng customerPickUpLocation, LatLng customerDestination, final String customerPickUpLocationDescription, final String customerDestinationDescription)
     {
         final TinyDB saveRideRequestResponse = new TinyDB(myContext);  //Will save a boolean value representing registration status
 
@@ -154,20 +154,33 @@ public class sendUserData
                     @Override
                     public void onResponse(JSONObject response)
                     {
-                        String rideRequestResponse = "";
+                        String statusResponse;
+                        String requestIdResponse;
 
                         try
                         {
-                            rideRequestResponse = response.getString("response");
+                            statusResponse = response.getString("status");
+                            requestIdResponse = response.getString("requestId");
+                            Log.e("Response for Status", statusResponse);
+
+                            CustomerMapActivity instCustomerMapActivity = CustomerMapActivity.instance();
+
+                            if(statusResponse.equals("Success"))
+                            {
+                                instCustomerMapActivity.handleRideRequest(context);
+                            }
+
+                            else
+                            {
+                                instCustomerMapActivity.defaultScreen(context);
+                                displayToast(context, "Request Error, Please Try Again");
+                            }
                         }
 
                         catch (Exception e)
                         {
                             e.printStackTrace();
                         }
-
-                        saveRideRequestResponse.putString("rideRequestResponse", rideRequestResponse);
-                        Log.e("Response", response.toString());
 
                     }
                 },
