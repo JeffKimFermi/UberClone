@@ -9,7 +9,6 @@ import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.location.Location;
 import android.net.Uri;
-import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
@@ -25,7 +24,6 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -122,7 +120,6 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
         endOfSession.setVisibility(View.INVISIBLE);
         customerInformation.setVisibility(View.INVISIBLE);
 
-       // checkForPushMessagesFromServer();
 
         driverMainButton.setOnClickListener(new View.OnClickListener()    //Main Driver Functionality Button
         {
@@ -151,8 +148,7 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
                     driverMainButton.setBackgroundColor(Color.RED);
                     driverMainButton.setTextColor(Color.WHITE);
 
-                    newCustomerAlertPopup();
-                    //newCustomerAlert();
+                    //newCustomerAlertPopup();
                 }
 
                 //checkIfLocationHasChangedConsiderably();
@@ -189,15 +185,13 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
 
     }
 
-
     public void checkForPushMessagesFromServer()
     {
-        String phone = "0720844920";
         PusherOptions options = new PusherOptions();
         options.setCluster("ap2");
         Pusher pusher = new Pusher("830d3e455fd9cfbcec39", options);
 
-        Channel channel = pusher.subscribe(phone);   //use Phone Number as Channel
+        Channel channel = pusher.subscribe(userPhoneNumber);   //use Phone Number as Channel
 
         channel.bind("no_driver", new SubscriptionEventListener()   //Events
         {
@@ -250,9 +244,21 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
                     e.printStackTrace();
                 }
 
+                String statusResponse;
                 try
                 {
-                    String statusResponse = jsonObj.getString("status");
+                    statusResponse = jsonObj.getString("status");
+                    String requestId = jsonObj.getString("requestId");
+
+                    if(statusResponse.equals("Success"))
+                    {
+                        newCustomerAlertPopup();
+                    }
+                    else
+                    {
+                        newCustomerAlertPopup();
+                    }
+
                 }
 
                 catch (Exception e)
@@ -261,66 +267,11 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
                 }
 
 
-                try
-                {
-                    String messageResponse = jsonObj.getString("message");
-                }
-
-                catch (Exception e)
-                {
-                    e.printStackTrace();
-                }
-
-                new Thread()
-                {
-                    public void run()
-                    {
-                        DriverMapActivity.this.runOnUiThread(new Runnable()
-                        {
-                            public void run()
-                            {
-                                Toast.makeText(getBaseContext(), "R: "+pushedMessages, Toast.LENGTH_LONG).show();
-                            }
-                        });
-                    }
-                }.start();
-
             }
         });
 
 
-
-        channel.bind("driver_accepted", new SubscriptionEventListener()   //Events
-        {
-            @Override
-            public void onEvent(String channelName, String eventName, final String data)
-            {
-                //Received Messages From Server
-
-                final String pushedMessages = data;
-
-                //Act on Response
-                //Act on Response
-                final String driverFound = "You've been assigned a Driver Successful";
-
-                new Thread()
-                {
-                    public void run()
-                    {
-                        DriverMapActivity.this.runOnUiThread(new Runnable()
-                        {
-                            public void run()
-                            {
-                                Toast.makeText(getBaseContext(), driverFound, Toast.LENGTH_LONG).show();
-                            }
-                        });
-                    }
-                }.start();
-            }
-        });
-
-
-        channel.bind("rideStarted", new SubscriptionEventListener()   //Events
+        channel.bind("ride_started", new SubscriptionEventListener()   //Events
         {
             @Override
             public void onEvent(String channelName, String eventName, final String data)
@@ -334,6 +285,7 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
         });
 
         pusher.connect();
+
     }
 
 
@@ -350,6 +302,7 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
         ImageView callBtn;
         ImageView sendSms;
         final EditText textMessage;
+
         myDialog.setContentView(R.layout.custompopup_customer_details);
 
         txtclose =(TextView) myDialog.findViewById(R.id.txtclose);
@@ -422,20 +375,11 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
 
         txtclose.setText("X");
 
+        driverMainButton.setVisibility(View.GONE); //Not Visible
+        driverMainButton.setClickable(false);
 
-        new Handler().postDelayed(new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                driverMainButton.setVisibility(View.GONE); //Not Visible
-                driverMainButton.setClickable(false);
-
-                myDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-                myDialog.show();
-            }
-        }, 5000);
-
+        myDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        myDialog.show();
 
         txtclose.setOnClickListener(new View.OnClickListener()
         {
@@ -459,7 +403,7 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
             @Override
             public void onClick(View v)
             {
-                int rideID = 1;
+                int rideID = 50;
                 sendUserData.sendRideRequestAccepted(getBaseContext(), rideID, userPhoneNumber);
                 showAssignedCustomerPopup();
                 myDialog.dismiss();
@@ -480,7 +424,7 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
             @Override
             public void onClick(View v)
             {
-                int rideID = 1;
+                int rideID = 50;
                 sendUserData.sendRideRequestRejected(getBaseContext(), rideID, userPhoneNumber);
                 int backgroundColour = Color.parseColor("#40E0D0");
                 driverMainButton.setBackgroundColor(backgroundColour);

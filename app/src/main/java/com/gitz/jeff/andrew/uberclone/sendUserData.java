@@ -132,7 +132,7 @@ public class sendUserData
         final TinyDB saveRideRequestResponse = new TinyDB(myContext);  //Will save a boolean value representing registration status
 
         final Context context= myContext;
-        JSONObject jsonObj = new JSONObject();
+        final JSONObject jsonObj = new JSONObject();
         try
         {
             jsonObj.put("userPhone", userId);
@@ -193,7 +193,7 @@ public class sendUserData
         JSONObject jsonObj = new JSONObject();
         try
         {
-            jsonObj.put("requestId", requestId);   //Unique ID of the Transaction
+            jsonObj.put("requestId", ""+requestId);   //Unique ID of the Transaction
             jsonObj.put("driverPhone", userId);    //User ID which is the Driver Phone
         }
         catch (JSONException jse)
@@ -201,7 +201,7 @@ public class sendUserData
             jse.printStackTrace();
         }
 
-        String url= "http://46.101.73.84:8080/driver/accept";
+        String url= "http://46.101.73.84:8080/request/driver/accept";
         JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.POST, url,jsonObj,   //url,jsonObj
                 new Response.Listener<JSONObject>()
                 {
@@ -253,7 +253,7 @@ public class sendUserData
             jse.printStackTrace();
         }
 
-        String url= "http://46.101.73.84:8080/driver/reject";
+        String url= "http://46.101.73.84:8080/request/driver/reject";
         JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.POST, url,jsonObj,   //url,jsonObj
                 new Response.Listener<JSONObject>()
                 {
@@ -272,7 +272,7 @@ public class sendUserData
                             e.printStackTrace();
                         }
 
-                        Log.e("Response", response.toString());
+                       // Log.e("Response", response.toString());
 
                     }
                 },
@@ -281,6 +281,7 @@ public class sendUserData
                     @Override
                     public void onErrorResponse(VolleyError error) {
                         Log.e("Error.Response", error.toString());
+                        error.printStackTrace();
                     }
                 }
         );

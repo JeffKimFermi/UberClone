@@ -19,6 +19,7 @@ import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.telephony.SmsManager;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -50,6 +51,12 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
+import com.pusher.client.Pusher;
+import com.pusher.client.PusherOptions;
+import com.pusher.client.channel.Channel;
+import com.pusher.client.channel.SubscriptionEventListener;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -78,6 +85,7 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
 
     TinyDB savedUserPhoneNumber;
     TinyDB getSavedUserPhoneNumber; //Get user Driver User Phone Number to act as ID
+    TinyDB getRideRequestResponse;
 
     Marker markerPickUp;    //Pickup Location Marker
     Marker markerDestination;  //Destination Marker
@@ -99,6 +107,14 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
     final int LOCATION_REQUEST_CODE = 1;
 
     Dialog myDialog;
+
+    //Public Driver Details
+    public String latitudeDriver;
+    public String longitudeDriver;
+    public String driverName = "Alex Mahone";
+    public String driverPhone = "0722833083";
+    public String requestId;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -125,11 +141,15 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
         }
 
         getSavedUserPhoneNumber = new TinyDB(getBaseContext());
+        getRideRequestResponse = new TinyDB(getBaseContext());
+
         customerUserId = getSavedUserPhoneNumber.getString("userPhoneNumber");  //Get Saved Phone Number to act as User ID
         callTaxi = (Button)findViewById(R.id.callTaxi);
         cancelRequest = (Button)findViewById(R.id.cancelRequest);
         cancelRequest.setVisibility(View.INVISIBLE);
         driverInfo.setVisibility(View.INVISIBLE);
+
+        checkForPushMessagesFromServer();
 
         autocompleteFragmentPickup = (PlaceAutocompleteFragment) getFragmentManager().findFragmentById(R.id.place_autocomplete_fragment_pickup);
         autocompleteFragmentPickup.setHint("Choose Pick Up Point");
@@ -329,18 +349,54 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
                 markerOrigin = mMap.addMarker(new MarkerOptions().position(pickUpLocation).title("Pick Me Up Here"));  //Add Marker, and Set Title of Marker
             }
             */
-            if(pickUpPointDescription == null)
-            {
-                displayToast(getBaseContext(), "Error, Missing Pickup Point");
-            }
+           // if(pickUpPointDescription == null)
+          //  {
+          //      displayToast(getBaseContext(), "Error, Missing Pickup Point");
+           // }
 
-            if(destinationDescription == null)
-            {
-                displayToast(getBaseContext(), "Error, Missing Pickup Point");
-            }
+           // if(destinationDescription == null)
+          //  {
+            //    displayToast(getBaseContext(), "Error, Missing Pickup Point");
+           // }
 
-            if(pickUpPointDescription != null && destinationDescription != null)
-            {
+           // if(pickUpPointDescription != null && destinationDescription != null)
+           // {
+                new Handler().postDelayed(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        String rideRequestResponse = getRideRequestResponse.getString("rideRequestResponse");  //Response From Server
+                        JSONObject jsonObjResponse = null;
+                        String status;
+                        String requestId;
+                        try
+                        {
+                            jsonObjResponse = new JSONObject(rideRequestResponse);  //Create New Json Object
+                            status = jsonObjResponse.getString("status");
+                            requestId = jsonObjResponse.getString("requestId");
+
+                            if(status.equals("Success"))
+                            {
+                                //Do Nothing
+                                displayToast(getBaseContext(), "Successful Request");
+
+                            }
+
+                            else
+                            {
+                                defaultScreen();
+                                displayToast(getBaseContext(), "Request Error, Please Try Again");
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            e.printStackTrace();
+                        }
+                    }
+                },2000);
+
+
                 taxiRequestMade = true;
                 int delayTime = 3000;
 
@@ -352,6 +408,7 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
 
                 new Handler().postDelayed(new Runnable()
                 {
+
                     @Override
                     public void run()
                     {
@@ -360,87 +417,17 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
 
                         //Get Individual Components of the Response
 
-                        if (rideRequestResponse.contains(","))
+                        if (rideRequestAccepted) //If Appropriate Driver Has Been Found
                         {
-                            String[] responseParts = rideRequestResponse.split(":");
-                            String statusString = responseParts[0];
-                            String messageString = responseParts[1];
-                            String requestIdString = responseParts[2];
-
-                            if(statusString.contains(":"))
-                            {
-                                String[] statusParts = statusString.split(":");
-                                String statusResponse = statusParts[1];
-                                displayToast(getBaseContext(), "Response: " +statusResponse);
-                                if(statusResponse.equals("Success"))
-                                {
-
-                                }
-
-                                else   //Error
-                                {
-
-                                }
-                            }
-
-                            if(messageString.contains(":"))
-                            {
-                                String[] messageParts = messageString.split(":");
-                                String messageResponse = messageParts[1];
-
-                                if(messageResponse.equals("Request Successfully made"))
-                                {
-
-                                }
-
-                                else if(messageResponse.equals("Customer does not exist"))
-                                {
-
-                                }
-
-                                else if(messageResponse.equals("Can't find driver"))
-                                {
-
-                                }
-                            }
-
-                            String rideIdStringValue = requestIdString.replaceAll("[^0-9]", ""); // returns 123
-                            int rideId = Integer.valueOf(rideIdStringValue);
-                            displayToast(getBaseContext(), "ID: " +rideId);
-                        }
-
-
-
-                        if(rideRequestAccepted) //If Appropriate Driver Has Been Found
-                        {
-                           /*
-                           Location customerLocation = new Location("");
-                           if(customerLocation != null)
-                           {
-                               customerLocation.setLatitude(pickUpLocation.latitude);
-                               customerLocation.setLongitude(pickUpLocation.longitude);
-                           }
-
-
-                           Location driverLocation = new Location("");  //Use Customer Location Till Driver Location Provided By Server System
-                           if(driverLocation != null)
-                           {
-                               driverLocation.setLatitude(pickUpLocation.latitude);
-                               driverLocation.setLongitude(pickUpLocation.longitude);
-                           }
-                           */
-
                             //float distanceBtwnCustomerAndDriver = customerLocation.distanceTo(driverLocation);         //Distance in Metres
                             float distanceBtwnCustomerAndDriver = 5324;  //Use Dummy Data for the Time Being
-                            float distanceInKms = distanceBtwnCustomerAndDriver/1000;
-                            if(distanceBtwnCustomerAndDriver < 100)  //If Distance Btwn Driver and Customer is less than 100m
+                            float distanceInKms = distanceBtwnCustomerAndDriver / 1000;
+                            if (distanceBtwnCustomerAndDriver < 100)  //If Distance Btwn Driver and Customer is less than 100m
                             {
                                 callTaxi.setBackgroundColor(Color.RED);
                                 callTaxi.setTextColor(Color.WHITE);
                                 callTaxi.setText("Driver has Arrived");
-                            }
-
-                            else                                     //If Distance Btwn Driver and Customer is more than 100m
+                            } else                                     //If Distance Btwn Driver and Customer is more than 100m
                             {
 
                                 callTaxi.setBackgroundColor(Color.RED);
@@ -475,7 +462,8 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
                         }
                     }
                 }, delayTime);
-             }
+
+           //  }
 
             }
         });
@@ -516,17 +504,25 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
 
     public void showAssignedDriverPopup()
     {
-        final String customerNumber = "0722833083";
         TextView txtclose;
         ImageView callBtn;
         ImageView sendSms;
         final EditText textMessage;
+        TextView name, phone;
         myDialog.setContentView(R.layout.custompopup_driver_details);
 
         txtclose =(TextView) myDialog.findViewById(R.id.txtclose);
+        name =(TextView) myDialog.findViewById(R.id.driverName);
+        phone =(TextView) myDialog.findViewById(R.id.driverPhone);
+
+        name.setText(driverName);
+        phone.setText(driverPhone);
+
+
         callBtn = (ImageView)myDialog.findViewById(R.id.callbutton);
         sendSms = (ImageView)myDialog.findViewById(R.id.sendSms);
         textMessage = (EditText)myDialog.findViewById(R.id.message);
+
 
         txtclose.setText("X");
         txtclose.setOnClickListener(new View.OnClickListener()
@@ -544,7 +540,7 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
             public void onClick(View v)
             {
                 Intent callIntent = new Intent(Intent.ACTION_CALL);
-                callIntent.setData(Uri.parse("tel:" + customerNumber));
+                callIntent.setData(Uri.parse("tel:" + driverPhone));
 
                 if (ActivityCompat.checkSelfPermission(CustomerMapActivity.this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED)
                 {
@@ -565,7 +561,7 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
 
                 try {
                     SmsManager sms_manager = SmsManager.getDefault();
-                    sms_manager.sendTextMessage(customerNumber, null, Message, null, null);
+                    sms_manager.sendTextMessage(driverPhone, null, Message, null, null);
                     textMessage.setText("");
                     displayToast(getBaseContext(), "Message Sent");
                 }
@@ -582,11 +578,119 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
     }
 
 
+
+
+    public void checkForPushMessagesFromServer()
+    {
+        PusherOptions options = new PusherOptions();
+        options.setCluster("ap2");
+        Pusher pusher = new Pusher("830d3e455fd9cfbcec39", options);
+
+        Channel channel = pusher.subscribe(userPhoneNumber);   //use Phone Number as Channel
+
+        channel.bind("no_driver", new SubscriptionEventListener()   //Events
+        {
+            @Override
+            public void onEvent(String channelName, String eventName, final String data)
+            {
+                //Received Messages From Server
+
+                final String pushedMessages = data;
+
+                final String noDriverFound = "No Driver Currently Available";
+
+                new Thread()
+                {
+                    public void run()
+                    {
+                       CustomerMapActivity.this.runOnUiThread(new Runnable()
+                        {
+                            public void run()
+                            {
+                                Toast.makeText(getBaseContext(), noDriverFound, Toast.LENGTH_LONG).show();
+                            }
+                        });
+                    }
+                }.start();
+
+            }
+        });
+
+
+
+        channel.bind("driver_accepted", new SubscriptionEventListener()   //Events
+        {
+            @Override
+            public void onEvent(String channelName, String eventName, final String data)
+            {
+                //Received Messages From Server
+                Log.e("DriverResponse: ", data);
+                final String pushedMessages = data;
+
+                JSONObject jsonObj = null;
+
+                try
+                {
+                    jsonObj = new JSONObject(pushedMessages);
+                }
+
+                catch (Exception e)
+                {
+                    e.printStackTrace();
+                }
+
+
+                try
+                {
+                    driverName = jsonObj.getString("driverName");
+                    driverPhone = jsonObj.getString("driverPhone");
+                    requestId = jsonObj.getString("requestId");
+                    latitudeDriver = jsonObj.getString("latitude");
+                    longitudeDriver = jsonObj.getString("longitude");
+
+                }
+
+
+                catch (Exception e)
+                {
+                    e.printStackTrace();
+                }
+
+            }
+        });
+
+
+        channel.bind("ride_started", new SubscriptionEventListener()   //Events
+        {
+            @Override
+            public void onEvent(String channelName, String eventName, final String data)
+            {
+                //Received Messages From Server
+
+                final String pushedMessages = data;
+
+                //Act on Response
+            }
+        });
+
+        pusher.connect();
+    }
+
+
     public void hideAssignedDriverDetails()
     {
     }
 
-
+    public void defaultScreen()
+    {
+        int backgroundColour = Color.parseColor("#40E0D0");
+        callTaxi.setBackgroundColor(backgroundColour);
+        callTaxi.setText("Call Taxi");
+        cancelRequest.setText("Cancel Request Successful");
+        callTaxi.setClickable(true);
+        rideRequestAccepted = true;
+        rideInSession = false;
+    }
 
     public void showDriverLocationMarker()
     {
