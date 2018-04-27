@@ -7,7 +7,9 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.location.Location;
 import android.net.Uri;
@@ -46,6 +48,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -73,6 +76,13 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
     String destinationDescription;     //Select your Destination
     String userPhoneNumber;
 
+    //Public Driver Details
+    public String latitudeDriver;
+    public String longitudeDriver;
+    public String driverName = "Alex Mahone";
+    public String driverPhone = "0722833083";
+    public String requestId;
+
     Button callTaxi;   //Request for a Taxi
     Button cancelRequest;    //Cancel Taxi Request
     Button driverInfo;
@@ -80,7 +90,7 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
     boolean locationDataCopied = false;
     boolean taxiRequestMade = false;
     boolean rideInSession = false;
-    boolean rideRequestAccepted = true;
+    boolean rideRequestAccepted = false;
 
 
     TinyDB savedUserPhoneNumber;
@@ -108,12 +118,6 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
 
     Dialog myDialog;
 
-    //Public Driver Details
-    public String latitudeDriver;
-    public String longitudeDriver;
-    public String driverName = "Alex Mahone";
-    public String driverPhone = "0722833083";
-    public String requestId;
 
     private static CustomerMapActivity inst;
     public static CustomerMapActivity instance()
@@ -122,7 +126,8 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
     }
 
     @Override
-    public void onStart() {
+    public void onStart()
+    {
         super.onStart();
         inst = this;
     }
@@ -134,13 +139,7 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_customer_map);
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-        myDialog = new Dialog(this);
-        driverInfo = (Button)findViewById(R.id.driverInformation);
 
-        savedUserPhoneNumber = new TinyDB(getBaseContext());
-        userPhoneNumber = savedUserPhoneNumber.getString("userPhoneNumber");
-        polylines = new ArrayList<>();
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED)
@@ -153,78 +152,64 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
             mapFragment.getMapAsync(this);
         }
 
+
+        myDialog = new Dialog(this);
+
+        savedUserPhoneNumber = new TinyDB(getBaseContext());
+        userPhoneNumber = savedUserPhoneNumber.getString("userPhoneNumber");
+        polylines = new ArrayList<>();
+
         getSavedUserPhoneNumber = new TinyDB(getBaseContext());
         getRideRequestResponse = new TinyDB(getBaseContext());
 
         customerUserId = getSavedUserPhoneNumber.getString("userPhoneNumber");  //Get Saved Phone Number to act as User ID
         callTaxi = (Button)findViewById(R.id.callTaxi);
+
         cancelRequest = (Button)findViewById(R.id.cancelRequest);
         cancelRequest.setVisibility(View.INVISIBLE);
+
+        driverInfo = (Button)findViewById(R.id.driverInformation);
         driverInfo.setVisibility(View.INVISIBLE);
 
-        checkForPushMessagesFromServer();
 
         autocompleteFragmentPickup = (PlaceAutocompleteFragment) getFragmentManager().findFragmentById(R.id.place_autocomplete_fragment_pickup);
         autocompleteFragmentPickup.setHint("Choose Pick Up Point");
         ((EditText)autocompleteFragmentPickup.getView().findViewById(R.id.place_autocomplete_search_input)).setTextSize(17.0f);
 
-        autocompleteFragmentPickup.setOnPlaceSelectedListener(new PlaceSelectionListener()
+        checkForPushMessagesFromServer();
+
+        autocompleteFragmentPickup.setOnPlaceSelectedListener(new PlaceSelectionListener()    //Pickup Point Autocomplete
         {
             @Override
-            public void onPlaceSelected(Place place)
+            public void onPlaceSelected(Place placePickup)
             {
-                pickUpPointDescription =  place.getName().toString();
-
-                latlngPickUpLocationCoordinates = place.getLatLng(); //Get Longitude and Latitude Coordinates
-                if(markerPickUp != null)
-                {
-                    markerPickUp.remove();
-                }
-                markerPickUp= mMap.addMarker(new MarkerOptions().position(latlngPickUpLocationCoordinates).title("Pick Up Point: " + pickUpPointDescription));  //Pick Up Point
-                mMap.animateCamera(CameraUpdateFactory.zoomTo(12), 2000, null);
-
-                autocompleteFragmentPickup.setHint("Enter Pickup Point");  //Change Hint. More Efficient instead of having two activities
+               handlePickupPointEntry(placePickup);
             }
 
             @Override
             public void onError(Status status)
-            {
-
-            }
+            {}
         });
 
         autocompleteFragmentDestination= (PlaceAutocompleteFragment) getFragmentManager().findFragmentById(R.id.place_autocomplete_fragment_destination);
         autocompleteFragmentDestination.setHint("Choose Destination");
         ((EditText)autocompleteFragmentDestination.getView().findViewById(R.id.place_autocomplete_search_input)).setTextSize(17.0f);
 
-        autocompleteFragmentDestination.setOnPlaceSelectedListener(new PlaceSelectionListener()
+        autocompleteFragmentDestination.setOnPlaceSelectedListener(new PlaceSelectionListener()    //Destination Point Autocomplete
         {
             @Override
-            public void onPlaceSelected(Place place)
+            public void onPlaceSelected(Place placeDestination)
             {
-
-                destinationDescription =  place.getName().toString();
-                latlngDestinationCoordinates = place.getLatLng(); //Get Longitude and Latitude Coordinates
-
-               // displayToast(getBaseContext(), "Location: " +latlngDestinationCoordinates);
-
-                if(markerDestination != null)
-                {
-                    markerDestination.remove();
-                }
-                markerDestination = mMap.addMarker(new MarkerOptions().position(latlngDestinationCoordinates).title("Destination: " + destinationDescription));
-                mMap.animateCamera(CameraUpdateFactory.zoomTo(12), 2000, null);
-                drawRouteToMarker(latlngPickUpLocationCoordinates, latlngDestinationCoordinates);  //Draw Route from PickUp Point to dstination
+                handleDestinationPointEntry(placeDestination);
             }
 
             @Override
             public void onError(Status status)
-            {
-            }
+            {}
         });
 
 
-        driverInfo.setOnClickListener(new View.OnClickListener()
+        driverInfo.setOnClickListener(new View.OnClickListener()    //Get Driver Information
         {
             @Override
             public void onClick(View v)
@@ -233,152 +218,22 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
             }
         });
 
-        cancelRequest.setOnClickListener(new View.OnClickListener()
+        cancelRequest.setOnClickListener(new View.OnClickListener()  //Cancel Ride Request
         {
             @Override
             public void onClick(View v)
             {
-                taxiRequestMade = false;
-
-                if(rideRequestAccepted)  //If Cancel Button Pressed while Driver has Already been Found
-                {
-                    //Pop up an Alert Dialog to confirm End of ride
-                    AlertDialog.Builder dialog = new AlertDialog.Builder(CustomerMapActivity.this);
-                    dialog.setTitle("Cancel Request?");
-                    dialog.setMessage("Confirm you want to Cancel Request?");
-                    dialog.setPositiveButton("Yes", new DialogInterface.OnClickListener()
-                    {
-                        @Override
-                        public void onClick(DialogInterface paramDialogInterface, int paramInt)
-                        {
-
-                            int backgroundColour = Color.parseColor("#40E0D0");
-                            callTaxi.setBackgroundColor(backgroundColour);
-                            callTaxi.setText("Call Taxi");
-                            cancelRequest.setText("Cancel Request Successful");
-                            callTaxi.setClickable(true);
-                            rideRequestAccepted = true;
-                            rideInSession = false;
-
-                            cancelRequest.setVisibility(View.INVISIBLE);
-                            driverInfo.setVisibility(View.INVISIBLE);
-                            autocompleteFragmentDestination.getView().setVisibility(View.VISIBLE);
-                            autocompleteFragmentDestination.getView().setClickable(true);
-                            autocompleteFragmentPickup.getView().setVisibility(View.VISIBLE);
-                            autocompleteFragmentPickup.getView().setClickable(true);
-
-                            if(markerPickUp != null && markerDestination != null)
-                            {
-                                markerPickUp.remove();            //Clear Pick Up Point Marker
-                                markerDestination.remove();       //Clear the Marker for the Destination previously chosen
-                                clearRouteFromMap();   //Clear Route From Map
-                            }
-
-                        }
-                    });
-
-                    dialog.setNegativeButton("No", new DialogInterface.OnClickListener()
-                    {
-
-                        @Override
-                        public void onClick(DialogInterface paramDialogInterface, int paramInt)
-                        {
-                            //Do Nothing
-                        }
-                    });
-
-                    dialog.show();
-
-                }
-
-                if(rideInSession)   //If Ride has Already Started
-                {
-                    //Pop up an Alert Dialog to confirm End of ride
-                    AlertDialog.Builder dialog = new AlertDialog.Builder(CustomerMapActivity.this);
-                    dialog.setTitle("End Ride Session?");
-                    dialog.setMessage("Confirm you want to End Session?");
-                    dialog.setPositiveButton("Yes", new DialogInterface.OnClickListener()
-                    {
-                        @Override
-                        public void onClick(DialogInterface paramDialogInterface, int paramInt)
-                        {
-
-                            int backgroundColour = Color.parseColor("#40E0D0");
-                            callTaxi.setBackgroundColor(backgroundColour);
-                            callTaxi.setText("Call Taxi");
-                            cancelRequest.setText("Session Ended Successfully");
-                            callTaxi.setClickable(true);
-                            rideRequestAccepted = true;
-                            rideInSession = false;
-
-                            cancelRequest.setVisibility(View.INVISIBLE);
-                            driverInfo.setVisibility(View.INVISIBLE);
-                            autocompleteFragmentDestination.getView().setVisibility(View.VISIBLE);
-                            autocompleteFragmentDestination.getView().setClickable(true);
-                            autocompleteFragmentPickup.getView().setVisibility(View.VISIBLE);
-                            autocompleteFragmentPickup.getView().setClickable(true);
-
-                            double currentFare = 734.54;
-                            cancelRequest.setText("End Session?");
-                            callTaxi.setText("Fare Payable: KSh" +currentFare);
-
-
-                            if(markerPickUp != null && markerDestination != null)
-                            {
-                                markerPickUp.remove();            //Clear Pick Up Point Marker
-                                markerDestination.remove();       //Clear the Marker for the Destination previously chosen
-                                clearRouteFromMap();   //Clear Route From Map
-                            }
-
-                        }
-                    });
-
-                    dialog.setNegativeButton("No", new DialogInterface.OnClickListener()
-                    {
-
-                        @Override
-                        public void onClick(DialogInterface paramDialogInterface, int paramInt)
-                        {
-                            //Do Nothing
-                        }
-                    });
-
-                    dialog.show();
-                }
+               handleCancelRideRequest();
             }
         });
 
 
-        callTaxi.setOnClickListener(new View.OnClickListener()
+        callTaxi.setOnClickListener(new View.OnClickListener()      //Make Taxi Request
         {
             @Override
             public void onClick(View v)
             {
-
-            /*
-            if(lastLocation!= null && lastLocation!= null)
-            {
-                pickUpLocation = new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude());   //Get Customer Pickup Location Co-ordinates
-                markerOrigin = mMap.addMarker(new MarkerOptions().position(pickUpLocation).title("Pick Me Up Here"));  //Add Marker, and Set Title of Marker
-            }
-            */
-           // if(pickUpPointDescription == null)
-          //  {
-          //      displayToast(getBaseContext(), "Error, Missing Pickup Point");
-           // }
-
-           // if(destinationDescription == null)
-          //  {
-            //    displayToast(getBaseContext(), "Error, Missing Pickup Point");
-           // }
-
-           // if(pickUpPointDescription != null && destinationDescription != null)
-           // {
-
-                sendUserData.sendRideRequest(getBaseContext(), userPhoneNumber, latlngPickUpLocationCoordinates, latlngDestinationCoordinates, pickUpPointDescription, destinationDescription);
-
-           //  }
-
+               handleCallTaxiRequest();
             }
         });
 
@@ -413,6 +268,25 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
                 myZoomLevel = mMap.getCameraPosition().zoom;
             }
         });
+    }
+
+
+    public void showAssignedDriverLocation()
+    {
+        double latitudeDriver = -1.2928832;
+        double longitudeDriver = 36.7880683;
+        LatLng locationDriver = new LatLng(latitudeDriver, longitudeDriver);
+
+        int heightCar = 40;
+        int widthCar = 35;
+        BitmapDrawable bitmapdrawCar =(BitmapDrawable)getResources().getDrawable(R.mipmap.car);
+        Bitmap bCar = bitmapdrawCar.getBitmap();
+        Bitmap smallCar = Bitmap.createScaledBitmap(bCar, widthCar, heightCar, false);
+
+        markerCurrentLocation = mMap.addMarker(new MarkerOptions().position(locationDriver).title("Driver Location").icon(BitmapDescriptorFactory.fromBitmap(smallCar)));  //Add Marker, and Set Title of Marker
+
+        locationDataCopied = true;
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(locationDriver));
     }
 
 
@@ -486,17 +360,75 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
         });
 
 
-
         myDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         myDialog.show();
     }
 
 
-    public void handleRideRequest(final Context context)
+    public void handlePickupPointEntry(Place place)
     {
+        pickUpPointDescription =  place.getName().toString();
+
+        latlngPickUpLocationCoordinates = place.getLatLng(); //Get Longitude and Latitude Coordinates
+        if(markerPickUp != null)
+        {
+            markerPickUp.remove();
+        }
+        markerPickUp= mMap.addMarker(new MarkerOptions().position(latlngPickUpLocationCoordinates).title("Pick Up Point: " + pickUpPointDescription));  //Pick Up Point
+        mMap.animateCamera(CameraUpdateFactory.zoomTo(12), 2000, null);
+
+        autocompleteFragmentPickup.setHint("Enter Pickup Point");  //Change Hint. More Efficient instead of having two activities
+    }
+
+
+    public void handleDestinationPointEntry(Place place)
+    {
+        destinationDescription =  place.getName().toString();
+        latlngDestinationCoordinates = place.getLatLng(); //Get Longitude and Latitude Coordinates
+
+        // displayToast(getBaseContext(), "Location: " +latlngDestinationCoordinates);
+
+        if(markerDestination != null)
+        {
+            markerDestination.remove();
+        }
+        markerDestination = mMap.addMarker(new MarkerOptions().position(latlngDestinationCoordinates).title("Destination: " + destinationDescription));
+        mMap.animateCamera(CameraUpdateFactory.zoomTo(12), 2000, null);
+        drawRouteToMarker(latlngPickUpLocationCoordinates, latlngDestinationCoordinates);  //Draw Route from PickUp Point to dstination
+    }
+
+    public void handleCallTaxiRequest()
+    {
+        /*
+        if(lastLocation!= null && lastLocation!= null)
+        {
+            pickUpLocation = new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude());   //Get Customer Pickup Location Co-ordinates
+            markerOrigin = mMap.addMarker(new MarkerOptions().position(pickUpLocation).title("Pick Me Up Here"));  //Add Marker, and Set Title of Marker
+        }
+        */
+        // if(pickUpPointDescription == null)
+        //  {
+        //      displayToast(getBaseContext(), "Error, Missing Pickup Point");
+        // }
+
+        // if(destinationDescription == null)
+        //  {
+        //    displayToast(getBaseContext(), "Error, Missing Pickup Point");
+        // }
+
+        // if(pickUpPointDescription != null && destinationDescription != null)
+        // {
+
+        sendUserData.sendRideRequest(getBaseContext(), userPhoneNumber, latlngPickUpLocationCoordinates, latlngDestinationCoordinates, pickUpPointDescription, destinationDescription);
+
+        //  }
+    }
+
+    public void updateUIAfterSuccessfulRideRequest()
+    {
+        rideRequestAccepted = true;
         taxiRequestMade = true;
         int delayTime = 3000;
-
 
         callTaxi.setBackgroundColor(Color.RED);
         callTaxi.setTextColor(Color.WHITE);
@@ -531,6 +463,8 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
                 cancelRequest.setVisibility(View.VISIBLE);
                 driverInfo.setVisibility(View.VISIBLE);
 
+                showAssignedDriverLocation();   //Display Driver's Current Location
+
                 cancelRequest.setText("Cancel Ride Request?");
                 autocompleteFragmentDestination.setText("");
                 autocompleteFragmentDestination.getView().setVisibility(View.GONE);
@@ -555,7 +489,116 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
     }
 
 
-    public void defaultScreen(Context context)
+
+    public void handleCancelRideRequest()
+    {
+        taxiRequestMade = false;
+
+        if(rideRequestAccepted)  //If Cancel Button Pressed while Driver has Already been Found
+        {
+            //Pop up an Alert Dialog to confirm End of ride
+            AlertDialog.Builder dialog = new AlertDialog.Builder(CustomerMapActivity.this);
+            dialog.setTitle("Cancel Request?");
+            dialog.setMessage("Confirm you want to Cancel Request?");
+            dialog.setPositiveButton("Yes", new DialogInterface.OnClickListener()
+            {
+                @Override
+                public void onClick(DialogInterface paramDialogInterface, int paramInt)
+                {
+                    int backgroundColour = Color.parseColor("#40E0D0");
+                    callTaxi.setBackgroundColor(backgroundColour);
+                    callTaxi.setText("Call Taxi");
+                    cancelRequest.setText("Cancel Request Successful");
+                    callTaxi.setClickable(true);
+                    rideRequestAccepted = true;
+                    rideInSession = false;
+
+                    cancelRequest.setVisibility(View.INVISIBLE);
+                    driverInfo.setVisibility(View.INVISIBLE);
+                    autocompleteFragmentDestination.getView().setVisibility(View.VISIBLE);
+                    autocompleteFragmentDestination.getView().setClickable(true);
+                    autocompleteFragmentPickup.getView().setVisibility(View.VISIBLE);
+                    autocompleteFragmentPickup.getView().setClickable(true);
+
+                    if(markerPickUp != null && markerDestination != null)
+                    {
+                        markerPickUp.remove();            //Clear Pick Up Point Marker
+                        markerDestination.remove();       //Clear the Marker for the Destination previously chosen
+                        clearRouteFromMap();   //Clear Route From Map
+                    }
+
+                }
+            });
+
+            dialog.setNegativeButton("No", new DialogInterface.OnClickListener()
+            {
+
+                @Override
+                public void onClick(DialogInterface paramDialogInterface, int paramInt)
+                {
+                    //Do Nothing
+                }
+            });
+
+            dialog.show();
+
+        }
+
+        if(rideInSession)   //If Ride has Already Started
+        {
+            //Pop up an Alert Dialog to confirm End of ride
+            AlertDialog.Builder dialog = new AlertDialog.Builder(CustomerMapActivity.this);
+            dialog.setTitle("End Ride Session?");
+            dialog.setMessage("Confirm you want to End Session?");
+            dialog.setPositiveButton("Yes", new DialogInterface.OnClickListener()
+            {
+                @Override
+                public void onClick(DialogInterface paramDialogInterface, int paramInt)
+                {
+                    int backgroundColour = Color.parseColor("#40E0D0");
+                    callTaxi.setBackgroundColor(backgroundColour);
+                    callTaxi.setText("Call Taxi");
+                    cancelRequest.setText("Session Ended Successfully");
+                    callTaxi.setClickable(true);
+                    rideRequestAccepted = true;
+                    rideInSession = false;
+
+                    cancelRequest.setVisibility(View.INVISIBLE);
+                    driverInfo.setVisibility(View.INVISIBLE);
+                    autocompleteFragmentDestination.getView().setVisibility(View.VISIBLE);
+                    autocompleteFragmentDestination.getView().setClickable(true);
+                    autocompleteFragmentPickup.getView().setVisibility(View.VISIBLE);
+                    autocompleteFragmentPickup.getView().setClickable(true);
+
+                    double currentFare = 734.54;
+                    cancelRequest.setText("End Session?");
+                    callTaxi.setText("Fare Payable: KSh" +currentFare);
+
+                    if(markerPickUp != null && markerDestination != null)
+                    {
+                        markerPickUp.remove();            //Clear Pick Up Point Marker
+                        markerDestination.remove();       //Clear the Marker for the Destination previously chosen
+                        clearRouteFromMap();   //Clear Route From Map
+                    }
+                }
+            });
+
+            dialog.setNegativeButton("No", new DialogInterface.OnClickListener()
+            {
+
+                @Override
+                public void onClick(DialogInterface paramDialogInterface, int paramInt)
+                {
+                    //Do Nothing
+                }
+            });
+
+            dialog.show();
+        }
+    }
+
+
+    public void defaultScreen()
     {
         int backgroundColour = Color.parseColor("#40E0D0");
         callTaxi.setBackgroundColor(backgroundColour);
@@ -565,6 +608,7 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
         rideRequestAccepted = true;
         rideInSession = false;
     }
+
 
     public void checkForPushMessagesFromServer()
     {
@@ -662,10 +706,6 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
         pusher.connect();
     }
 
-
-    public void hideAssignedDriverDetails()
-    {
-    }
 
 
     public void showDriverLocationMarker()
@@ -859,7 +899,8 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
 
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
+    public boolean onOptionsItemSelected(MenuItem item)
+    {
         switch (item.getItemId())
         {
             case R.id.settingsId:

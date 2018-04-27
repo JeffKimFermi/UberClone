@@ -129,8 +129,6 @@ public class sendUserData
     //Send Ride Request
     public static  void sendRideRequest(Context myContext, final String userId, LatLng customerPickUpLocation, LatLng customerDestination, final String customerPickUpLocationDescription, final String customerDestinationDescription)
     {
-        final TinyDB saveRideRequestResponse = new TinyDB(myContext);  //Will save a boolean value representing registration status
-
         final Context context= myContext;
         final JSONObject jsonObj = new JSONObject();
         try
@@ -167,12 +165,12 @@ public class sendUserData
 
                             if(statusResponse.equals("Success"))
                             {
-                                instCustomerMapActivity.handleRideRequest(context);
+                                instCustomerMapActivity.updateUIAfterSuccessfulRideRequest();
                             }
 
                             else
                             {
-                                instCustomerMapActivity.defaultScreen(context);
+                                instCustomerMapActivity.defaultScreen();
                                 displayToast(context, "Request Error, Please Try Again");
                             }
                         }
