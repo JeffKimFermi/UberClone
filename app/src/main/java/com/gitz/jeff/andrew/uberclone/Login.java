@@ -26,8 +26,24 @@ public class Login extends AppCompatActivity
     private static final int  displayTime = 2200;  //Alert DialogBox Display Time
     TinyDB loginStatus;  //Will save a boolean value representing registration status
     TinyDB savedUserPhoneNumber;
-    String userPhoneNumber;
-    boolean booleanLogin = false;
+    String userPhone;
+    String userPassword;
+    boolean loginState = false;
+    AlertDialog alertDialog;
+
+    private static Login inst;
+    public static Login instance()
+    {
+        return inst;
+    }
+
+    @Override
+    public void onStart()
+    {
+        super.onStart();
+        inst = this;
+    }
+
 
 
     @Override
@@ -35,74 +51,79 @@ public class Login extends AppCompatActivity
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
+        alertDialog = new SpotsDialog(Login.this);  //Display Alert for 4 Seconds before going to next Activity
         loginButton = (Button)findViewById(R.id.login);
         savedUserType = new TinyDB(getBaseContext());
         loginStatus = new TinyDB(getBaseContext());
         savedUserPhoneNumber = new TinyDB(getBaseContext());
+
+
+        //final AlertDialog alertDialog = new SpotsDialog(Login.this, R.style.customLogin);  //Display Alert for 4 Seconds before going to next Activity
+        loginPhone = (EditText)findViewById(R.id.phoneNumber);
+        loginPassword = (EditText)findViewById(R.id.loginPass);
+        userType = savedUserType.getInt("usesType");
+
+        userPhone = loginPhone.getText().toString().trim();
+
+        userPassword = loginPassword.getText().toString().trim();
 
         loginButton.setOnClickListener(new View.OnClickListener()
         {
             @Override
             public void onClick(View v)
             {
-                handleLoginProcess();
+                handleLoginRequest();
+                showDialogAlertDuringLogin();
+                Log.e("Phone", userPhone);
+                Log.e("pass", userPassword);
             }
         });
     }
 
 
-    public void handleLoginProcess()
+    public void handleLoginRequest()
     {
-        //final AlertDialog alertDialog = new SpotsDialog(Login.this, R.style.customLogin);  //Display Alert for 4 Seconds before going to next Activity
-        final AlertDialog alertDialog = new SpotsDialog(Login.this);  //Display Alert for 4 Seconds before going to next Activity
-        alertDialog.show();
+        sendUserData.sendLoginRequest(getBaseContext(), userPhone, userPassword);  //Use Phone Number as ID and Password
+    }
 
-        loginPhone = (EditText)findViewById(R.id.phoneNumber);
-        loginPassword = (EditText)findViewById(R.id.loginPass);
-        userType = savedUserType.getInt("usesType");
 
-        final String enteredPhoneNumber = loginPhone.getText().toString().trim();
+    public void updateUIAfterSuccessLoginRequest()
+    {
+        loginState = true;
+        loginStatus.putBoolean("loginStatus", loginState);
 
-        String enteredPassword = loginPassword.getText().toString().trim();
+        savedUserPhoneNumber.putString("userPhoneNumber", userPhone);  //Save user Phone Number that will be used throughout
 
-        sendUserData.sendLoginRequest(getBaseContext(), enteredPhoneNumber, enteredPassword);  //Use Phone Number as ID and Password
-
-        new Handler().postDelayed(new Runnable()
+        if (userType == 1)             //If Customer in Use
         {
-            @Override
-            public void run()
-            {
-                booleanLogin = loginStatus.getBoolean("loginStatus");                           //Get True or false
+            Intent intent = new Intent(getBaseContext(), CustomerMapActivity.class);
+            startActivity(intent);
+            alertDialog.dismiss();     //Dismiss it after 4 seconds
 
-                if(booleanLogin)                   //If valid credentials
-                {
-                    userPhoneNumber = enteredPhoneNumber;   //Pass Phone Number String
-                    savedUserPhoneNumber.putString("userPhoneNumber", userPhoneNumber);  //Save user Phone Number that will be used throughout
+        }
+        else if (userType == 2)        //If Driver in Use
+        {
+            Intent intent = new Intent(getBaseContext(), DriverMapActivity.class);
+            startActivity(intent);
+            alertDialog.dismiss();    //Dismiss it after 4 seconds
+        }
 
-                    if (userType == 1)             //If Customer in Use
-                    {
-                        Intent intent = new Intent(getBaseContext(), CustomerMapActivity.class);
-                        startActivity(intent);
-                        alertDialog.dismiss();     //Dismiss it after 4 seconds
+    }
 
-                    }
-                    else if (userType == 2)        //If Driver in Use
-                    {
-                        Intent intent = new Intent(getBaseContext(), DriverMapActivity.class);
-                        startActivity(intent);
-                        alertDialog.dismiss();    //Dismiss it after 4 seconds
-                    }
-                }
+    public void showDialogAlertDuringLogin()
+    {
+        alertDialog.show();
+    }
 
-                else                               //If invalid credentials
-                {
-                    displayToast(getBaseContext(), "Error, Invalid Phone Number or Password");
-                    alertDialog.dismiss();    //Dismiss it after 4 seconds
-                    loginPassword.setText("");
-                    loginPhone.setText("");
-                }
-            }
-        }, displayTime);
+    public void hideDialogAlertDuringLogin()
+    {
+        alertDialog.dismiss();    //Dismiss it after 4 seconds
+    }
+
+    public void clearEditTextBoxes()
+    {
+        loginPassword.setText("");
+        loginPhone.setText("");
     }
 
 

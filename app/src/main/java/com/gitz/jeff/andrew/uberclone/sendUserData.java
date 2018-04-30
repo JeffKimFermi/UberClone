@@ -443,8 +443,6 @@ public class sendUserData
     //Send User Login Details
     public static void sendLoginRequest (Context myContext,final String userId, final String userPassword)
     {
-        final TinyDB loginStatus = new TinyDB(myContext);
-
         final Context context= myContext;
         JSONObject jsonObj = new JSONObject();
         try
@@ -464,7 +462,7 @@ public class sendUserData
                     @Override
                     public void onResponse(JSONObject response)
                     {
-                        boolean booleanLogin = false;
+                        Login instLogin = Login.instance();
 
                         String loginResponse = "";
                         try
@@ -479,25 +477,38 @@ public class sendUserData
 
                         if(loginResponse.equals("Login Successful"))
                         {
-                            booleanLogin = true;
+                            instLogin.updateUIAfterSuccessLoginRequest();  //Update UI Accordingly
+                            instLogin.hideDialogAlertDuringLogin();
                         }
 
                         else if(loginResponse.equals("Invalid Password"))
                         {
-                            booleanLogin = false;
+                            displayToast(context, "Error, Invalid Password");
+                            instLogin.clearEditTextBoxes();
+                            instLogin.hideDialogAlertDuringLogin();
+
+                            instLogin.updateUIAfterSuccessLoginRequest();  //Update UI Accordingly
+
                         }
 
-                        else if (loginResponse.equals("Login Unsuccessful, user does not Exist"))
+                        else if (loginResponse.equals("Login unsuccessful. User does not exist "))
                         {
-                            booleanLogin = false;
+                            displayToast(context, "Error, User Does not Exist");
+                            instLogin.clearEditTextBoxes();
+                            instLogin.hideDialogAlertDuringLogin();
+
+                            instLogin.updateUIAfterSuccessLoginRequest();  //Update UI Accordingly
+
                         }
 
                         else   //Do nothing for now
                         {
-                           // booleanLogin = true;
+                            displayToast(context, "Error Login In");
+
+                            instLogin.updateUIAfterSuccessLoginRequest();  //Update UI Accordingly
+
                         }
 
-                        loginStatus.putBoolean("loginStatus",  booleanLogin);
                         Log.e("Response", response.toString());
                     }
                 },

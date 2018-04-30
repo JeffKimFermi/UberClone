@@ -26,7 +26,6 @@ public class userType extends AppCompatActivity
     TinyDB saveUserType;
     TinyDB savedRegistrationComplete;
     int userType = 0;
-    int registrationStatus = 0;                      //0 is Default, 1 is when registration already done
     int customerUser = 1;                            // 1 For Customer, 2 For Driver;
     int driverUser = 2;                              // 1 For Customer, 2 For Driver;
     private static final int MY_PERMISSIONS_REQUEST_ACCOUNTS = 1;

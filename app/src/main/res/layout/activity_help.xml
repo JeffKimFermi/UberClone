@@ -49,7 +49,7 @@
                 android:layout_width="70sp"
                 android:layout_height="70sp"
                 android:id="@+id/callCustomerCare"
-                android:src="@drawable/ic_call_customer"
+                android:src="@drawable/callbutton3"
                 android:padding="12sp"
                 android:scaleType="fitCenter"
                 android:adjustViewBounds="true"

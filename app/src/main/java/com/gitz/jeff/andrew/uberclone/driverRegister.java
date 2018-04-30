@@ -81,11 +81,12 @@ public class driverRegister extends AppCompatActivity {
             String pass1 = passWord1.getText().toString();    //First Password
             String pass2 = passWord2.getText().toString();     //Second Password/Password confirmation
 
-        /*Perform Error Handling*/
+            /*Perform Error Handling*/
             if (pass1.matches("") || pass2.matches(""))        //If No Input Entered
             {
-                displayToast(getBaseContext(), "Missing Input");
-            } else                                              //Acceptable Input
+                displayToast(getBaseContext(), "Error, you've not Entered an Input.");
+            }
+            else                                              //Acceptable Input
             {
                 if (pass1.equals(pass2))
                 {

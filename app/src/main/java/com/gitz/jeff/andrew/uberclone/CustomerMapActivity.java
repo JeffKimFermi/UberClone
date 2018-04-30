@@ -283,10 +283,15 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
         Bitmap bCar = bitmapdrawCar.getBitmap();
         Bitmap smallCar = Bitmap.createScaledBitmap(bCar, widthCar, heightCar, false);
 
-        markerCurrentLocation = mMap.addMarker(new MarkerOptions().position(locationDriver).title("Driver Location").icon(BitmapDescriptorFactory.fromBitmap(smallCar)));  //Add Marker, and Set Title of Marker
+        markerDriverLocation = mMap.addMarker(new MarkerOptions().position(locationDriver).title("Driver Location").icon(BitmapDescriptorFactory.fromBitmap(smallCar)));  //Add Marker, and Set Title of Marker
 
         locationDataCopied = true;
         mMap.moveCamera(CameraUpdateFactory.newLatLng(locationDriver));
+    }
+
+    public void hideAssignedDriverLocation()
+    {
+        markerDriverLocation.remove();
     }
 
 
@@ -452,7 +457,6 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
 
                 else                                     //If Distance Btwn Driver and Customer is more than 100m
                 {
-
                     callTaxi.setBackgroundColor(Color.RED);
                     callTaxi.setTextColor(Color.WHITE);
                     callTaxi.setText("Driver Found: " + String.valueOf(distanceInKms) + " km");  //Change Button Appropriately
@@ -512,6 +516,8 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
                     callTaxi.setClickable(true);
                     rideRequestAccepted = true;
                     rideInSession = false;
+
+                    hideAssignedDriverLocation();
 
                     cancelRequest.setVisibility(View.INVISIBLE);
                     driverInfo.setVisibility(View.INVISIBLE);
@@ -573,6 +579,8 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
                     double currentFare = 734.54;
                     cancelRequest.setText("End Session?");
                     callTaxi.setText("Fare Payable: KSh" +currentFare);
+
+                    hideAssignedDriverLocation();
 
                     if(markerPickUp != null && markerDestination != null)
                     {
@@ -706,17 +714,6 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
         pusher.connect();
     }
 
-
-
-    public void showDriverLocationMarker()
-    {
-        if(markerDriverLocation != null)
-        {
-           markerDriverLocation.remove();
-        }
-        markerDriverLocation = mMap.addMarker(new MarkerOptions().position(latlngPickUpLocationCoordinates).title("Driver Location: " + pickUpPointDescription));  //Pick Up Point
-        mMap.animateCamera(CameraUpdateFactory.zoomTo(12), 2000, null);
-    }
 
     protected synchronized void buildGoogleApiClient()
     {

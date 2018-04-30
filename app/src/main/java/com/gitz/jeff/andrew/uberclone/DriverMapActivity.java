@@ -67,7 +67,8 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
     Location lastLocation;
     LatLng currentLocation;
     LatLng previousLocation;
-    Marker markerCurrentLocation; //My Current Locaton Marker
+    Marker markerCurrentLocation;   //My Current Location Marker
+    Marker markerCustomerLocation;  //Customer Location Marker
 
     public static float myZoomLevel = 14;
     private List<Polyline> polylines;
@@ -196,7 +197,7 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
 
                     if(statusResponse.equals("Success"))
                     {
-                        newCustomerAlertPopup();
+                       // newCustomerAlertPopup();
                     }
                     else
                     {
@@ -569,6 +570,7 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
                 customerInformation.setVisibility(View.INVISIBLE);
                 rideInSession = false;
                 readyToStartRide = false;
+                hideAssignedCustomerLocation();
             }
         });
 
@@ -612,6 +614,7 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
                 endOfSession.setVisibility(View.GONE);
                 rideInSession = false;
                 readyToStartRide = false;
+                hideAssignedCustomerLocation();
             }
         });
 
@@ -643,11 +646,16 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
         Bitmap bPerson = bitmapdrawPerson.getBitmap();
         Bitmap smallPerson = Bitmap.createScaledBitmap(bPerson, widthPerson, heightPerson, false);
 
-        markerCurrentLocation = mMap.addMarker(new MarkerOptions().position(locationCustomer).title("Customer Location").icon(BitmapDescriptorFactory.fromBitmap(smallPerson)));  //Add Marker, and Set Title of Marker
+        markerCustomerLocation = mMap.addMarker(new MarkerOptions().position(locationCustomer).title("Customer Location").icon(BitmapDescriptorFactory.fromBitmap(smallPerson)));  //Add Marker, and Set Title of Marker
 
         mMap.moveCamera(CameraUpdateFactory.newLatLng(locationCustomer));
     }
 
+
+    public void hideAssignedCustomerLocation()
+    {
+        markerCustomerLocation.remove();
+    }
 
 
     public void rideCancelled()
