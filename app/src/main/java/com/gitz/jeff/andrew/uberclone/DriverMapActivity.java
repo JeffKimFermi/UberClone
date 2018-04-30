@@ -57,6 +57,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.gitz.jeff.andrew.uberclone.R.id.customerName;
 import static com.gitz.jeff.andrew.uberclone.R.id.map;
 
 public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, com.google.android.gms.location.LocationListener, RoutingListener {
@@ -67,6 +68,7 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
     Location lastLocation;
     LatLng currentLocation;
     LatLng previousLocation;
+    LatLng currentDriverLocation;
     Marker markerCurrentLocation;   //My Current Location Marker
     Marker markerCustomerLocation;  //Customer Location Marker
 
@@ -86,6 +88,16 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
     boolean locationDataCopied = false;
     boolean driverAvailable = false;  //Set When Driver is Available
     boolean readyToStartRide = false;
+    boolean showCustomerPopup = false;
+
+    //Public Driver Details
+    public String latitudeCustomer;
+    public String longitudeCustomer;
+    public String customerName = "Lisa Randall";
+    public String customerPhone = "0722833083";
+    public String requestId;
+    TextView pickup, destination;
+
 
     Dialog myDialog;
 
@@ -107,8 +119,14 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
 
 
         myDialog = new Dialog(this);
+        myDialog.setContentView(R.layout.newcustomeralert);
+
         savedUserPhoneNumber = new TinyDB(getBaseContext());
         userPhoneNumber = savedUserPhoneNumber.getString("userPhoneNumber");
+
+        pickup = (TextView)myDialog.findViewById(R.id.pickup);
+        destination = (TextView)myDialog.findViewById(R.id.destination);
+
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         polylines = new ArrayList<>();
@@ -119,9 +137,16 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
         customerInformation = (Button)findViewById(R.id.customerInfo);
         customerInformation.setVisibility(View.INVISIBLE);
 
-        checkForPushMessagesFromServer();  //Check for Push Messages
 
         driverMainButton = (Button)findViewById(R.id.driverMainButton);
+
+        checkForPushMessagesFromServer();  //Check for Push Messages
+
+        if(showCustomerPopup)  //If true
+        {
+            newCustomerAlertPopup();
+        }
+
         driverMainButton.setOnClickListener(new View.OnClickListener()       //Main Driver Functionality Button
         {
             @Override
@@ -177,27 +202,25 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
                 Log.e("PushResponse", data);
                 final String pushedMessages = data;
 
-                JSONObject jsonObj = null;
+                JSONObject jsonObj = null;   //Create JSON Object
+                String statusResponse;
 
                 try
                 {
                     jsonObj = new JSONObject(pushedMessages);
-                }
 
-                catch (Exception e)
-                {
-                    e.printStackTrace();
-                }
-
-                String statusResponse;
-                try
-                {
                     statusResponse = jsonObj.getString("status");
                     String requestId = jsonObj.getString("requestId");
 
+                    requestId = jsonObj.getString("requestId");
+                    customerName = jsonObj.getString("driverName");
+                    customerPhone = jsonObj.getString("driverPhone");
+                    latitudeCustomer = jsonObj.getString("latitude");
+                    longitudeCustomer = jsonObj.getString("longitude");
+
                     if(statusResponse.equals("Success"))
                     {
-                       // newCustomerAlertPopup();
+                        showCustomerPopup = true;
                     }
                     else
                     {
@@ -209,7 +232,6 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
                 {
                     e.printStackTrace();
                 }
-
 
             }
         });
@@ -269,11 +291,21 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
         TextView txtclose;
         ImageView callBtn;
         ImageView sendSms;
+        TextView name, phone;
         final EditText textMessage;
 
         myDialog.setContentView(R.layout.custompopup_customer_details);
 
         txtclose =(TextView) myDialog.findViewById(R.id.txtclose);
+        name = (TextView) myDialog.findViewById(R.id.customerName);
+        phone = (TextView)myDialog.findViewById(R.id.customerPhone);
+
+        //pickup.setText();
+        //destination.setText();
+
+        name.setText(customerName);
+        phone.setText(customerNumber);
+
         callBtn = (ImageView)myDialog.findViewById(R.id.callbutton);
         sendSms = (ImageView)myDialog.findViewById(R.id.sendSms);
         textMessage = (EditText)myDialog.findViewById(R.id.message);
@@ -337,10 +369,12 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
         Button acceptRequest;
         Button rejectRequest;
 
-        myDialog.setContentView(R.layout.newcustomeralert);
         txtclose = (TextView) myDialog.findViewById(R.id.txtclose);
         acceptRequest = (Button)myDialog.findViewById(R.id.accept);
         rejectRequest = (Button)myDialog.findViewById(R.id.reject);
+
+        //pickup.setText();
+        //destination.setText();
 
         txtclose.setText("X");
 
@@ -459,6 +493,7 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
             lastLocation = location;  //Copy the Data
 
             LatLng initLatLang = new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude());
+            currentDriverLocation = initLatLang;
             markerCurrentLocation = mMap.addMarker(new MarkerOptions().position(initLatLang).title("My Current Location").icon(BitmapDescriptorFactory.fromBitmap(smallCar)));  //Add Marker, and Set Title of Marker
 
             locationDataCopied = true;
@@ -474,6 +509,7 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
                 lastLocation = location;
 
                 LatLng currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
+                currentDriverLocation = currentLatLng;
 
                 markerCurrentLocation = mMap.addMarker(new MarkerOptions().position(currentLatLng).title("My Current Location").icon(BitmapDescriptorFactory.fromBitmap(smallCar)));  //Add Marker, and Set Title of Marker
                 mMap.moveCamera(CameraUpdateFactory.newLatLng(currentLatLng));
@@ -530,6 +566,7 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
     @Override
     public void onConnected(@Nullable Bundle bundle)
     {
+        int rideId = 1;
         locationRequest = new LocationRequest();
         locationRequest.setInterval(2500);    //Refresh rate
         locationRequest.setFastestInterval(2500);
@@ -540,6 +577,12 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
 
             return;
         }
+
+        if(readyToStartRide)
+        {
+            //sendUserData.sendPeriodicDriverLocationToCustomer(getBaseContext(), rideId, currentDriverLocation);   //Send every 2.5s Driver Location
+        }
+
         LocationServices.FusedLocationApi.requestLocationUpdates(googleApiClient, locationRequest, this);
     }
 

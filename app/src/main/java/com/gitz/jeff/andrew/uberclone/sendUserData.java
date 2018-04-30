@@ -204,7 +204,7 @@ public class sendUserData
         JSONObject jsonObj = new JSONObject();
         try
         {
-            jsonObj.put("requestId", ""+requestId);   //Unique ID of the Transaction
+            jsonObj.put("requestId", requestId);   //Unique ID of the Transaction
             jsonObj.put("driverPhone", userId);    //User ID which is the Driver Phone
         }
         catch (JSONException jse)
@@ -524,6 +524,109 @@ public class sendUserData
 
         Volley.newRequestQueue(context).add(getRequest);
     }
+
+
+    //Send Notification Driver Accepted Ride Request
+    public static void sendPeriodicDriverLocationToCustomer(Context myContext, final int requestId, LatLng driverCurrentLocation)
+    {
+        final Context context= myContext;
+        JSONObject jsonObj = new JSONObject();
+        try
+        {
+            jsonObj.put("requestId", requestId);   //Unique ID of the Transaction
+            jsonObj.put("driverCurrentLocation", driverCurrentLocation);    //User ID which is the Driver Phone
+        }
+        catch (JSONException jse)
+        {
+            jse.printStackTrace();
+        }
+
+        String url= "http://46.101.73.84:8080/request/driver/accept";
+        JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.POST, url,jsonObj,   //url,jsonObj
+                new Response.Listener<JSONObject>()
+                {
+                    @Override
+                    public void onResponse(JSONObject response)
+                    {
+                        String rideRequestResponse = "";
+
+                        try
+                        {
+                            rideRequestResponse = response.getString("response");
+                        }
+
+                        catch (Exception e)
+                        {
+                            e.printStackTrace();
+                        }
+
+                        Log.e("Response", response.toString());
+
+                    }
+                },
+                new Response.ErrorListener()
+                {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.e("Error.Response", error.toString());
+                    }
+                }
+        );
+
+        Volley.newRequestQueue(context).add(getRequest);
+    }
+
+
+    //Send Notification Driver Accepted Ride Request
+    public static void sendPeriodicCustomerLocationToDriver(Context myContext, final int requestId, LatLng driverCurrentLocation)
+    {
+        final Context context= myContext;
+        JSONObject jsonObj = new JSONObject();
+        try
+        {
+            jsonObj.put("requestId", requestId);   //Unique ID of the Transaction
+            jsonObj.put("driverCurrentLocation", driverCurrentLocation);    //User ID which is the Driver Phone
+        }
+        catch (JSONException jse)
+        {
+            jse.printStackTrace();
+        }
+
+        String url= "http://46.101.73.84:8080/request/driver/accept";
+        JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.POST, url,jsonObj,   //url,jsonObj
+                new Response.Listener<JSONObject>()
+                {
+                    @Override
+                    public void onResponse(JSONObject response)
+                    {
+                        String rideRequestResponse = "";
+
+                        try
+                        {
+                            rideRequestResponse = response.getString("response");
+                        }
+
+                        catch (Exception e)
+                        {
+                            e.printStackTrace();
+                        }
+
+                        Log.e("Response", response.toString());
+
+                    }
+                },
+                new Response.ErrorListener()
+                {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.e("Error.Response", error.toString());
+                    }
+                }
+        );
+
+        Volley.newRequestQueue(context).add(getRequest);
+    }
+
 
     public static  void displayToast(Context myContext, String displayToastMessage)
     {

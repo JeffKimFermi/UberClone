@@ -102,9 +102,9 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
     Marker markerCurrentLocation; //My Current Locaton Marker
     Marker markerDriverLocation;
 
-    public LatLng latlngDestinationCoordinates;    //Longitude Latitude coordates of your destination
-    public LatLng latlngPickUpLocationCoordinates;  //Longitude Latitude co-ordinates of your preferred Pickup Location
-    public LatLng pickUpLocation;   //Will Hold Pick Up Location Co-ordinates
+    LatLng latlngDestinationCoordinates;    //Longitude Latitude coordates of your destination
+    LatLng latlngPickUpLocationCoordinates;  //Longitude Latitude co-ordinates of your preferred Pickup Location
+    LatLng currentCustomerLocation;
 
     private List<Polyline> polylines;
 
@@ -670,24 +670,13 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
                 try
                 {
                     jsonObj = new JSONObject(pushedMessages);
-                }
 
-                catch (Exception e)
-                {
-                    e.printStackTrace();
-                }
-
-
-                try
-                {
                     driverName = jsonObj.getString("driverName");
                     driverPhone = jsonObj.getString("driverPhone");
                     requestId = jsonObj.getString("requestId");
                     latitudeDriver = jsonObj.getString("latitude");
                     longitudeDriver = jsonObj.getString("longitude");
-
                 }
-
 
                 catch (Exception e)
                 {
@@ -734,6 +723,7 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
         {
             lastLocation = location;  //Copy the Data
             LatLng initLatLang = new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude());
+            currentCustomerLocation = initLatLang;
             markerCurrentLocation = mMap.addMarker(new MarkerOptions().position(initLatLang).title("My Current Location"));  //Add Marker, and Set Title of Marker
             locationDataCopied = true;
             mMap.moveCamera(CameraUpdateFactory.newLatLng(initLatLang));
@@ -747,6 +737,7 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
                 markerCurrentLocation.remove();
                 lastLocation = location;
                 LatLng currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
+                currentCustomerLocation = currentLatLng;
                 markerCurrentLocation = mMap.addMarker(new MarkerOptions().position(currentLatLng).title("My Current Location"));  //Add Marker, and Set Title of Marker
                 mMap.moveCamera(CameraUpdateFactory.newLatLng(currentLatLng));
 
@@ -777,6 +768,7 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
     @Override
     public void onConnected(@Nullable Bundle bundle)
     {
+        int rideId = 1;
         locationRequest = new LocationRequest();
         locationRequest.setInterval(2500);    //Refresh rate
         locationRequest.setFastestInterval(2500);
@@ -786,6 +778,11 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
         {
 
             return;
+        }
+
+        if(rideRequestAccepted)  //Send Periodic Customer Co-ordinates to Driver
+        {
+            //sendUserData.sendPeriodicCustomerLocationToDriver(getBaseContext(), rideId, currentCustomerLocation);
         }
         LocationServices.FusedLocationApi.requestLocationUpdates(googleApiClient, locationRequest, this);
     }
