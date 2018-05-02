@@ -63,9 +63,6 @@ public class Login extends AppCompatActivity
         loginPassword = (EditText)findViewById(R.id.loginPass);
         userType = savedUserType.getInt("usesType");
 
-        userPhone = loginPhone.getText().toString().trim();
-
-        userPassword = loginPassword.getText().toString().trim();
 
         loginButton.setOnClickListener(new View.OnClickListener()
         {
@@ -74,8 +71,6 @@ public class Login extends AppCompatActivity
             {
                 handleLoginRequest();
                 showDialogAlertDuringLogin();
-                Log.e("Phone", userPhone);
-                Log.e("pass", userPassword);
             }
         });
     }
@@ -83,6 +78,9 @@ public class Login extends AppCompatActivity
 
     public void handleLoginRequest()
     {
+        userPhone = loginPhone.getText().toString().trim();
+        userPassword = loginPassword.getText().toString().trim();
+
         sendUserData.sendLoginRequest(getBaseContext(), userPhone, userPassword);  //Use Phone Number as ID and Password
     }
 

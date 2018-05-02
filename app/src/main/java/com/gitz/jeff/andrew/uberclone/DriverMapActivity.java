@@ -56,8 +56,6 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import static com.gitz.jeff.andrew.uberclone.R.id.customerName;
 import static com.gitz.jeff.andrew.uberclone.R.id.map;
 
 public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, com.google.android.gms.location.LocationListener, RoutingListener {
@@ -88,7 +86,6 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
     boolean locationDataCopied = false;
     boolean driverAvailable = false;  //Set When Driver is Available
     boolean readyToStartRide = false;
-    boolean showCustomerPopup = false;
 
     //Public Driver Details
     public String latitudeCustomer;
@@ -118,14 +115,9 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
         }
 
 
-        myDialog = new Dialog(this);
-        myDialog.setContentView(R.layout.newcustomeralert);
 
         savedUserPhoneNumber = new TinyDB(getBaseContext());
         userPhoneNumber = savedUserPhoneNumber.getString("userPhoneNumber");
-
-        pickup = (TextView)myDialog.findViewById(R.id.pickup);
-        destination = (TextView)myDialog.findViewById(R.id.destination);
 
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
@@ -142,10 +134,6 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
 
         checkForPushMessagesFromServer();  //Check for Push Messages
 
-        if(showCustomerPopup)  //If true
-        {
-            newCustomerAlertPopup();
-        }
 
         driverMainButton.setOnClickListener(new View.OnClickListener()       //Main Driver Functionality Button
         {
@@ -178,7 +166,7 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
             @Override
             public void onClick(View v)
             {
-                showAssignedCustomerPopup();
+                showAssignedCustomerProfile();
             }
         });
 
@@ -192,7 +180,6 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
 
         Channel channel = pusher.subscribe(userPhoneNumber);   //use Phone Number as Channel
 
-
         channel.bind("ride_request", new SubscriptionEventListener()   //Events
         {
             @Override
@@ -200,27 +187,31 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
             {
                 //Received Messages From Server
                 Log.e("PushResponse", data);
-                final String pushedMessages = data;
+                ///final String pushedMessages = data;
 
                 JSONObject jsonObj = null;   //Create JSON Object
                 String statusResponse;
 
                 try
                 {
-                    jsonObj = new JSONObject(pushedMessages);
+                    jsonObj = new JSONObject(data);
 
                     statusResponse = jsonObj.getString("status");
                     String requestId = jsonObj.getString("requestId");
 
-                    requestId = jsonObj.getString("requestId");
-                    customerName = jsonObj.getString("driverName");
-                    customerPhone = jsonObj.getString("driverPhone");
-                    latitudeCustomer = jsonObj.getString("latitude");
-                    longitudeCustomer = jsonObj.getString("longitude");
+                    //requestId = jsonObj.getString("requestId");
+                    customerName = jsonObj.getString("riderName");
+                    customerPhone = jsonObj.getString("riderPhone");
+                    //latitudeCustomer = jsonObj.getString("latitude");
+                    //longitudeCustomer = jsonObj.getString("longitude");
 
+                    Log.e("statusResponse Out", jsonObj.toString());
+                    Log.e("statusResponse Out", statusResponse);
                     if(statusResponse.equals("Success"))
                     {
-                        showCustomerPopup = true;
+                        Log.e("statusResponse In", statusResponse);
+                        newCustomerAlertPopup();
+
                     }
                     else
                     {
@@ -230,6 +221,7 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
 
                 catch (Exception e)
                 {
+                    Log.e("JSONPARSE ERROR", "error parsing JSON from pusher");
                     e.printStackTrace();
                 }
 
@@ -285,7 +277,7 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
         //checkIfLocationHasChangedConsiderably();
     }
 
-    public void  showAssignedCustomerPopup()
+    public void  showAssignedCustomerProfile()
     {
         final String customerNumber = "0722833083";
         TextView txtclose;
@@ -369,6 +361,13 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
         Button acceptRequest;
         Button rejectRequest;
 
+        myDialog = new Dialog(getApplicationContext());
+        myDialog.setContentView(R.layout.newcustomeralert);
+
+
+        //pickup = (TextView)myDialog.findViewById(R.id.pickup);
+        //destination = (TextView)myDialog.findViewById(R.id.destination);
+
         txtclose = (TextView) myDialog.findViewById(R.id.txtclose);
         acceptRequest = (Button)myDialog.findViewById(R.id.accept);
         rejectRequest = (Button)myDialog.findViewById(R.id.reject);
@@ -380,9 +379,6 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
 
         driverMainButton.setVisibility(View.GONE); //Not Visible
         driverMainButton.setClickable(false);
-
-        myDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        myDialog.show();
 
         txtclose.setOnClickListener(new View.OnClickListener()
         {
@@ -408,7 +404,6 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
             {
                 int rideID = 50;
                 sendUserData.sendRideRequestAccepted(getBaseContext(), rideID, userPhoneNumber);
-                showAssignedCustomerPopup();
                 myDialog.dismiss();
                 driverMainButton.setVisibility(View.VISIBLE);
                 driverMainButton.setClickable(true);
@@ -441,6 +436,8 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
             }
         });
 
+        myDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        myDialog.show();
     }
 
     @Override

@@ -37,7 +37,7 @@ public class sendUserData
             jse.printStackTrace();
         }
 
-        String url= "http://46.101.73.84:8080/start/ride";
+        String url= "http://46.101.73.84:8080/request/startRide";
         JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.POST, url,jsonObj,   //url,jsonObj
                 new Response.Listener<JSONObject>()
                 {
@@ -486,9 +486,6 @@ public class sendUserData
                             displayToast(context, "Error, Invalid Password");
                             instLogin.clearEditTextBoxes();
                             instLogin.hideDialogAlertDuringLogin();
-
-                            instLogin.updateUIAfterSuccessLoginRequest();  //Update UI Accordingly
-
                         }
 
                         else if (loginResponse.equals("Login unsuccessful. User does not exist "))
@@ -496,17 +493,11 @@ public class sendUserData
                             displayToast(context, "Error, User Does not Exist");
                             instLogin.clearEditTextBoxes();
                             instLogin.hideDialogAlertDuringLogin();
-
-                            instLogin.updateUIAfterSuccessLoginRequest();  //Update UI Accordingly
-
                         }
 
                         else   //Do nothing for now
                         {
                             displayToast(context, "Error Login In");
-
-                            instLogin.updateUIAfterSuccessLoginRequest();  //Update UI Accordingly
-
                         }
 
                         Log.e("Response", response.toString());
