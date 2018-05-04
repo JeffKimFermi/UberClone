@@ -58,7 +58,8 @@ import java.util.ArrayList;
 import java.util.List;
 import static com.gitz.jeff.andrew.uberclone.R.id.map;
 
-public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, com.google.android.gms.location.LocationListener, RoutingListener {
+public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, com.google.android.gms.location.LocationListener, RoutingListener
+{
 
     private GoogleMap mMap;
     GoogleApiClient googleApiClient;
@@ -70,6 +71,11 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
     Marker markerCurrentLocation;   //My Current Location Marker
     Marker markerCustomerLocation;  //Customer Location Marker
 
+    //Dummy Customer Location Data
+    double latitudeCustomerLocation = -1.2948306999999997;
+    double longitudeCustomerLocation = 36.7871865;
+    LatLng currentCustomerLocation = new LatLng(latitudeCustomerLocation, longitudeCustomerLocation);
+
     public static float myZoomLevel = 14;
     private List<Polyline> polylines;
     private static final int[] COLORS = new int[]{R.color.primary_dark,R.color.primary,R.color.primary_light,R.color.accent,R.color.primary_dark_material_light};
@@ -79,24 +85,41 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
     Button endOfSession;
     Button customerInformation;
 
-    TinyDB savedUserPhoneNumber;
-    String userPhoneNumber;
-
-    boolean rideInSession = false;
+    boolean rideInSession;
+    boolean readyToStartRide;
     boolean locationDataCopied = false;
     boolean driverAvailable = false;  //Set When Driver is Available
-    boolean readyToStartRide = false;
+
+    TinyDB savedUserPhoneNumber;
+    TinyDB savedSelectedChoice;
+
+    public static String userPhoneNumber;
 
     //Public Driver Details
-    public String latitudeCustomer;
-    public String longitudeCustomer;
-    public String customerName = "Lisa Randall";
-    public String customerPhone = "0722833083";
-    public String requestId;
-    TextView pickup, destination;
+    String latitudeCustomer;
+    String longitudeCustomer;
+    String customerName = "Mrs. Lucy";
+    String customerPhone = "0722833083";
+    String requestId;
 
+    TextView pickup;
+    TextView destination;
 
     Dialog myDialog;
+
+    private static DriverMapActivity inst;
+    public static DriverMapActivity instance()
+    {
+        return inst;
+    }
+
+    @Override
+    public void onStart()
+    {
+        super.onStart();
+        inst = this;
+    }
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -117,6 +140,9 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
 
 
         savedUserPhoneNumber = new TinyDB(getBaseContext());
+        savedSelectedChoice = new TinyDB(getBaseContext());
+        savedSelectedChoice.putInt("select", 0); //Avoid null Pointer Exception
+
         userPhoneNumber = savedUserPhoneNumber.getString("userPhoneNumber");
 
 
@@ -134,6 +160,7 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
 
         checkForPushMessagesFromServer();  //Check for Push Messages
 
+        updateUI();  //Update UI based on Driver Choice to ride request
 
         driverMainButton.setOnClickListener(new View.OnClickListener()       //Main Driver Functionality Button
         {
@@ -187,7 +214,6 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
             {
                 //Received Messages From Server
                 Log.e("PushResponse", data);
-                ///final String pushedMessages = data;
 
                 JSONObject jsonObj = null;   //Create JSON Object
                 String statusResponse;
@@ -199,19 +225,22 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
                     statusResponse = jsonObj.getString("status");
                     String requestId = jsonObj.getString("requestId");
 
-                    //requestId = jsonObj.getString("requestId");
                     customerName = jsonObj.getString("riderName");
                     customerPhone = jsonObj.getString("riderPhone");
                     //latitudeCustomer = jsonObj.getString("latitude");
                     //longitudeCustomer = jsonObj.getString("longitude");
 
-                    Log.e("statusResponse Out", jsonObj.toString());
-                    Log.e("statusResponse Out", statusResponse);
+                    //Log.e("statusResponse Out", jsonObj.toString());
+                   // Log.e("statusResponse Out", statusResponse);
                     if(statusResponse.equals("Success"))
                     {
-                        Log.e("statusResponse In", statusResponse);
-                        newCustomerAlertPopup();
+                       // Log.e("statusResponse In", statusResponse);
 
+                        if(statusResponse.equals("Success"))
+                        {
+                            Intent intent = new Intent(getBaseContext(), newCustomerPopup.class);
+                            startActivity(intent);
+                        }
                     }
                     else
                     {
@@ -270,8 +299,6 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
             driverMainButton.setText("Checking For Customers");
             driverMainButton.setBackgroundColor(Color.RED);
             driverMainButton.setTextColor(Color.WHITE);
-
-            newCustomerAlertPopup();
         }
 
         //checkIfLocationHasChangedConsiderably();
@@ -279,7 +306,6 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
 
     public void  showAssignedCustomerProfile()
     {
-        final String customerNumber = "0722833083";
         TextView txtclose;
         ImageView callBtn;
         ImageView sendSms;
@@ -296,7 +322,7 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
         //destination.setText();
 
         name.setText(customerName);
-        phone.setText(customerNumber);
+        phone.setText(customerPhone);
 
         callBtn = (ImageView)myDialog.findViewById(R.id.callbutton);
         sendSms = (ImageView)myDialog.findViewById(R.id.sendSms);
@@ -318,7 +344,7 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
             public void onClick(View v)
             {
                 Intent callIntent = new Intent(Intent.ACTION_CALL);
-                callIntent.setData(Uri.parse("tel:" + customerNumber));
+                callIntent.setData(Uri.parse("tel:" + customerPhone));
 
                 if (ActivityCompat.checkSelfPermission(DriverMapActivity.this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED)
                 {
@@ -339,7 +365,7 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
 
                 try {
                     SmsManager sms_manager = SmsManager.getDefault();
-                    sms_manager.sendTextMessage(customerNumber, null, Message, null, null);
+                    sms_manager.sendTextMessage(customerPhone, null, Message, null, null);
                     textMessage.setText("");
                     Toast.makeText(getApplicationContext(), "Message sent", Toast.LENGTH_LONG).show();
                 }
@@ -355,90 +381,59 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
     }
 
 
-    public void newCustomerAlertPopup()
+    public void updateUI()
     {
-        TextView txtclose;
-        Button acceptRequest;
-        Button rejectRequest;
+        int selectedChoice = 0;
+        selectedChoice  =  savedSelectedChoice.getInt("select"); //1 for Accept, 2, for Reject, 3 for Cancel
 
-        myDialog = new Dialog(getApplicationContext());
-        myDialog.setContentView(R.layout.newcustomeralert);
-
-
-        //pickup = (TextView)myDialog.findViewById(R.id.pickup);
-        //destination = (TextView)myDialog.findViewById(R.id.destination);
-
-        txtclose = (TextView) myDialog.findViewById(R.id.txtclose);
-        acceptRequest = (Button)myDialog.findViewById(R.id.accept);
-        rejectRequest = (Button)myDialog.findViewById(R.id.reject);
-
-        //pickup.setText();
-        //destination.setText();
-
-        txtclose.setText("X");
-
-        driverMainButton.setVisibility(View.GONE); //Not Visible
-        driverMainButton.setClickable(false);
-
-        txtclose.setOnClickListener(new View.OnClickListener()
+        if(selectedChoice == 0)   //Default
         {
-            @Override
-            public void onClick(View v)
-            {
-                int rideID = 1;
-                sendUserData.sendRideRequestRejected(getBaseContext(), rideID, userPhoneNumber);
-                int backgroundColour = Color.parseColor("#40E0D0");
-                driverMainButton.setBackgroundColor(backgroundColour);
-                driverMainButton.setText("Available");
-                driverMainButton.setVisibility(View.VISIBLE); //Not Visible
-                driverMainButton.setClickable(true);
-                myDialog.dismiss();
-                rideInSession = false;
-            }
-        });
+           //Do Nothing For Now
+        }
 
-        acceptRequest.setOnClickListener(new View.OnClickListener()
+        else if(selectedChoice == 1)  //Accept
         {
-            @Override
-            public void onClick(View v)
-            {
-                int rideID = 50;
-                sendUserData.sendRideRequestAccepted(getBaseContext(), rideID, userPhoneNumber);
-                myDialog.dismiss();
-                driverMainButton.setVisibility(View.VISIBLE);
-                driverMainButton.setClickable(true);
-                driverMainButton.setText("START SESSION");
+            int rideID = 50;
+            sendUserData.sendRideRequestAccepted(getBaseContext(), rideID, userPhoneNumber);
+            driverMainButton.setVisibility(View.VISIBLE);
+            driverMainButton.setClickable(true);
+            driverMainButton.setText("START SESSION");
 
-                showAssignedCustomerLocation();      //Show Assigned Customer Marker
+           // showAssignedCustomerLocation();      //Show Assigned Customer Marker
+            drawRouteToBetweenPickupAndDestination(currentDriverLocation, currentCustomerLocation );
 
-                endOfSession.setVisibility(View.VISIBLE);
-                endOfSession.setText("Cancel Request?");
-                customerInformation.setVisibility(View.VISIBLE);
-                readyToStartRide = true;
-            }
-        });
+            endOfSession.setVisibility(View.VISIBLE);
+            endOfSession.setText("Cancel Request?");
+            customerInformation.setVisibility(View.VISIBLE);
+            readyToStartRide = true;
+        }
 
-
-        rejectRequest.setOnClickListener(new View.OnClickListener()
+        else if(selectedChoice == 2)  //Reject
         {
-            @Override
-            public void onClick(View v)
-            {
-                int rideID = 50;
-                sendUserData.sendRideRequestRejected(getBaseContext(), rideID, userPhoneNumber);
-                int backgroundColour = Color.parseColor("#40E0D0");
-                driverMainButton.setBackgroundColor(backgroundColour);
-                driverMainButton.setText("Available");
-                driverMainButton.setVisibility(View.VISIBLE); //Not Visible
-                driverMainButton.setClickable(true);
-                myDialog.dismiss();
-                rideInSession = false;
-            }
-        });
+            int rideID = 50;
+            sendUserData.sendRideRequestRejected(getBaseContext(), rideID, userPhoneNumber);
+            int backgroundColour = Color.parseColor("#40E0D0");
+            driverMainButton.setBackgroundColor(backgroundColour);
+            driverMainButton.setText("Available");
+            driverMainButton.setVisibility(View.VISIBLE); //Not Visible
+            driverMainButton.setClickable(true);
+            rideInSession = false;
 
-        myDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        myDialog.show();
+        }
+
+        else if(selectedChoice == 3)  //Cancel
+        {
+            int rideID = 1;
+            sendUserData.sendRideRequestRejected(getBaseContext(), rideID, userPhoneNumber);
+            int backgroundColour = Color.parseColor("#40E0D0");
+            driverMainButton.setBackgroundColor(backgroundColour);
+            driverMainButton.setText("Available");
+            driverMainButton.setVisibility(View.VISIBLE); //Not Visible
+            driverMainButton.setClickable(true);
+            rideInSession = false;
+        }
     }
+
 
     @Override
     public void onMapReady(GoogleMap googleMap)   //Notifies when map is ready for use
@@ -610,7 +605,8 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
                 customerInformation.setVisibility(View.INVISIBLE);
                 rideInSession = false;
                 readyToStartRide = false;
-                hideAssignedCustomerLocation();
+                hideAssignedCustomerLocation(); //Hide Customer Marker
+                clearRouteFromMap();  //Clear Route From Marker
             }
         });
 
@@ -654,7 +650,8 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
                 endOfSession.setVisibility(View.GONE);
                 rideInSession = false;
                 readyToStartRide = false;
-                hideAssignedCustomerLocation();
+                hideAssignedCustomerLocation(); //Hide Customer Location Marker
+                clearRouteFromMap();  //Clear Route From Map
             }
         });
 
@@ -676,35 +673,19 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
 
     public void showAssignedCustomerLocation()
     {
-        double latitudeCustomer = -1.2948306999999997;
-        double longitudeCustomer = 36.7871865;
-        LatLng locationCustomer = new LatLng(latitudeCustomer, longitudeCustomer);
-
         int heightPerson = 35;
         int widthPerson = 30;
         BitmapDrawable bitmapdrawPerson =(BitmapDrawable)getResources().getDrawable(R.mipmap.person);
         Bitmap bPerson = bitmapdrawPerson.getBitmap();
         Bitmap smallPerson = Bitmap.createScaledBitmap(bPerson, widthPerson, heightPerson, false);
 
-        markerCustomerLocation = mMap.addMarker(new MarkerOptions().position(locationCustomer).title("Customer Location").icon(BitmapDescriptorFactory.fromBitmap(smallPerson)));  //Add Marker, and Set Title of Marker
+        markerCustomerLocation = mMap.addMarker(new MarkerOptions().position(currentCustomerLocation).title("Customer Location").icon(BitmapDescriptorFactory.fromBitmap(smallPerson)));  //Add Marker, and Set Title of Marker
 
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(locationCustomer));
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(currentCustomerLocation));
     }
 
 
-    public void hideAssignedCustomerLocation()
-    {
-        markerCustomerLocation.remove();
-    }
-
-
-    public void rideCancelled()
-    {
-        clearRouteFromMap();   //Clear Route From Map
-    }
-
-
-    public void drawRouteToMarker(LatLng pickUpPointCoordinates, LatLng destinationCoordinates)
+    public void drawRouteToBetweenPickupAndDestination(LatLng pickUpPointCoordinates, LatLng destinationCoordinates)
     {
         Routing routing = new Routing.Builder()
                 .travelMode(AbstractRouting.TravelMode.DRIVING)
@@ -714,6 +695,14 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
                 .build();
         routing.execute();
     }
+
+
+
+    public void hideAssignedCustomerLocation()
+    {
+        markerCustomerLocation.remove();
+    }
+
 
     public void clearRouteFromMap()
     {
@@ -763,8 +752,10 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
     @Override
     public void onRoutingSuccess(ArrayList<Route> route, int shortestRouteIndex)
     {
-        if(polylines.size()>0) {
-            for (Polyline poly : polylines) {
+        if(polylines.size()>0)
+        {
+            for (Polyline poly : polylines)
+            {
                 poly.remove();
             }
         }
@@ -784,7 +775,7 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
             Polyline polyline = mMap.addPolyline(polyOptions);
             polylines.add(polyline);
 
-            Toast.makeText(getApplicationContext(),"Route "+ (i+1) +": Distance: "+ route.get(i).getDistanceValue()+": Duration- "+ route.get(i).getDurationValue(),Toast.LENGTH_SHORT).show();
+            //Toast.makeText(getApplicationContext(),"Route "+ (i+1) +": Distance: "+ route.get(i).getDistanceValue()+": Duration- "+ route.get(i).getDurationValue(),Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -832,5 +823,97 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
         }
         return super.onOptionsItemSelected(item);
     }
+
+
+
+/*
+    public void newCustomerAlertPopup()
+    {
+        TextView txtclose;
+        Button acceptRequest;
+        Button rejectRequest;
+
+        myDialog = new Dialog(DriverMapActivity.this);
+        myDialog.setContentView(R.layout.newcustomeralert);
+
+
+        //pickup = (TextView)myDialog.findViewById(R.id.pickup);
+        //destination = (TextView)myDialog.findViewById(R.id.destination);
+
+        txtclose = (TextView) myDialog.findViewById(R.id.txtclose);
+        acceptRequest = (Button)myDialog.findViewById(R.id.accept);
+        rejectRequest = (Button)myDialog.findViewById(R.id.reject);
+
+        //pickup.setText();
+        //destination.setText();
+
+        txtclose.setText("X");
+
+        driverMainButton.setVisibility(View.GONE); //Not Visible
+        driverMainButton.setClickable(false);
+
+        txtclose.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                int rideID = 1;
+                sendUserData.sendRideRequestRejected(getBaseContext(), rideID, userPhoneNumber);
+
+                int backgroundColour = Color.parseColor("#40E0D0");
+                driverMainButton.setBackgroundColor(backgroundColour);
+                driverMainButton.setText("Available");
+                driverMainButton.setVisibility(View.VISIBLE); //Not Visible
+                driverMainButton.setClickable(true);
+                myDialog.dismiss();
+                rideInSession = false;
+            }
+        });
+
+        acceptRequest.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                int rideID = 50;
+                sendUserData.sendRideRequestAccepted(getBaseContext(), rideID, userPhoneNumber);
+                myDialog.dismiss();
+                driverMainButton.setVisibility(View.VISIBLE);
+                driverMainButton.setClickable(true);
+                driverMainButton.setText("START SESSION");
+
+                showAssignedCustomerLocation();      //Show Assigned Customer Marker
+
+                endOfSession.setVisibility(View.VISIBLE);
+                endOfSession.setText("Cancel Request?");
+                customerInformation.setVisibility(View.VISIBLE);
+                readyToStartRide = true;
+            }
+        });
+
+
+        rejectRequest.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                int rideID = 50;
+                sendUserData.sendRideRequestRejected(getBaseContext(), rideID, userPhoneNumber);
+                int backgroundColour = Color.parseColor("#40E0D0");
+                driverMainButton.setBackgroundColor(backgroundColour);
+                driverMainButton.setText("Available");
+                driverMainButton.setVisibility(View.VISIBLE); //Not Visible
+                driverMainButton.setClickable(true);
+                myDialog.dismiss();
+                rideInSession = false;
+            }
+        });
+
+        myDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        myDialog.show();
+
+    }
+*/
+
 
 }

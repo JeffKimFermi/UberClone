@@ -166,11 +166,13 @@ public class sendUserData
                             if(statusResponse.equals("Success"))
                             {
                                 instCustomerMapActivity.updateUIAfterSuccessfulRideRequest();
+                                instCustomerMapActivity.hideDialogAlert();
                             }
 
                             else
                             {
                                 instCustomerMapActivity.defaultScreen();
+                                instCustomerMapActivity.hideDialogAlert();
                                 displayToast(context, "Request Error, Please Try Again");
                             }
                         }

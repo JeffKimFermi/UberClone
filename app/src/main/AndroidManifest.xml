@@ -1,19 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    package="com.gitz.jeff.andrew.uberclone">
+          xmlns:tools="http://schemas.android.com/tools"
+          package="com.gitz.jeff.andrew.uberclone">
 
-    <uses-permission android:name="android.permission.GET_ACCOUNTS" />
-    <uses-permission android:name="android.permission.AUTHENTICATE_ACCOUNTS" />
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
-    <uses-permission android:name="android.permission.PROCESS_OUTGOING_CALLS" />
-    <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-    <uses-permission android:name="android.permission.CALL_PHONE" />
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.GET_ACCOUNTS"/>
+    <uses-permission android:name="android.permission.AUTHENTICATE_ACCOUNTS"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
+    <uses-permission android:name="android.permission.PROCESS_OUTGOING_CALLS"/>
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.CALL_PHONE"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     <uses-permission android:name="android.permission.SEND_SMS"/>
-
 
     <application
         android:allowBackup="true"
@@ -25,12 +24,12 @@
         tools:replace="android:label">
         <activity android:name=".splashActivity">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
+                <action android:name="android.intent.action.MAIN"/>
 
-                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-        <activity android:name=".Login" />
+        <activity android:name=".Login"/>
         <!--
              The API key for Google Maps-based APIs is defined as a string resource.
              (See the file "res/values/google_maps_api.xml").
@@ -41,18 +40,20 @@
         -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="@string/google_maps_key" />
+            android:value="@string/google_maps_key"/>
 
         <activity
             android:name=".DriverMapActivity"
-            android:label="@string/title_activity_driver_map" />
-        <activity android:name=".CustomerMapActivity" />
-        <activity android:name=".userType" />
-        <activity android:name=".driverRegister" />
-        <activity android:name=".customerRegister" />
-        <activity android:name=".About" />
-        <activity android:name=".Help" />
-        <activity android:name=".settingsApp"></activity>
+            android:label="@string/title_activity_driver_map"/>
+        <activity android:name=".CustomerMapActivity"/>
+        <activity android:name=".userType"/>
+        <activity android:name=".driverRegister"/>
+        <activity android:name=".customerRegister"/>
+        <activity android:name=".About"/>
+        <activity android:name=".Help"/>
+        <activity android:name=".settingsApp"/>
+        <activity android:name=".newCustomerPopup">
+        </activity>
     </application>
 
 </manifest>

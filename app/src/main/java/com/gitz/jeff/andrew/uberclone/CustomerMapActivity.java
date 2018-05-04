@@ -63,6 +63,8 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
+import dmax.dialog.SpotsDialog;
+
 public class CustomerMapActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, com.google.android.gms.location.LocationListener, RoutingListener {
 
     private GoogleMap mMap;
@@ -77,8 +79,8 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
     String userPhoneNumber;
 
     //Public Driver Details
-    public String latitudeDriver;
-    public String longitudeDriver;
+    //public String latitudeDriver;
+    //public String longitudeDriver;
     public String driverName = "Alex Mahone";
     public String driverPhone = "0722833083";
     public String requestId;
@@ -104,7 +106,13 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
 
     LatLng latlngDestinationCoordinates;    //Longitude Latitude coordates of your destination
     LatLng latlngPickUpLocationCoordinates;  //Longitude Latitude co-ordinates of your preferred Pickup Location
-    LatLng currentCustomerLocation;
+    LatLng currentCustomerLatLang;
+
+    double latitudeDriver = -1.2928832;  ///Yaya
+    double longitudeDriver = 36.7880683;
+    LatLng currentDriverLatLang = new LatLng(latitudeDriver, longitudeDriver);  //Current Driver LatLang
+
+    double distanceDriverCustomer;  //Distance between Driver and Customer
 
     private List<Polyline> polylines;
 
@@ -114,9 +122,13 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
     public PlaceAutocompleteFragment autocompleteFragmentPickup;
     public PlaceAutocompleteFragment autocompleteFragmentDestination;
 
+    //int distanceBtwnPickupAndDestination = 0;
+    //int estimatedJourneyTime = 0;
+
     final int LOCATION_REQUEST_CODE = 1;
 
     Dialog myDialog;
+    android.app.AlertDialog alertDialog;
 
 
     private static CustomerMapActivity inst;
@@ -154,6 +166,8 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
 
 
         myDialog = new Dialog(this);
+        alertDialog = new SpotsDialog(CustomerMapActivity.this);  //Display Alert for 4 Seconds before going to next Activity
+
 
         savedUserPhoneNumber = new TinyDB(getBaseContext());
         userPhoneNumber = savedUserPhoneNumber.getString("userPhoneNumber");
@@ -234,6 +248,7 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
             public void onClick(View v)
             {
                handleCallTaxiRequest();
+               showDialogAlert();
             }
         });
 
@@ -337,7 +352,6 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
 
                 if (ActivityCompat.checkSelfPermission(CustomerMapActivity.this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED)
                 {
-
                     return;
                 }
                 startActivity(callIntent);
@@ -399,7 +413,7 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
         }
         markerDestination = mMap.addMarker(new MarkerOptions().position(latlngDestinationCoordinates).title("Destination: " + destinationDescription));
         mMap.animateCamera(CameraUpdateFactory.zoomTo(12), 2000, null);
-        drawRouteToMarker(latlngPickUpLocationCoordinates, latlngDestinationCoordinates);  //Draw Route from PickUp Point to dstination
+        drawRouteToBetweenPickupAndDestination(latlngPickUpLocationCoordinates, latlngDestinationCoordinates);  //Draw Route from PickUp Point to dstination
     }
 
     public void handleCallTaxiRequest()
@@ -445,10 +459,9 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
             @Override
             public void run()
             {
-                //float distanceBtwnCustomerAndDriver = customerLocation.distanceTo(driverLocation);         //Distance in Metres
-                float distanceBtwnCustomerAndDriver = 5324;  //Use Dummy Data for the Time Being
-                float distanceInKms = distanceBtwnCustomerAndDriver / 1000;
-                if (distanceBtwnCustomerAndDriver < 100)  //If Distance Btwn Driver and Customer is less than 100m
+                distanceDriverCustomer = getDistanceBetweenDriverAndCustomer();  //Use Dummy Data for the Time Being
+                double distanceInKms = distanceDriverCustomer / 1000;
+                if (distanceDriverCustomer < 100)  //If Distance Btwn Driver and Customer is less than 100m
                 {
                     callTaxi.setBackgroundColor(Color.RED);
                     callTaxi.setTextColor(Color.WHITE);
@@ -674,8 +687,8 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
                     driverName = jsonObj.getString("driverName");
                     driverPhone = jsonObj.getString("driverPhone");
                     requestId = jsonObj.getString("requestId");
-                    latitudeDriver = jsonObj.getString("latitude");
-                    longitudeDriver = jsonObj.getString("longitude");
+                   // latitudeDriver = jsonObj.getString("latitude");
+                   // longitudeDriver = jsonObj.getString("longitude");
                 }
 
                 catch (Exception e)
@@ -704,6 +717,26 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
     }
 
 
+    public double getDistanceBetweenDriverAndCustomer()
+    {
+        double distanceBetweenDriverAndCustomer;
+
+        //Driver Co-ordinates
+        Location currentDriverLocation = new Location("");
+
+        currentDriverLocation.setLatitude(currentDriverLatLang.latitude);
+        currentDriverLocation.setLongitude(currentDriverLatLang.longitude);
+
+        Location currentCustomerLocation = new Location("");
+
+        currentCustomerLocation.setLatitude(currentCustomerLatLang.latitude);
+        currentCustomerLocation.setLongitude(currentCustomerLatLang.longitude);
+
+        distanceBetweenDriverAndCustomer = currentCustomerLocation.distanceTo(currentCustomerLocation);
+        return distanceBetweenDriverAndCustomer;
+    }
+
+
     protected synchronized void buildGoogleApiClient()
     {
         googleApiClient = new GoogleApiClient.Builder(this)
@@ -723,7 +756,7 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
         {
             lastLocation = location;  //Copy the Data
             LatLng initLatLang = new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude());
-            currentCustomerLocation = initLatLang;
+            currentCustomerLatLang = initLatLang;
             markerCurrentLocation = mMap.addMarker(new MarkerOptions().position(initLatLang).title("My Current Location"));  //Add Marker, and Set Title of Marker
             locationDataCopied = true;
             mMap.moveCamera(CameraUpdateFactory.newLatLng(initLatLang));
@@ -737,7 +770,7 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
                 markerCurrentLocation.remove();
                 lastLocation = location;
                 LatLng currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
-                currentCustomerLocation = currentLatLng;
+                currentCustomerLatLang = currentLatLng;
                 markerCurrentLocation = mMap.addMarker(new MarkerOptions().position(currentLatLng).title("My Current Location"));  //Add Marker, and Set Title of Marker
                 mMap.moveCamera(CameraUpdateFactory.newLatLng(currentLatLng));
 
@@ -780,15 +813,16 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
             return;
         }
 
-        if(rideRequestAccepted)  //Send Periodic Customer Co-ordinates to Driver
+        if(rideRequestAccepted)    //If Driver has Accepted Ride Request
         {
-            //sendUserData.sendPeriodicCustomerLocationToDriver(getBaseContext(), rideId, currentCustomerLocation);
+            //sendUserData.sendPeriodicCustomerLocationToDriver(getBaseContext(), rideId, currentCustomerLatLang);
+            distanceDriverCustomer = getDistanceBetweenDriverAndCustomer();  //Get periodic distance between Driver and Customer
         }
         LocationServices.FusedLocationApi.requestLocationUpdates(googleApiClient, locationRequest, this);
     }
 
 
-    public void drawRouteToMarker(LatLng pickUpPointCoordinates, LatLng destinationCoordinates)
+    public void drawRouteToBetweenPickupAndDestination(LatLng pickUpPointCoordinates, LatLng destinationCoordinates)
     {
         Routing routing = new Routing.Builder()
                 .travelMode(AbstractRouting.TravelMode.DRIVING)
@@ -856,6 +890,9 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
             polyOptions.addAll(route.get(i).getPoints());
             Polyline polyline = mMap.addPolyline(polyOptions);
             polylines.add(polyline);
+
+            //distanceBtwnPickupAndDestination = route.get(i).getDistanceValue();
+            //estimatedJourneyTime = route.get(i).getDurationValue();
 
             //displayToast(getBaseContext(), "Route "+ (i+1) +": distance - "+ route.get(i).getDistanceValue()+": duration - "+ route.get(i).getDurationValue());
         }
@@ -927,6 +964,26 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
     protected void onStop()  //If Driver gets out of this activity, Notify Db, for Him to be removed as Hes is no longer Active
     {
         super.onStop();
+    }
+
+    public void showDialogAlert()
+    {
+        alertDialog.show();
+
+        new Handler().postDelayed(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                alertDialog.dismiss(); //Dismiss just in case there was network error
+            }
+        }, 3000);
+    }
+
+
+    public void hideDialogAlert()
+    {
+        alertDialog.dismiss();
     }
 
     public void displayToast(Context myContext, String displayToastMessage)

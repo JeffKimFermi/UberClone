@@ -82,6 +82,15 @@ public class Login extends AppCompatActivity
         userPassword = loginPassword.getText().toString().trim();
 
         sendUserData.sendLoginRequest(getBaseContext(), userPhone, userPassword);  //Use Phone Number as ID and Password
+
+        new Handler().postDelayed(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                alertDialog.dismiss(); //Dismiss just in case there was network error
+            }
+        }, 3000);
     }
 
 
