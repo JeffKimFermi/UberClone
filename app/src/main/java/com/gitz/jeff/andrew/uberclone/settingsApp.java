@@ -14,7 +14,7 @@ public class settingsApp extends AppCompatActivity
 {
 
     ListView listView;
-    String settingsItems[] = new String [] {"Change Login Details", "Change User Type", "Change Font"};
+    String settingsItems[] = new String [] {"Change User Profile", "Change User Type", "Change Font"};
     TinyDB saveUserType;
 
     @Override
@@ -27,7 +27,7 @@ public class settingsApp extends AppCompatActivity
 
         listView = (ListView)findViewById(R.id.settingsListView);
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, settingsItems);
-        
+
         listView.setAdapter(adapter);
 
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener()

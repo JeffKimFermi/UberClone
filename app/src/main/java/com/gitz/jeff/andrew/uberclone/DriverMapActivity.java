@@ -71,11 +71,6 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
     Marker markerCurrentLocation;   //My Current Location Marker
     Marker markerCustomerLocation;  //Customer Location Marker
 
-    //Dummy Customer Location Data
-    double latitudeCustomerLocation = -1.2948306999999997;
-    double longitudeCustomerLocation = 36.7871865;
-    LatLng currentCustomerLocation = new LatLng(latitudeCustomerLocation, longitudeCustomerLocation);
-
     public static float myZoomLevel = 14;
     private List<Polyline> polylines;
     private static final int[] COLORS = new int[]{R.color.primary_dark,R.color.primary,R.color.primary_light,R.color.accent,R.color.primary_dark_material_light};
@@ -93,14 +88,23 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
     TinyDB savedUserPhoneNumber;
     TinyDB savedSelectedChoice;
 
-    public static String userPhoneNumber;
+    public static String driverPhoneNumber;
 
-    //Public Driver Details
-    String latitudeCustomer;
-    String longitudeCustomer;
+    //Public Customer Details
+    String requestId;
+    String pickupName = "Prestige Plaza";  //Name description of Pickup Point
+    String destinationName = "Upper Hill"; //Name description of Destination Point
     String customerName = "Mrs. Lucy";
     String customerPhone = "0722833083";
-    String requestId;
+    double latitudePickupLocation;  //Latitide of Pickup Location
+    double longitudePickupLocation;  //Longitude of Destination Location
+    double latitudeDestinationLocation;
+    double longitudeDestinationLocation;
+
+    //Create a LatLng Object for Pickup and Destination
+    LatLng customerPickupLocation = new LatLng(latitudePickupLocation, longitudePickupLocation);
+    LatLng customerDestinationLocation = new LatLng(latitudeDestinationLocation, longitudeDestinationLocation);
+
 
     TextView pickup;
     TextView destination;
@@ -143,7 +147,7 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
         savedSelectedChoice = new TinyDB(getBaseContext());
         savedSelectedChoice.putInt("select", 0); //Avoid null Pointer Exception
 
-        userPhoneNumber = savedUserPhoneNumber.getString("userPhoneNumber");
+        driverPhoneNumber = savedUserPhoneNumber.getString("userPhoneNumber");
 
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
@@ -205,7 +209,7 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
         options.setCluster("ap2");
         Pusher pusher = new Pusher("830d3e455fd9cfbcec39", options);
 
-        Channel channel = pusher.subscribe(userPhoneNumber);   //use Phone Number as Channel
+        Channel channel = pusher.subscribe(driverPhoneNumber);   //use Phone Number as Channel
 
         channel.bind("ride_request", new SubscriptionEventListener()   //Events
         {
@@ -223,19 +227,26 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
                     jsonObj = new JSONObject(data);
 
                     statusResponse = jsonObj.getString("status");
+
                     String requestId = jsonObj.getString("requestId");
 
-                    customerName = jsonObj.getString("riderName");
-                    customerPhone = jsonObj.getString("riderPhone");
-                    //latitudeCustomer = jsonObj.getString("latitude");
-                    //longitudeCustomer = jsonObj.getString("longitude");
+                    customerName = jsonObj.getString("riderName");  //Get name of Customer
+                    customerPhone = jsonObj.getString("riderPhone");  //Get Phone Number of Customer
 
-                    //Log.e("statusResponse Out", jsonObj.toString());
-                   // Log.e("statusResponse Out", statusResponse);
+                    //Get Pickup latlang coordinates
+                    latitudePickupLocation = jsonObj.getDouble("sourceLatitude");
+                    longitudePickupLocation = jsonObj.getDouble("sourceLongitude");
+
+                    //Get Destination latlang coordinates
+                    latitudeDestinationLocation = jsonObj.getDouble("destinationLatitude");
+                    longitudeDestinationLocation = jsonObj.getDouble("destinationLongitude");
+
+                    //Get Pickup and Destination Locations Descriptions
+                    pickupName = jsonObj.getString("sourceDescription");
+                    destinationName = jsonObj.getString("destinationDescription");
+
                     if(statusResponse.equals("Success"))
                     {
-                       // Log.e("statusResponse In", statusResponse);
-
                         if(statusResponse.equals("Success"))
                         {
                             Intent intent = new Intent(getBaseContext(), newCustomerPopup.class);
@@ -289,7 +300,7 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
             rideInSession = true;
 
             int requestId = 1;
-            sendUserData.sendRideStartedNotification(getBaseContext(), requestId, userPhoneNumber);   //currentLatitudeLongitude is current Driver Location
+            sendUserData.sendRideStartedNotification(getBaseContext(), requestId, driverPhoneNumber);   //currentLatitudeLongitude is current Driver Location
         }
 
         else
@@ -314,19 +325,21 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
 
         myDialog.setContentView(R.layout.custompopup_customer_details);
 
-        txtclose =(TextView) myDialog.findViewById(R.id.txtclose);
-        name = (TextView) myDialog.findViewById(R.id.customerName);
-        phone = (TextView)myDialog.findViewById(R.id.customerPhone);
-
-        //pickup.setText();
-        //destination.setText();
-
-        name.setText(customerName);
-        phone.setText(customerPhone);
-
         callBtn = (ImageView)myDialog.findViewById(R.id.callbutton);
         sendSms = (ImageView)myDialog.findViewById(R.id.sendSms);
         textMessage = (EditText)myDialog.findViewById(R.id.message);
+        txtclose =(TextView) myDialog.findViewById(R.id.txtclose);
+
+        name = (TextView) myDialog.findViewById(R.id.customerName);
+        phone = (TextView)myDialog.findViewById(R.id.customerPhone);
+        pickup = (TextView)myDialog.findViewById(R.id.pickup);
+        destination = (TextView)myDialog.findViewById(R.id.destination);
+
+        //Update Dialog Alert Popup UI Appropriately
+        name.setText(customerName);     //Customer Name
+        phone.setText(customerPhone);   //Customer Phone
+        pickup.setText(pickupName);     //Pickup Location Name
+        destination.setText(destinationName);  //Destination Location Name
 
         txtclose.setText("X");
         txtclose.setOnClickListener(new View.OnClickListener()
@@ -386,21 +399,20 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
         int selectedChoice = 0;
         selectedChoice  =  savedSelectedChoice.getInt("select"); //1 for Accept, 2, for Reject, 3 for Cancel
 
-        if(selectedChoice == 0)   //Default
+        if(selectedChoice == 0)       //Default
         {
            //Do Nothing For Now
         }
 
         else if(selectedChoice == 1)  //Accept
         {
-            int rideID = 50;
-            sendUserData.sendRideRequestAccepted(getBaseContext(), rideID, userPhoneNumber);
+            sendUserData.sendRideRequestAccepted(getBaseContext(), requestId, driverPhoneNumber, currentDriverLocation);
             driverMainButton.setVisibility(View.VISIBLE);
             driverMainButton.setClickable(true);
             driverMainButton.setText("START SESSION");
 
            // showAssignedCustomerLocation();      //Show Assigned Customer Marker
-            drawRouteToBetweenPickupAndDestination(currentDriverLocation, currentCustomerLocation );
+            drawRouteToBetweenPickupAndDestination(currentDriverLocation, customerPickupLocation);
 
             endOfSession.setVisibility(View.VISIBLE);
             endOfSession.setText("Cancel Request?");
@@ -410,8 +422,7 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
 
         else if(selectedChoice == 2)  //Reject
         {
-            int rideID = 50;
-            sendUserData.sendRideRequestRejected(getBaseContext(), rideID, userPhoneNumber);
+            sendUserData.sendRideRequestRejected(getBaseContext(), requestId, driverPhoneNumber);
             int backgroundColour = Color.parseColor("#40E0D0");
             driverMainButton.setBackgroundColor(backgroundColour);
             driverMainButton.setText("Available");
@@ -423,8 +434,7 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
 
         else if(selectedChoice == 3)  //Cancel
         {
-            int rideID = 1;
-            sendUserData.sendRideRequestRejected(getBaseContext(), rideID, userPhoneNumber);
+            sendUserData.sendRideRequestRejected(getBaseContext(), requestId, driverPhoneNumber);
             int backgroundColour = Color.parseColor("#40E0D0");
             driverMainButton.setBackgroundColor(backgroundColour);
             driverMainButton.setText("Available");
@@ -558,7 +568,6 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
     @Override
     public void onConnected(@Nullable Bundle bundle)
     {
-        int rideId = 1;
         locationRequest = new LocationRequest();
         locationRequest.setInterval(2500);    //Refresh rate
         locationRequest.setFastestInterval(2500);
@@ -572,7 +581,7 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
 
         if(readyToStartRide)
         {
-            //sendUserData.sendPeriodicDriverLocationToCustomer(getBaseContext(), rideId, currentDriverLocation);   //Send every 2.5s Driver Location
+            sendUserData.sendPeriodicDriverLocationToCustomer(getBaseContext(), requestId, driverPhoneNumber, currentDriverLocation);   //Send every 2.5s Driver Location
         }
 
         LocationServices.FusedLocationApi.requestLocationUpdates(googleApiClient, locationRequest, this);
@@ -593,7 +602,7 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
             public void onClick(DialogInterface paramDialogInterface, int paramInt)
             {
                 int requestId = 1;
-                sendUserData.sendRideEndedNotification(getBaseContext(), requestId, userPhoneNumber);   //currentLatitudeLongitude is current Driver Location
+                sendUserData.sendRideEndedNotification(getBaseContext(), requestId, driverPhoneNumber);   //currentLatitudeLongitude is current Driver Location
 
                 //customerInformation.setVisibility(View.GONE);
                 int backgroundColour = Color.parseColor("#40E0D0");
@@ -639,7 +648,7 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
             public void onClick(DialogInterface paramDialogInterface, int paramInt)
             {
                 int requestId = 1;
-                sendUserData.sendRideEndedNotification(getBaseContext(), requestId, userPhoneNumber);   //currentLatitudeLongitude is current Driver Location
+                sendUserData.sendRideEndedNotification(getBaseContext(), requestId, driverPhoneNumber);   //currentLatitudeLongitude is current Driver Location
 
                 int backgroundColour = Color.parseColor("#40E0D0");
                 driverMainButton.setBackgroundColor(backgroundColour);
@@ -679,9 +688,9 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
         Bitmap bPerson = bitmapdrawPerson.getBitmap();
         Bitmap smallPerson = Bitmap.createScaledBitmap(bPerson, widthPerson, heightPerson, false);
 
-        markerCustomerLocation = mMap.addMarker(new MarkerOptions().position(currentCustomerLocation).title("Customer Location").icon(BitmapDescriptorFactory.fromBitmap(smallPerson)));  //Add Marker, and Set Title of Marker
+        markerCustomerLocation = mMap.addMarker(new MarkerOptions().position(customerPickupLocation).title("Customer Location").icon(BitmapDescriptorFactory.fromBitmap(smallPerson)));  //Add Marker, and Set Title of Marker
 
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(currentCustomerLocation));
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(customerPickupLocation));
     }
 
 

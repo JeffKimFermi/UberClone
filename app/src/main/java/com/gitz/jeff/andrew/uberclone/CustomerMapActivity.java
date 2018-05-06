@@ -79,11 +79,15 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
     String userPhoneNumber;
 
     //Public Driver Details
-    //public String latitudeDriver;
-    //public String longitudeDriver;
-    public String driverName = "Alex Mahone";
-    public String driverPhone = "0722833083";
-    public String requestId;
+    String requestId;
+    String driverName = "Alex Mahone";
+    String driverPhone = "0722833083";
+    String vehicleRegistration = "KAV 587V";
+    double driverLatitude;
+    double driverLongitude;
+
+    //Create LatLang Object for distance Calculation
+    LatLng currentDriverLatLang = new LatLng(driverLatitude, driverLongitude); //LatLang Object of current Driver Location
 
     Button callTaxi;   //Request for a Taxi
     Button cancelRequest;    //Cancel Taxi Request
@@ -93,7 +97,6 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
     boolean taxiRequestMade = false;
     boolean rideInSession = false;
     boolean rideRequestAccepted = false;
-
 
     TinyDB savedUserPhoneNumber;
     TinyDB getSavedUserPhoneNumber; //Get user Driver User Phone Number to act as ID
@@ -107,10 +110,6 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
     LatLng latlngDestinationCoordinates;    //Longitude Latitude coordates of your destination
     LatLng latlngPickUpLocationCoordinates;  //Longitude Latitude co-ordinates of your preferred Pickup Location
     LatLng currentCustomerLatLang;
-
-    double latitudeDriver = -1.2928832;  ///Yaya
-    double longitudeDriver = 36.7880683;
-    LatLng currentDriverLatLang = new LatLng(latitudeDriver, longitudeDriver);  //Current Driver LatLang
 
     double distanceDriverCustomer;  //Distance between Driver and Customer
 
@@ -684,11 +683,14 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
                 {
                     jsonObj = new JSONObject(pushedMessages);
 
+                    requestId = jsonObj.getString("requestId");
                     driverName = jsonObj.getString("driverName");
                     driverPhone = jsonObj.getString("driverPhone");
-                    requestId = jsonObj.getString("requestId");
-                   // latitudeDriver = jsonObj.getString("latitude");
-                   // longitudeDriver = jsonObj.getString("longitude");
+                    vehicleRegistration = jsonObj.getString("vehicleRegistration");
+                    driverLatitude = jsonObj.getDouble("driverLatitude");
+                    driverLongitude = jsonObj.getDouble("driverLongitude");
+
+                    updateUIAfterSuccessfulRideRequest();
                 }
 
                 catch (Exception e)

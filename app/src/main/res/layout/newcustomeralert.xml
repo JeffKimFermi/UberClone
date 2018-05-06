@@ -65,6 +65,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:id="@+id/pickup"
                 android:text="Prestige Plaza"
                 android:textColor="@color/white"
                 />
@@ -92,6 +93,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Upper Hill"
+                android:id="@+id/destination"
                 android:textColor="@color/white"
                 />
 

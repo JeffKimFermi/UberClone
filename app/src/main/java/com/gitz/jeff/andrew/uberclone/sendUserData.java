@@ -134,8 +134,16 @@ public class sendUserData
         try
         {
             jsonObj.put("userPhone", userId);
-            jsonObj.put("sourceLatitudeLongitude", customerPickUpLocation);
-            jsonObj.put("destinationLatitudeLongitude", customerDestination);
+
+            //Pickpup Location Coordinates
+            jsonObj.put("sourceLatitude", customerPickUpLocation.latitude);
+            jsonObj.put("sourceLongitude", customerPickUpLocation.longitude);
+
+            //Destination Location Coordinates
+            jsonObj.put("destinationLatitude", customerDestination.latitude);
+            jsonObj.put("destinationLongitude", customerDestination.longitude);
+
+            //Name Destination of Source and Destination
             jsonObj.put("sourceDescription", customerPickUpLocationDescription);
             jsonObj.put("destinationDescription", customerDestinationDescription);
 
@@ -165,7 +173,7 @@ public class sendUserData
 
                             if(statusResponse.equals("Success"))
                             {
-                                instCustomerMapActivity.updateUIAfterSuccessfulRideRequest();
+                                //instCustomerMapActivity.updateUIAfterSuccessfulRideRequest();
                                 instCustomerMapActivity.hideDialogAlert();
                             }
 
@@ -200,7 +208,7 @@ public class sendUserData
 
 
     //Send Notification Driver Accepted Ride Request
-    public static void sendRideRequestAccepted(Context myContext, final int requestId, final String userId)
+    public static void sendRideRequestAccepted(Context myContext, final String requestId, final String userId, LatLng driverLocation)
     {
         final Context context= myContext;
         JSONObject jsonObj = new JSONObject();
@@ -208,6 +216,8 @@ public class sendUserData
         {
             jsonObj.put("requestId", requestId);   //Unique ID of the Transaction
             jsonObj.put("driverPhone", userId);    //User ID which is the Driver Phone
+            jsonObj.put("driverLatitude", driverLocation.latitude);  //Driver Latitude
+            jsonObj.put("driverLongitude", driverLocation.longitude); //Driver Longitude
         }
         catch (JSONException jse)
         {
@@ -252,7 +262,7 @@ public class sendUserData
 
 
     //Send Notification Driver Rejected Ride Request
-    public static void sendRideRequestRejected(Context myContext, final int requestId, final String userId)
+    public static void sendRideRequestRejected(Context myContext, final String requestId, final String userId)
     {
         final Context context= myContext;
         JSONObject jsonObj = new JSONObject();
@@ -519,73 +529,23 @@ public class sendUserData
     }
 
 
-    //Send Notification Driver Accepted Ride Request
-    public static void sendPeriodicDriverLocationToCustomer(Context myContext, final int requestId, LatLng driverCurrentLocation)
+    public static void sendPeriodicDriverLocationToCustomer(Context myContext, final String requestId, final String userId, LatLng currentDriverLocation)
     {
         final Context context= myContext;
         JSONObject jsonObj = new JSONObject();
         try
         {
             jsonObj.put("requestId", requestId);   //Unique ID of the Transaction
-            jsonObj.put("driverCurrentLocation", driverCurrentLocation);    //User ID which is the Driver Phone
+            jsonObj.put("driverPhone", userId);    //Driver Phone Number
+            jsonObj.put("driverLatitude", currentDriverLocation.latitude);    //Driver Latitude
+            jsonObj.put("driverLongitude", currentDriverLocation.longitude);  //Driver Longitude
         }
         catch (JSONException jse)
         {
             jse.printStackTrace();
         }
 
-        String url= "http://46.101.73.84:8080/request/driver/accept";
-        JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.POST, url,jsonObj,   //url,jsonObj
-                new Response.Listener<JSONObject>()
-                {
-                    @Override
-                    public void onResponse(JSONObject response)
-                    {
-                        String rideRequestResponse = "";
-
-                        try
-                        {
-                            rideRequestResponse = response.getString("response");
-                        }
-
-                        catch (Exception e)
-                        {
-                            e.printStackTrace();
-                        }
-
-                        Log.e("Response", response.toString());
-
-                    }
-                },
-                new Response.ErrorListener()
-                {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Log.e("Error.Response", error.toString());
-                    }
-                }
-        );
-
-        Volley.newRequestQueue(context).add(getRequest);
-    }
-
-
-    //Send Notification Driver Accepted Ride Request
-    public static void sendPeriodicCustomerLocationToDriver(Context myContext, final int requestId, LatLng driverCurrentLocation)
-    {
-        final Context context= myContext;
-        JSONObject jsonObj = new JSONObject();
-        try
-        {
-            jsonObj.put("requestId", requestId);   //Unique ID of the Transaction
-            jsonObj.put("driverCurrentLocation", driverCurrentLocation);    //User ID which is the Driver Phone
-        }
-        catch (JSONException jse)
-        {
-            jse.printStackTrace();
-        }
-
-        String url= "http://46.101.73.84:8080/request/driver/accept";
+        String url= "http://46.101.73.84:8080/request/driver/location/update";
         JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.POST, url,jsonObj,   //url,jsonObj
                 new Response.Listener<JSONObject>()
                 {
