@@ -450,7 +450,7 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
         // if(pickUpPointDescription != null && destinationDescription != null)
         // {
 
-        sendUserData.sendRideRequest(getBaseContext(), userPhoneNumber, latlngPickUpLocationCoordinates, latlngDestinationCoordinates, pickUpPointDescription, destinationDescription);
+        sendUserData.sendNewRideRequest(getBaseContext(), userPhoneNumber, latlngPickUpLocationCoordinates, latlngDestinationCoordinates, pickUpPointDescription, destinationDescription);
 
         //  }
     }

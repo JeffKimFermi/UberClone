@@ -68,6 +68,8 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
     LatLng currentLocation;
     LatLng previousLocation;
     LatLng currentDriverLocation;
+    LatLng startOfRideLocation; //Location of Ride Start
+    LatLng endOfRideLocation;   //Location of Ride End
     Marker markerCurrentLocation;   //My Current Location Marker
     Marker markerCustomerLocation;  //Customer Location Marker
 
@@ -298,8 +300,8 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
             driverMainButton.setClickable(false);
             readyToStartRide = false;
             rideInSession = true;
+            startOfRideLocation = currentLocation;   //Pick Exact Coordinates of when Ride Started
 
-            int requestId = 1;
             sendUserData.sendRideStartedNotification(getBaseContext(), requestId, driverPhoneNumber);   //currentLatitudeLongitude is current Driver Location
         }
 
@@ -599,8 +601,10 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
             @Override
             public void onClick(DialogInterface paramDialogInterface, int paramInt)
             {
-                int requestId = 1;
-                sendUserData.sendRideEndedNotification(getBaseContext(), requestId, driverPhoneNumber);   //currentLatitudeLongitude is current Driver Location
+                endOfRideLocation = currentLocation; //Pick Exact Coordinates of when Ride Stopped
+                double distanceCovered = getTotalDistanceTravelled(); //Get Total Distance Travelled during Ride
+
+                sendUserData.sendRideCompeteNotification(getBaseContext(), requestId, distanceCovered, currentDriverLocation);   //currentLatitudeLongitude is current Driver Location
 
                 //customerInformation.setVisibility(View.GONE);
                 int backgroundColour = Color.parseColor("#40E0D0");
@@ -645,9 +649,7 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
             @Override
             public void onClick(DialogInterface paramDialogInterface, int paramInt)
             {
-                int requestId = 1;
-                sendUserData.sendRideEndedNotification(getBaseContext(), requestId, driverPhoneNumber);   //currentLatitudeLongitude is current Driver Location
-
+                //sendUserData.sendRideCompeteNotification(getBaseContext(), requestId, driverPhoneNumber);   //currentLatitudeLongitude is current Driver Location
                 int backgroundColour = Color.parseColor("#40E0D0");
                 driverMainButton.setBackgroundColor(backgroundColour);
                 driverMainButton.setVisibility(View.VISIBLE);
@@ -677,6 +679,26 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
 
     }
 
+
+    public double getTotalDistanceTravelled()
+    {
+        double distanceTravelled;
+
+        //Driver Co-ordinates
+        Location endOfRideDriverLocation = new Location("");
+
+        endOfRideDriverLocation.setLatitude(endOfRideLocation.latitude);  //Latitude when Ride Ends
+        endOfRideDriverLocation.setLongitude(endOfRideLocation.longitude); //Longitude when Ride Ends
+
+        Location startOfRideDriverLocation = new Location("");
+
+        startOfRideDriverLocation.setLatitude(startOfRideLocation.latitude);
+        startOfRideDriverLocation.setLongitude(startOfRideLocation.longitude);
+
+        distanceTravelled = endOfRideDriverLocation.distanceTo(startOfRideDriverLocation);
+
+        return distanceTravelled;  //Holds Length of Distance Travelled
+    }
 
     public void showAssignedCustomerLocation()
     {

@@ -23,7 +23,7 @@ public class sendUserData
 {
 
     //Send Notification that Ride has Started
-    public static void sendRideStartedNotification(Context myContext, final int requestId, final String userId)
+    public static void sendRideStartedNotification(Context myContext, final String requestId, final String userId)
     {
         final Context context = myContext;
         JSONObject jsonObj = new JSONObject();
@@ -75,21 +75,23 @@ public class sendUserData
 
 
     //Send Notification that Ride has Started
-    public static void sendRideEndedNotification(Context myContext, final int requestId, final String userId)
+    public static void sendRideCompeteNotification(Context myContext, final String requestId, final double distanceTravelled, LatLng driverLocation)
     {
         final Context context= myContext;
         JSONObject jsonObj = new JSONObject();
         try
         {
             jsonObj.put("requestId", requestId);   //Unique ID of the Transaction
-            jsonObj.put("driverPhone", userId);    //User ID which is the Driver Phone
+            jsonObj.put("distance", distanceTravelled); //Send Distance Travelled
+            jsonObj.put("driverLatitude", driverLocation.latitude);
+            jsonObj.put("driverLongitude", driverLocation.longitude);
         }
         catch (JSONException jse)
         {
             jse.printStackTrace();
         }
 
-        String url= "http://46.101.73.84:8080/end/ride";
+        String url= "http://46.101.73.84:8080/request/complete";
         JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.POST, url,jsonObj,   //url,jsonObj
                 new Response.Listener<JSONObject>()
                 {
@@ -127,7 +129,7 @@ public class sendUserData
 
 
     //Send Ride Request
-    public static  void sendRideRequest(Context myContext, final String userId, LatLng customerPickUpLocation, LatLng customerDestination, final String customerPickUpLocationDescription, final String customerDestinationDescription)
+    public static  void sendNewRideRequest(Context myContext, final String userId, LatLng customerPickUpLocation, LatLng customerDestination, final String customerPickUpLocationDescription, final String customerDestinationDescription)
     {
         final Context context= myContext;
         final JSONObject jsonObj = new JSONObject();
