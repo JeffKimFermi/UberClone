@@ -85,9 +85,8 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
     String vehicleRegistration = "KAV 587V";
     double driverLatitude;
     double driverLongitude;
-
-    //Create LatLang Object for distance Calculation
-    LatLng currentDriverLatLang = new LatLng(driverLatitude, driverLongitude); //LatLang Object of current Driver Location
+    LatLng currentDriverLatLang = null;  //LatLang Object of current Driver Location
+    LatLng periodicDriverLatLang = null; //Latlang Object to show periodic Driver Locations once ride Accepted
 
     Button callTaxi;   //Request for a Taxi
     Button cancelRequest;    //Cancel Taxi Request
@@ -105,7 +104,8 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
     Marker markerPickUp;    //Pickup Location Marker
     Marker markerDestination;  //Destination Marker
     Marker markerCurrentLocation; //My Current Locaton Marker
-    Marker markerDriverLocation;
+    Marker markerInitialDriverLocation;
+    Marker markerPeriodicDriverLocation;
 
     LatLng latlngDestinationCoordinates;    //Longitude Latitude coordates of your destination
     LatLng latlngPickUpLocationCoordinates;  //Longitude Latitude co-ordinates of your preferred Pickup Location
@@ -287,25 +287,38 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
 
     public void showAssignedDriverLocation()
     {
-        double latitudeDriver = -1.2928832;
-        double longitudeDriver = 36.7880683;
-        LatLng locationDriver = new LatLng(latitudeDriver, longitudeDriver);
-
         int heightCar = 40;
         int widthCar = 35;
         BitmapDrawable bitmapdrawCar =(BitmapDrawable)getResources().getDrawable(R.mipmap.car);
         Bitmap bCar = bitmapdrawCar.getBitmap();
         Bitmap smallCar = Bitmap.createScaledBitmap(bCar, widthCar, heightCar, false);
 
-        markerDriverLocation = mMap.addMarker(new MarkerOptions().position(locationDriver).title("Driver Location").icon(BitmapDescriptorFactory.fromBitmap(smallCar)));  //Add Marker, and Set Title of Marker
+        markerInitialDriverLocation= mMap.addMarker(new MarkerOptions().position(currentDriverLatLang).title("Driver Location").icon(BitmapDescriptorFactory.fromBitmap(smallCar)));  //Add Marker, and Set Title of Marker
 
         locationDataCopied = true;
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(locationDriver));
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(currentDriverLatLang));
     }
+
+
+    public void showPeriodicLocationOfAssignedDriver()
+    {
+        int heightCar = 40;
+        int widthCar = 35;
+        BitmapDrawable bitmapdrawCar =(BitmapDrawable)getResources().getDrawable(R.mipmap.car);
+        Bitmap bCar = bitmapdrawCar.getBitmap();
+        Bitmap smallCar = Bitmap.createScaledBitmap(bCar, widthCar, heightCar, false);
+
+        markerPeriodicDriverLocation = mMap.addMarker(new MarkerOptions().position(periodicDriverLatLang).title("Driver Location").icon(BitmapDescriptorFactory.fromBitmap(smallCar)));  //Add Marker, and Set Title of Marker
+
+        locationDataCopied = true;
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(periodicDriverLatLang));
+    }
+
 
     public void hideAssignedDriverLocation()
     {
-        markerDriverLocation.remove();
+        markerInitialDriverLocation.remove();
+        markerPeriodicDriverLocation.remove();
     }
 
 
@@ -479,7 +492,11 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
                 cancelRequest.setVisibility(View.VISIBLE);
                 driverInfo.setVisibility(View.VISIBLE);
 
-                showAssignedDriverLocation();   //Display Driver's Current Location
+                if(markerPeriodicDriverLocation != null)
+                {
+                    markerPeriodicDriverLocation.remove();  //Removing Periodic Driver Location Marker Before Placing current Location Marker
+                }
+                showAssignedDriverLocation();        //Display Driver's Current Location
 
                 cancelRequest.setText("Cancel Ride Request?");
                 autocompleteFragmentDestination.setText("");
@@ -638,14 +655,12 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
 
         Channel channel = pusher.subscribe(userPhoneNumber);   //use Phone Number as Channel
 
-        channel.bind("no_driver", new SubscriptionEventListener()   //Events
+        channel.bind("no_driver", new SubscriptionEventListener()   //Push Events
         {
             @Override
             public void onEvent(String channelName, String eventName, final String data)
             {
                 //Received Messages From Server
-
-                final String pushedMessages = data;
 
                 final String noDriverFound = "No Driver Currently Available";
 
@@ -668,6 +683,7 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
 
 
 
+        /*Driver has Accepted Customer's ride Request*/
         channel.bind("driver_accepted", new SubscriptionEventListener()   //Events
         {
             @Override
@@ -675,13 +691,12 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
             {
                 //Received Messages From Server
                 Log.e("DriverResponse: ", data);
-                final String pushedMessages = data;
 
                 JSONObject jsonObj = null;
 
                 try
                 {
-                    jsonObj = new JSONObject(pushedMessages);
+                    jsonObj = new JSONObject(data);
 
                     requestId = jsonObj.getString("requestId");
                     driverName = jsonObj.getString("driverName");
@@ -689,6 +704,7 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
                     vehicleRegistration = jsonObj.getString("vehicleRegistration");
                     driverLatitude = jsonObj.getDouble("driverLatitude");
                     driverLongitude = jsonObj.getDouble("driverLongitude");
+                    currentDriverLatLang = new LatLng(driverLatitude, driverLongitude);
 
                     updateUIAfterSuccessfulRideRequest();
                 }
@@ -709,11 +725,49 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
             {
                 //Received Messages From Server
 
-                final String pushedMessages = data;
-
-                //Act on Response
             }
         });
+
+
+
+        /*Update Driver Current Location*/
+        channel.bind("driver_location_updated", new SubscriptionEventListener()   //Events
+        {
+            @Override
+            public void onEvent(String channelName, String eventName, final String data)
+            {
+                //Received Messages From Server
+                Log.e("Location response: ", data);
+
+                JSONObject jsonObj = null;
+                String statusResponse = null;
+                String messageResponse = null;
+
+                try
+                {
+                    jsonObj = new JSONObject(data);
+
+                    statusResponse = jsonObj.getString("status");
+                    messageResponse = jsonObj.getString("message");
+
+                    if(statusResponse.equals("Success"))
+                    {
+                        driverLatitude = jsonObj.getDouble("driverLatitude");
+                        driverLongitude = jsonObj.getDouble("driverLongitude");
+                        periodicDriverLatLang = new LatLng(driverLatitude, driverLongitude); //Co-ordinates of Periodic driver Location one Ride Accepted
+                    }
+
+                    updateUIAfterSuccessfulRideRequest();
+                }
+
+                catch (Exception e)
+                {
+                    e.printStackTrace();
+                }
+
+            }
+        });
+
 
         pusher.connect();
     }
@@ -803,7 +857,6 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
     @Override
     public void onConnected(@Nullable Bundle bundle)
     {
-        int rideId = 1;
         locationRequest = new LocationRequest();
         locationRequest.setInterval(2500);    //Refresh rate
         locationRequest.setFastestInterval(2500);
@@ -819,6 +872,12 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
         {
             //sendUserData.sendPeriodicCustomerLocationToDriver(getBaseContext(), rideId, currentCustomerLatLang);
             distanceDriverCustomer = getDistanceBetweenDriverAndCustomer();  //Get periodic distance between Driver and Customer
+
+            if(markerInitialDriverLocation != null)
+            {
+               markerInitialDriverLocation.remove();  //Remove Marker of Initial Driver Location
+               showPeriodicLocationOfAssignedDriver();  //Show Periodic Location of Assigned Driver
+            }
         }
         LocationServices.FusedLocationApi.requestLocationUpdates(googleApiClient, locationRequest, this);
     }

@@ -411,7 +411,7 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
             driverMainButton.setClickable(true);
             driverMainButton.setText("START SESSION");
 
-           // showAssignedCustomerLocation();      //Show Assigned Customer Marker
+            showAssignedCustomerLocation();      //Place a Marker at Assigned Customer Location
             drawRouteToBetweenPickupAndDestination(currentDriverLocation, customerPickupLocation);
 
             endOfSession.setVisibility(View.VISIBLE);
@@ -591,8 +591,6 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
     public void endOfRideConfirmationAlert()
     {
         //Pop up an Alert Dialog to confirm End of ride
-        final String eventID = "endOfRideSession";
-
         AlertDialog.Builder dialog = new AlertDialog.Builder(this);
         dialog.setTitle("End Session?");
         dialog.setMessage("Confirm you want to end Session?");
