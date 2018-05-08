@@ -14,7 +14,7 @@ public class newCustomerPopup extends AppCompatActivity
 {
     Dialog  dialog;
     TinyDB saveSelectedChoice;
-    public int choiceSelected = 0; // 1 for Accept, 2 for Reject, 3 for Cancel
+    public int choiceSelected = 5; // 1 for Accept, 2 for Reject, 3 for Cancel
 
 
     @Override
@@ -31,6 +31,9 @@ public class newCustomerPopup extends AppCompatActivity
     public void newCustomerAlertPopup()
     {
         TextView txtclose;
+        TextView pickupLocation;
+        TextView destinationLocation;
+
         Button acceptRequest;
         Button rejectRequest;
 
@@ -38,8 +41,17 @@ public class newCustomerPopup extends AppCompatActivity
         dialog.setContentView(R.layout.newcustomeralert);
 
         txtclose = (TextView)dialog.findViewById(R.id.txtclose);
+        pickupLocation = (TextView)dialog.findViewById(R.id.pickup);
+        destinationLocation = (TextView)dialog.findViewById(R.id.destination);
+
         acceptRequest = (Button)dialog.findViewById(R.id.accept);
         rejectRequest = (Button)dialog.findViewById(R.id.reject);
+
+        Intent i = getIntent();
+        String pickupPoint = i.getStringExtra("pickup");
+        String destinationPoint = i.getStringExtra("destination");
+        pickupLocation.setText(pickupPoint);
+        destinationLocation.setText(destinationPoint);
 
         txtclose.setText("X");
 
