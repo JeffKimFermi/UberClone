@@ -67,7 +67,7 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
     Location lastLocation;
     LatLng currentLocation;
     LatLng previousLocation;
-    LatLng currentDriverLocation;
+    LatLng currentDriverLocation = new LatLng(0, 0);
     LatLng startOfRideLocation; //Location of Ride Start
     LatLng endOfRideLocation;   //Location of Ride End
     Marker markerDriverLocation;   //My Current Location Marker
@@ -93,6 +93,7 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
     TinyDB savedSourceLongitude;
     TinyDB savedDestinationLatitude;
     TinyDB savedDestinationLongitude;
+    TinyDB savedRequestId;
     TinyDB savedDriverLatitude;
     TinyDB savedDriverLongitude;
 
@@ -108,6 +109,8 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
     double longitudePickupLocation;  //Longitude of Destination Location
     double latitudeDestinationLocation;
     double longitudeDestinationLocation;
+    double latitudeDriverLocation;
+    double longitudeDriverLocation;
 
     LatLng customerPickupLocation = new LatLng(0, 0);
     LatLng customerDestinationLocation = new LatLng(0, 0);
@@ -160,6 +163,7 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
         savedDestinationLongitude = new TinyDB(getBaseContext());
         savedDriverLatitude = new TinyDB(getBaseContext());
         savedSourceLongitude = new TinyDB(getBaseContext());
+        savedRequestId = new TinyDB(getBaseContext());
 
         driverPhoneNumber = savedUserPhoneNumber.getString("userPhoneNumber");
 
@@ -267,9 +271,10 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
                 {
                     jsonObj = new JSONObject(data);
 
-                    String requestId = jsonObj.getString("requestId");
-                    String statusResponse = jsonObj.getString("status");
+                    requestId = jsonObj.getString("requestId");
+                    savedRequestId.putString("id", requestId);
 
+                    String statusResponse = jsonObj.getString("status");
 
                     customerName = jsonObj.getString("riderName");  //Get name of Customer
                     customerPhone = jsonObj.getString("riderPhone");  //Get Phone Number of Customer
@@ -282,6 +287,11 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
                     latitudeDestinationLocation = jsonObj.getDouble("destinationLatitude");
                     longitudeDestinationLocation = jsonObj.getDouble("destinationLongitude");
 
+                    latitudeDriverLocation = currentDriverLocation.latitude;
+                    longitudeDriverLocation = currentDriverLocation.longitude;
+                    //savedDriverLatitude.putDouble("driverLatitude", latitudeDriverLocation);
+                    //savedDriverLongitude.putDouble("driverLongitude", longitudeDriverLocation);
+
                     //Get Pickup and Destination Locations Descriptions
                     //pickupName = jsonObj.getString("sourceDescription");
                     destinationName = jsonObj.getString("destinationDescription");
@@ -293,8 +303,6 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
                         savedSourceLongitude.putDouble("sLongitude", longitudePickupLocation);
                         savedDestinationLatitude.putDouble("dLatitude", latitudeDestinationLocation);
                         savedDestinationLongitude.putDouble("dLongitude", longitudeDestinationLocation);
-                        savedDriverLatitude.putDouble("driverLatitude", currentDriverLocation.latitude);
-                        savedDriverLongitude.putDouble("driverLongitude", currentDriverLocation.longitude);
 
                         Intent intent = new Intent(DriverMapActivity.this, newCustomerPopup.class);
                         intent.putExtra("pickup", pickupName);
@@ -369,16 +377,16 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
     public void updateUIAfterCustomerRideRequest()
     {
 
+        requestId = savedRequestId.getString("id");
         selectedChoice = savedSelectedChoice.getInt("select"); //1 for Accept, 2, for Reject, 3 for Cancel
         latitudePickupLocation = savedSourceLatitude.getDouble("sLatitude", 0.0);
         longitudePickupLocation = savedSourceLongitude.getDouble("sLongitude", 0.0);
         latitudeDestinationLocation = savedDestinationLatitude.getDouble("dLatitude", 0.0);
         longitudeDestinationLocation = savedDestinationLongitude.getDouble("dLongitude", 0.0);
 
-
         customerPickupLocation = new LatLng(latitudePickupLocation, longitudePickupLocation);
         customerDestinationLocation = new LatLng(latitudeDestinationLocation, longitudeDestinationLocation);
-        currentDriverLocation = new LatLng(savedDriverLatitude.getDouble("driverLatitude", 0.0), savedDestinationLongitude.getDouble("driverLongitude", 0.0));
+        //currentDriverLocation = new LatLng(savedDriverLatitude.getDouble("driverLatitude", 0.0), savedDestinationLongitude.getDouble("driverLongitude", 0.0));
 
         //Toast.makeText(getBaseContext(), ""+selectedChoice, Toast.LENGTH_LONG).show();
 
@@ -684,14 +692,13 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
         Bitmap bCar = bitmapdrawCar.getBitmap();
         Bitmap smallCar = Bitmap.createScaledBitmap(bCar, widthCar, heightCar, false);
 
-        currentDriverLocation = new LatLng(location.getLatitude(), location.getLongitude());
 
         if(!locationDataCopied)
         {
             lastLocation = location;  //Copy the Data
 
             LatLng initLatLang = new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude());
-          //  currentDriverLocation = initLatLang;
+            currentDriverLocation = initLatLang;
             markerDriverLocation = mMap.addMarker(new MarkerOptions().position(initLatLang).title("My Current Location").icon(BitmapDescriptorFactory.fromBitmap(smallCar)));  //Add Marker, and Set Title of Marker
 
             locationDataCopied = true;
@@ -707,7 +714,7 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
                 lastLocation = location;
 
                 LatLng currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
-              //  currentDriverLocation = currentLatLng;
+                currentDriverLocation = currentLatLng;
 
                 markerDriverLocation = mMap.addMarker(new MarkerOptions().position(currentLatLng).title("My Current Location").icon(BitmapDescriptorFactory.fromBitmap(smallCar)));  //Add Marker, and Set Title of Marker
                 mMap.moveCamera(CameraUpdateFactory.newLatLng(currentLatLng));

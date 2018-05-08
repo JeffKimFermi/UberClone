@@ -108,8 +108,8 @@ public class sendUserData
         {
             jsonObj.put("requestId", requestId);   //Unique ID of the Transaction
             jsonObj.put("driverPhone", userId);    //User ID which is the Driver Phone
-            //jsonObj.put("driverLatitude", driverLocation.latitude);  //Driver Latitude
-           // jsonObj.put("driverLongitude", driverLocation.longitude); //Driver Longitude
+            jsonObj.put("driverLatitude", driverLocation.latitude);  //Driver Latitude
+            jsonObj.put("driverLongitude", driverLocation.longitude); //Driver Longitude
         }
         catch (JSONException jse)
         {

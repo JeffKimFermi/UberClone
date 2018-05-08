@@ -326,7 +326,7 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
                 double distanceInKms = 0;
                 if(rideRequestAccepted)
                 {
-                    distanceDriverCustomer = getDistanceBetweenDriverAndCustomer();  //Use Dummy Data for the Time Being
+                    //distanceDriverCustomer = getDistanceBetweenDriverAndCustomer();  //Use Dummy Data for the Time Being
                     distanceInKms = distanceDriverCustomer / 1000;
                 }
 
