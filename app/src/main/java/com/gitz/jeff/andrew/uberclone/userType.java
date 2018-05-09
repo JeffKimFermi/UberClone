@@ -246,6 +246,8 @@ public class userType extends AppCompatActivity
         int permissionAccessFineLocation = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION);
         int permissionAccessCoarseLocation = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION);
         int permissionMakePhoneCall = ContextCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE);
+        int permissionSendSms = ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS);
+
 
         List<String> listPermissionsNeeded = new ArrayList<>();
         if(permissionAccessFineLocation != PackageManager.PERMISSION_GRANTED)
@@ -261,6 +263,11 @@ public class userType extends AppCompatActivity
         if(permissionMakePhoneCall != PackageManager.PERMISSION_GRANTED)
         {
             listPermissionsNeeded.add(Manifest.permission.CALL_PHONE);
+        }
+
+        if(permissionSendSms != PackageManager.PERMISSION_GRANTED)
+        {
+            listPermissionsNeeded.add(Manifest.permission.SEND_SMS);
         }
 
         if (!listPermissionsNeeded.isEmpty())

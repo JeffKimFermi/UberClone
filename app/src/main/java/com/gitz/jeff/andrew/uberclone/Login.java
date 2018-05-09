@@ -106,7 +106,6 @@ public class Login extends AppCompatActivity
             Intent intent = new Intent(getBaseContext(), CustomerMapActivity.class);
             startActivity(intent);
             alertDialog.dismiss();     //Dismiss it after 4 seconds
-
         }
         else if (userType == 2)        //If Driver in Use
         {

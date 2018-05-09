@@ -65,11 +65,11 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
     GoogleApiClient googleApiClient;
     LocationRequest locationRequest;
     Location lastLocation;
-    LatLng currentLocation;
-    LatLng previousLocation;
+    LatLng currentLocation = new LatLng(0, 0);
+    LatLng previousLocation = new LatLng(0, 0);
     LatLng currentDriverLocation = new LatLng(0, 0);
-    LatLng startOfRideLocation; //Location of Ride Start
-    LatLng endOfRideLocation;   //Location of Ride End
+    LatLng startOfRideLocation = new LatLng(0, 0); //Location of Ride Start
+    LatLng endOfRideLocation = new LatLng(0, 0);   //Location of Ride End
     Marker markerDriverLocation;   //My Current Location Marker
     Marker markerCustomerLocation;  //Customer Location Marker
 
@@ -86,6 +86,7 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
     boolean readyToStartRide;
     boolean locationDataCopied = false;
     boolean driverAvailable = false;  //Set When Driver is Available
+    boolean rideComplete = false;
 
     TinyDB savedUserPhoneNumber;
     TinyDB savedSelectedChoice;
@@ -95,6 +96,11 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
     TinyDB savedDestinationLongitude;
     TinyDB savedRequestId;
     TinyDB savedDriverLatitude;
+    TinyDB savedCustomerName;
+    TinyDB savedCustomerPhone;
+    TinyDB savedPickup;
+    TinyDB savedDestination;
+
     TinyDB savedDriverLongitude;
 
     public static String driverPhoneNumber;
@@ -118,11 +124,16 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
 
     TextView pickup;
     TextView destination;
-    TextView pickupForPopup;
-    TextView destinationForPopup;
+    TextView name;
+    TextView phone;
+
     int selectedChoice;
 
     Dialog myDialog;
+    Dialog rideDetailsDialog;
+
+    String costOfRide = "0.0";
+    double distanceOfRide = 0.0;
 
     private static DriverMapActivity inst;
     public static DriverMapActivity instance()
@@ -164,6 +175,10 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
         savedDriverLatitude = new TinyDB(getBaseContext());
         savedSourceLongitude = new TinyDB(getBaseContext());
         savedRequestId = new TinyDB(getBaseContext());
+        savedCustomerName = new TinyDB(getBaseContext());
+        savedCustomerPhone = new TinyDB(getBaseContext());
+        savedPickup = new TinyDB(getBaseContext());
+        savedDestination = new TinyDB(getBaseContext());
 
         driverPhoneNumber = savedUserPhoneNumber.getString("userPhoneNumber");
 
@@ -224,7 +239,7 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
 
     public void handleDriverMainActivityButton()
     {
-        if(readyToStartRide)
+        if(readyToStartRide && !rideComplete)
         {
             endOfSession.setVisibility(View.VISIBLE);
             endOfSession.setText("End Session?");
@@ -240,12 +255,22 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
 
         else
         {
-            driverAvailable = true;
-
-            driverMainButton.setText("Checking For Customers");
-            driverMainButton.setBackgroundColor(Color.RED);
-            driverMainButton.setTextColor(Color.WHITE);
+            if(!rideComplete)
+            {
+                driverAvailable = true;
+                driverMainButton.setText("Checking For Customers");
+                driverMainButton.setBackgroundColor(Color.RED);
+                driverMainButton.setTextColor(Color.WHITE);
+            }
         }
+
+
+        if(rideComplete)
+        {
+            selectedChoice = 0;
+            showRideDetails();
+        }
+
 
     }
 
@@ -289,8 +314,10 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
 
                     latitudeDriverLocation = currentDriverLocation.latitude;
                     longitudeDriverLocation = currentDriverLocation.longitude;
-                    //savedDriverLatitude.putDouble("driverLatitude", latitudeDriverLocation);
-                    //savedDriverLongitude.putDouble("driverLongitude", longitudeDriverLocation);
+
+                    savedDriverLatitude.putDouble("driverLatitude", latitudeDriverLocation);  //Save current coordinates
+                    savedDriverLatitude.putDouble("driverLongitude", longitudeDriverLocation);  //Save current ooordinates
+
 
                     //Get Pickup and Destination Locations Descriptions
                     //pickupName = jsonObj.getString("sourceDescription");
@@ -303,6 +330,11 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
                         savedSourceLongitude.putDouble("sLongitude", longitudePickupLocation);
                         savedDestinationLatitude.putDouble("dLatitude", latitudeDestinationLocation);
                         savedDestinationLongitude.putDouble("dLongitude", longitudeDestinationLocation);
+
+                        savedCustomerName.putString("customerName", customerName);
+                        savedCustomerPhone.putString("customerPhone", customerPhone);
+                        // savedPickup.putString("pickupPoint", pickupName);
+                        savedDestination.putString("destinationPoint", destinationName);
 
                         Intent intent = new Intent(DriverMapActivity.this, newCustomerPopup.class);
                         intent.putExtra("pickup", pickupName);
@@ -333,7 +365,6 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
 
                 final String pushedMessages = data;
 
-                //Act on Response
             }
         });
 
@@ -349,8 +380,6 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
 
                 JSONObject jsonObj = null;
                 String statusResponse;
-                String messageResponse;
-                String costOfRide;
 
                 try
                 {
@@ -358,8 +387,23 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
 
                     requestId = jsonObj.getString("requestId");
                     statusResponse = jsonObj.getString("status");
-                    messageResponse = jsonObj.getString("driverPhone");
                     costOfRide = jsonObj.getString("cost");
+
+                    if(statusResponse.equals("Success"))
+                    {
+                        rideComplete = true;
+                        runOnUiThread(new Runnable()   //Special Thread to do the work
+                        {
+
+                            @Override
+                            public void run()
+                            {
+                                driverMainButton.setClickable(true);
+                                driverMainButton.setBackgroundColor(Color.RED);
+                                driverMainButton.setText("Ride Details");
+                            }
+                        });
+                    }
                 }
 
                 catch (Exception e)
@@ -379,14 +423,13 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
 
         requestId = savedRequestId.getString("id");
         selectedChoice = savedSelectedChoice.getInt("select"); //1 for Accept, 2, for Reject, 3 for Cancel
+
         latitudePickupLocation = savedSourceLatitude.getDouble("sLatitude", 0.0);
         longitudePickupLocation = savedSourceLongitude.getDouble("sLongitude", 0.0);
-        latitudeDestinationLocation = savedDestinationLatitude.getDouble("dLatitude", 0.0);
-        longitudeDestinationLocation = savedDestinationLongitude.getDouble("dLongitude", 0.0);
 
         customerPickupLocation = new LatLng(latitudePickupLocation, longitudePickupLocation);
         customerDestinationLocation = new LatLng(latitudeDestinationLocation, longitudeDestinationLocation);
-        //currentDriverLocation = new LatLng(savedDriverLatitude.getDouble("driverLatitude", 0.0), savedDestinationLongitude.getDouble("driverLongitude", 0.0));
+        currentDriverLocation = new LatLng(savedDriverLatitude.getDouble("driverLatitude", 0.0), savedDestinationLongitude.getDouble("driverLongitude", 0.0));
 
         //Toast.makeText(getBaseContext(), ""+selectedChoice, Toast.LENGTH_LONG).show();
 
@@ -396,9 +439,6 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
             driverMainButton.setVisibility(View.VISIBLE);
             driverMainButton.setClickable(true);
             driverMainButton.setText("START SESSION");
-
-            //drawRouteToBetweenPickupAndDestination(currentDriverLocation, customerPickupLocation);
-
             endOfSession.setVisibility(View.VISIBLE);
             endOfSession.setText("Cancel Request?");
             customerInformation.setVisibility(View.VISIBLE);
@@ -408,27 +448,27 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
         else if(selectedChoice == 2)  //Reject
         {
             sendUserData.sendRideRequestRejected(getBaseContext(), requestId, driverPhoneNumber);
-            int backgroundColour = Color.parseColor("#40E0D0");
-            driverMainButton.setBackgroundColor(backgroundColour);
-            driverMainButton.setText("Available");
-            driverMainButton.setVisibility(View.VISIBLE); //Not Visible
-            driverMainButton.setClickable(true);
-            rideInSession = false;
+            defaultUI();
 
         }
 
         else if(selectedChoice == 3)  //Cancel
         {
             sendUserData.sendRideRequestRejected(getBaseContext(), requestId, driverPhoneNumber);
-            int backgroundColour = Color.parseColor("#40E0D0");
-            driverMainButton.setBackgroundColor(backgroundColour);
-            driverMainButton.setText("Available");
-            driverMainButton.setVisibility(View.VISIBLE); //Not Visible
-            driverMainButton.setClickable(true);
-            rideInSession = false;
+            defaultUI();
         }
 
         else{}
+    }
+
+    public void defaultUI()
+    {
+        int backgroundColour = Color.parseColor("#40E0D0");
+        driverMainButton.setBackgroundColor(backgroundColour);
+        driverMainButton.setText("Available");
+        driverMainButton.setVisibility(View.VISIBLE); //Not Visible
+        driverMainButton.setClickable(true);
+        rideInSession = false;
     }
 
     public void  showAssignedCustomerProfile()
@@ -436,9 +476,9 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
         TextView txtclose;
         ImageView callBtn;
         ImageView sendSms;
-        TextView name, phone;
         final EditText textMessage;
 
+        myDialog = new Dialog(DriverMapActivity.this);
         myDialog.setContentView(R.layout.custompopup_customer_details);
 
         callBtn = (ImageView)myDialog.findViewById(R.id.callbutton);
@@ -448,8 +488,13 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
 
         name = (TextView) myDialog.findViewById(R.id.customerName);
         phone = (TextView)myDialog.findViewById(R.id.customerPhone);
-        pickup = (TextView)myDialog.findViewById(R.id.pickup);
-        destination = (TextView)myDialog.findViewById(R.id.destination);
+        pickup = (TextView)myDialog.findViewById(R.id.pickupPoint);
+        destination = (TextView)myDialog.findViewById(R.id.destinationPoint);
+
+        customerName = savedCustomerName.getString("customerName");
+        customerPhone = savedCustomerPhone.getString("customerPhone");
+        //pickupName = savedPickup.getString("pickupPoint");
+        destinationName = savedDestination.getString("destinationPoint");
 
         //Update Dialog Alert Popup UI Appropriately
         name.setText(customerName);     //Customer Name
@@ -509,6 +554,44 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
         myDialog.show();
     }
 
+    public void showRideDetails()
+    {
+        rideDetailsDialog = new Dialog(DriverMapActivity.this);
+        rideDetailsDialog.setContentView(R.layout.ridedetails);
+
+        TextView txtclose;
+        txtclose = (TextView)rideDetailsDialog.findViewById(R.id.txtclose);
+
+        TextView rideCost;
+        TextView distanceCovered;
+
+        txtclose.setText("X");
+
+        txtclose.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                rideDetailsDialog.dismiss();
+                defaultUI();
+            }
+        });
+
+
+        rideCost = (TextView) rideDetailsDialog.findViewById(R.id.cost);
+        distanceCovered =(TextView) rideDetailsDialog.findViewById(R.id.distance);
+
+        distanceOfRide = getTotalDistanceTravelled();
+
+        String doubleDistance = Double.toString(distanceOfRide);
+
+        rideCost.setText(costOfRide + " Ksh");
+        distanceCovered.setText(doubleDistance + " Km");
+
+        rideDetailsDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        rideDetailsDialog.show();
+    }
+
     public void showAssignedCustomerLocation()
     {
         int heightPerson = 35;
@@ -559,11 +642,6 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
             public void onClick(DialogInterface paramDialogInterface, int paramInt)
             {
                 //sendUserData.sendRideCompeteNotification(getBaseContext(), requestId, driverPhoneNumber);   //currentLatitudeLongitude is current Driver Location
-                int backgroundColour = Color.parseColor("#40E0D0");
-                driverMainButton.setBackgroundColor(backgroundColour);
-                driverMainButton.setVisibility(View.VISIBLE);
-                driverMainButton.setClickable(true);
-                driverMainButton.setText("Available");
                 customerInformation.setVisibility(View.GONE);
                 endOfSession.setVisibility(View.GONE);
                 rideInSession = false;
@@ -602,7 +680,7 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
                 endOfRideLocation = currentLocation; //Pick Exact Coordinates of when Ride Stopped
                 double distanceCovered = getTotalDistanceTravelled(); //Get Total Distance Travelled during Ride
 
-                //sendUserData.sendRideCompeteNotification(getBaseContext(), requestId, distanceCovered, currentDriverLocation);   //currentLatitudeLongitude is current Driver Location
+                sendUserData.sendRideCompeteNotification(getBaseContext(), requestId, distanceCovered, currentDriverLocation);   //currentLatitudeLongitude is current Driver Location
 
                 //customerInformation.setVisibility(View.GONE);
                 int backgroundColour = Color.parseColor("#40E0D0");
@@ -634,7 +712,7 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
 
     }
 
-    public void drawRouteToBetweenPickupAndDestination(LatLng pickUpPointCoordinates, LatLng destinationCoordinates)
+    public void drawRouteBetweenPickupAndDestination(LatLng pickUpPointCoordinates, LatLng destinationCoordinates)
     {
         Routing routing = new Routing.Builder()
                 .travelMode(AbstractRouting.TravelMode.DRIVING)
@@ -767,6 +845,7 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
         if(selectedChoice == 1)
         {
             showAssignedCustomerLocation();
+            drawRouteBetweenPickupAndDestination(currentDriverLocation, customerPickupLocation);
         }
 
     }
@@ -787,7 +866,7 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
 
         if(readyToStartRide)
         {
-           // sendUserData.sendPeriodicDriverLocationToCustomer(getBaseContext(), requestId, driverPhoneNumber, currentDriverLocation);   //Send every 2.5s Driver Location
+            sendUserData.sendPeriodicDriverLocationToCustomer(getBaseContext(), requestId, driverPhoneNumber, currentDriverLocation);   //Send every 2.5s Driver Location
         }
 
         LocationServices.FusedLocationApi.requestLocationUpdates(googleApiClient, locationRequest, this);
@@ -919,6 +998,3 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
 }
 
 
-//Log.e("LATLONG RECICEIVED",""+customerPickupLocation.latitude+" : "+customerPickupLocation.latitude);
-//Log.e("LATLONG RECICEIVED",""+longitudeDestinationLocation+" : "+longitudeDestinationLocation);
-//Create a LatLng Object for Pickup and Destination
