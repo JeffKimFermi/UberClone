@@ -198,8 +198,6 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
 
         updateUIAfterCustomerRideRequest();  //Update UI based on Driver Choice to ride request
 
-        checkIfLocationHasChangedConsiderably(); //Update Driver Location if Position Changed > 200m
-
         driverMainButton.setOnClickListener(new View.OnClickListener()       //Main Driver Functionality Button
         {
             @Override
@@ -261,6 +259,8 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
                 driverMainButton.setText("Checking For Customers");
                 driverMainButton.setBackgroundColor(Color.RED);
                 driverMainButton.setTextColor(Color.WHITE);
+
+                previousLocation = currentLocation;  //Pick Coordinates At exactly when driver says he is Available
             }
         }
 
@@ -712,7 +712,7 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
 
     }
 
-    public void drawRouteBetweenPickupAndDestination(LatLng pickUpPointCoordinates, LatLng destinationCoordinates)
+    public void drawRouteBetweenDriverAndPickupLocations(LatLng pickUpPointCoordinates, LatLng destinationCoordinates)
     {
         Routing routing = new Routing.Builder()
                 .travelMode(AbstractRouting.TravelMode.DRIVING)
@@ -750,13 +750,17 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
             currentLoc.setLongitude(currentLocation.longitude);
         }
 
-        float differenceInDistance = 0;
+        float differenceInDistance;
 
-        differenceInDistance = previousLoc.distanceTo(currentLoc);
-
-        if(differenceInDistance > 200)
+        if((previousLocation.latitude != 0 && previousLocation.longitude!= 0) && (currentLocation.latitude != 0 && currentLocation.longitude != 0))
         {
-           // sendUserData.sendRideRequestAccepted(getBaseContext(), localRequestId, driverPhoneNumber, currentDriverLocation);
+
+            differenceInDistance = previousLoc.distanceTo(currentLoc);
+
+            if(differenceInDistance > 200)
+            {
+                sendUserData.sendRideRequestAccepted(getBaseContext(), localRequestId, driverPhoneNumber, currentDriverLocation);
+            }
         }
 
     }
@@ -801,7 +805,7 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
         }
 
 
-
+        checkIfLocationHasChangedConsiderably(); //Update Driver Location if Position Changed > 200m
 
 
         mMap.animateCamera(CameraUpdateFactory.zoomTo(myZoomLevel), new GoogleMap.CancelableCallback() {
@@ -845,7 +849,7 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
         if(selectedChoice == 1)
         {
             showAssignedCustomerLocation();
-            drawRouteBetweenPickupAndDestination(currentDriverLocation, customerPickupLocation);
+           // drawRouteBetweenDriverAndPickupLocations(currentDriverLocation, customerPickupLocation);
         }
 
     }
