@@ -248,6 +248,13 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
             rideInSession = true;
             startOfRideLocation = currentLocation;   //Pick Exact Coordinates of when Ride Started
 
+            clearRouteFromMap();  //Clear Drawn Route to Customer
+
+            if(markerCustomerLocation != null)
+            {
+                markerCustomerLocation.remove();
+            }
+
             sendUserData.sendRideStartedNotification(getBaseContext(), requestId, driverPhoneNumber);   //currentLatitudeLongitude is current Driver Location
         }
 
@@ -712,7 +719,7 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
 
     }
 
-    public void drawRouteBetweenDriverAndPickupLocations(LatLng pickUpPointCoordinates, LatLng destinationCoordinates)
+    public void drawRouteBetweenDriverAndPickupLocation(LatLng pickUpPointCoordinates, LatLng destinationCoordinates)
     {
         Routing routing = new Routing.Builder()
                 .travelMode(AbstractRouting.TravelMode.DRIVING)
@@ -849,7 +856,7 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
         if(selectedChoice == 1)
         {
             showAssignedCustomerLocation();
-           // drawRouteBetweenDriverAndPickupLocations(currentDriverLocation, customerPickupLocation);
+            drawRouteBetweenDriverAndPickupLocation(currentDriverLocation, customerPickupLocation);
         }
 
     }

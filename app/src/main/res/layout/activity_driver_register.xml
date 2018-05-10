@@ -6,6 +6,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:background="#ffffffff"
     android:orientation="vertical"
+    android:layout_centerVertical="true"
     android:padding="16dp"
     tools:context="com.gitz.jeff.andrew.uberclone.driverRegister">
     <TextView

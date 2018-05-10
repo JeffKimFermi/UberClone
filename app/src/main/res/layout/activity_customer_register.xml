@@ -7,6 +7,7 @@
     android:background="#ffffffff"
     android:orientation="vertical"
     android:padding="16dp"
+    android:layout_centerVertical="true"
     tools:context="com.gitz.jeff.andrew.uberclone.customerRegister">
     <TextView
         android:layout_width="match_parent"

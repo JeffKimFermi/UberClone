@@ -245,18 +245,22 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
             }
         });
 
-
         callTaxi.setOnClickListener(new View.OnClickListener()      //Make Taxi Request
         {
             @Override
             public void onClick(View v)
             {
-               handleCallTaxiRequest();
-               showDialogAlert();
+                if(!rideComplete)
+                {
+                    handleCallTaxiRequest();
+                    showDialogAlert();
+                }
 
-               if(rideComplete)
+               if(rideComplete)  //If Ride Complete
                {
-                showRideDetails();
+                 showRideDetails();
+                 cancelRequest.setClickable(true);
+                 driverInfo.setClickable(true);
                }
             }
         });
@@ -291,7 +295,7 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
         }
         markerDestination = mMap.addMarker(new MarkerOptions().position(latlngDestinationCoordinates).title("Destination: " + destinationDescription));
         mMap.animateCamera(CameraUpdateFactory.zoomTo(12), 2000, null);
-       // drawRouteToBetweenPickupAndDestination(latlngPickUpLocationCoordinates, latlngDestinationCoordinates);  //Draw Route from PickUp Point to dstination
+        drawRouteToBetweenPickupAndDestination(latlngPickUpLocationCoordinates, latlngDestinationCoordinates);  //Draw Route from PickUp Point to dstination
     }
 
     public void handleCallTaxiRequest()
@@ -320,10 +324,13 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
         callTaxi.setBackgroundColor(Color.RED);
         callTaxi.setTextColor(Color.WHITE);
         callTaxi.setText("Getting you a Driver...");
-
         callTaxi.setClickable(false);
-        cancelRequest.setVisibility(View.VISIBLE);
-        driverInfo.setVisibility(View.VISIBLE);
+
+        cancelRequest.setClickable(false);
+        cancelRequest.setVisibility(View.INVISIBLE);
+
+        driverInfo.setClickable(false);
+        driverInfo.setVisibility(View.INVISIBLE);
 
         if(markerPeriodicDriverLocation != null)
         {
@@ -347,7 +354,7 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
         double distanceInKms;
 
         distanceDriverCustomer = getDistanceBetweenDriverAndCustomer();  //Use Dummy Data for the Time Being
-        Toast.makeText(getBaseContext(), ""+distanceDriverCustomer, Toast.LENGTH_LONG).show();
+      //  Toast.makeText(getBaseContext(), ""+distanceDriverCustomer, Toast.LENGTH_LONG).show();
         distanceInKms = distanceDriverCustomer / 1000;
 
         if (distanceDriverCustomer < 100)  //If Distance Btwn Driver and Customer is less than 100m
@@ -435,7 +442,7 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
         name.setText(driverName);
         phone.setText(driverPhone);
         numberPlate.setText(vehicleRegistration);
-        distance.setText(doubleDistance);
+        distance.setText(doubleDistance + " km ");
 
         callBtn = (ImageView)myDialog.findViewById(R.id.callbutton);
         sendSms = (ImageView)myDialog.findViewById(R.id.sendSms);
@@ -495,6 +502,12 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
 
     public void showAssignedDriverLocation()
     {
+        cancelRequest.setClickable(true);
+        cancelRequest.setVisibility(View.VISIBLE);
+
+        driverInfo.setClickable(true);
+        driverInfo.setVisibility(View.VISIBLE);
+
         int heightCar = 40;
         int widthCar = 35;
         BitmapDrawable bitmapdrawCar =(BitmapDrawable)getResources().getDrawable(R.mipmap.car);
@@ -659,8 +672,12 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
                 clearRouteFromMap();  //Clear Route
                 markerDestination.remove(); //Remove Destination Marker
                 markerPickUp.remove();  //Remove Pickup Marker
-                markerPeriodicDriverLocation.remove();
-                markerInitialDriverLocation.remove();
+                if(markerPeriodicDriverLocation != null && markerInitialDriverLocation != null)
+                {
+                    markerPeriodicDriverLocation.remove();
+                    markerInitialDriverLocation.remove();
+                }
+
             }
         });
     }
