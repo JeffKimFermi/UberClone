@@ -6,7 +6,7 @@ android {
     defaultConfig {
         applicationId "com.gitz.jeff.andrew.uberclone"
         minSdkVersion 21
-        targetSdkVersion 21
+        targetSdkVersion 27
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
@@ -51,4 +51,5 @@ dependencies {
     compile 'com.steelkiwi:dots-loader-view:1.0.0'
     compile 'com.github.d-max:spots-dialog:0.7@aar'
     testCompile 'junit:junit:4.12'
+    compile 'com.google.maps.android:android-maps-utils:0.4+'
 }

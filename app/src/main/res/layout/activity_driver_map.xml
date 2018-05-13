@@ -48,6 +48,23 @@
     </LinearLayout>
 
 
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/distanceTest"
+        android:text="0.0 km"
+        android:layout_gravity="center"
+        android:textAllCaps="false"
+        android:layout_marginRight="15sp"
+        android:layout_marginLeft="15sp"
+        android:layout_marginBottom="10sp"
+        android:background="#40E0D0"
+        android:textColor="#ffffff"
+
+        />
+
+
     <Button
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

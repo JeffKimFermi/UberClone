@@ -11,6 +11,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.app.AlertDialog;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import dmax.dialog.SpotsDialog;
@@ -20,15 +21,22 @@ public class Login extends AppCompatActivity
 
     EditText loginPhone;
     EditText loginPassword;
-    TinyDB savedUserType;
-    int userType = 0;    //Whether Use is a Customer or a Driver
+
     Button loginButton;
-    private static final int  displayTime = 2200;  //Alert DialogBox Display Time
+    LinearLayout confirmationMsg;
     TinyDB loginStatus;  //Will save a boolean value representing registration status
     TinyDB savedUserPhoneNumber;
+    TinyDB savedRegistrationStatus;
+    TinyDB savedUserType;
+
     String userPhone;
     String userPassword;
+
+    int userType = 0;    //Whether Use is a Customer or a Driver
+
     boolean loginState = false;
+    boolean registrationComplete = false;
+
     AlertDialog alertDialog;
 
     private static Login inst;
@@ -56,6 +64,11 @@ public class Login extends AppCompatActivity
         savedUserType = new TinyDB(getBaseContext());
         loginStatus = new TinyDB(getBaseContext());
         savedUserPhoneNumber = new TinyDB(getBaseContext());
+        savedRegistrationStatus = new TinyDB(getBaseContext());
+
+        registrationComplete = savedRegistrationStatus.getBoolean("regStatus");
+        confirmationMsg = (LinearLayout)findViewById(R.id.confirmation);
+        confirmationMsg.setVisibility(View.INVISIBLE);
 
 
         //final AlertDialog alertDialog = new SpotsDialog(Login.this, R.style.customLogin);  //Display Alert for 4 Seconds before going to next Activity
@@ -69,8 +82,25 @@ public class Login extends AppCompatActivity
             @Override
             public void onClick(View v)
             {
-                handleLoginRequest();
-                showDialogAlertDuringLogin();
+                registrationComplete = true; //Rem to Uncoment
+                if(registrationComplete)   //If Regstration successful
+                {
+                    handleLoginRequest();
+                    showDialogAlertDuringLogin();
+                }
+
+                else
+                {
+                    confirmationMsg.setVisibility(View.VISIBLE);
+                    new Handler().postDelayed(new Runnable()
+                    {
+                        @Override
+                        public void run()
+                        {
+                            confirmationMsg.setVisibility(View.INVISIBLE);
+                        }
+                    }, 3000);
+                }
             }
         });
     }
@@ -89,8 +119,10 @@ public class Login extends AppCompatActivity
             public void run()
             {
                 alertDialog.dismiss(); //Dismiss just in case there was network error
+                loginPhone.setText("");
+                loginPassword.setText("");
             }
-        }, 3000);
+        }, 2500);
     }
 
 

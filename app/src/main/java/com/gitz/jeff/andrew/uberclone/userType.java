@@ -295,4 +295,11 @@ public class userType extends AppCompatActivity
             break;
         }
     }
+
+    @Override
+    public  void onBackPressed()
+    {
+        finish();
+        super.onBackPressed();
+    }
 }

@@ -21,6 +21,65 @@ import org.json.JSONObject;
 public class sendUserData
 {
     //Send Ride Request
+    public static  void sendDriverAvailable(Context myContext, final String userId, LatLng currentDriverLocation)
+    {
+        final Context context= myContext;
+        final JSONObject jsonObj = new JSONObject();
+        try
+        {
+            jsonObj.put("userPhone", userId);
+
+            //Pickpup Location Coordinates
+            jsonObj.put("sourceLatitude", currentDriverLocation.latitude);
+            jsonObj.put("sourceLongitude", currentDriverLocation.longitude);
+        }
+        catch (JSONException jse)
+        {
+            jse.printStackTrace();
+        }
+
+        String url= "http://46.101.73.84:8080/request/driver/availability";
+        JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.POST, url,jsonObj,   //url,jsonObj
+                new Response.Listener<JSONObject>()
+                {
+                    @Override
+                    public void onResponse(JSONObject response)
+                    {
+                        String statusResponse;
+                        String requestIdResponse;
+
+                        try
+                        {
+                            statusResponse = response.getString("status");
+                            requestIdResponse = response.getString("requestId");
+                            Log.e("Response for Status", statusResponse);
+
+                            if(statusResponse.equals("Success"))
+                            {}
+
+                            else
+                            {}
+                        }
+
+                        catch (Exception e)
+                        {
+                            e.printStackTrace();
+                        }
+
+                    }
+                },
+                new Response.ErrorListener()
+                {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.e("Error.Response", error.toString());
+                    }
+                }
+        );
+
+        Volley.newRequestQueue(context).add(getRequest);
+    }
+
     public static  void sendNewRideRequest(Context myContext, final String userId, LatLng customerPickUpLocation, LatLng customerDestination, final String customerPickUpLocationDescription, final String customerDestinationDescription)
     {
         final Context context= myContext;
@@ -77,6 +136,64 @@ public class sendUserData
                                 instCustomerMapActivity.hideDialogAlert();
                                 displayToast(context, "Request Error, Please Try Again");
                             }
+                        }
+
+                        catch (Exception e)
+                        {
+                            e.printStackTrace();
+                        }
+
+                    }
+                },
+                new Response.ErrorListener()
+                {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.e("Error.Response", error.toString());
+                    }
+                }
+        );
+
+        Volley.newRequestQueue(context).add(getRequest);
+    }
+
+    public static  void sendCancelRideRequest(Context myContext, final String userId, final String requestId)
+    {
+        final Context context= myContext;
+        final JSONObject jsonObj = new JSONObject();
+        try
+        {
+            jsonObj.put("userPhone", userId);
+            jsonObj.put("requestId", requestId);
+
+        }
+        catch (JSONException jse)
+        {
+            jse.printStackTrace();
+        }
+
+        String url= "http://46.101.73.84:8080/request/cancel method";
+        JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.POST, url,jsonObj,   //url,jsonObj
+                new Response.Listener<JSONObject>()
+                {
+                    @Override
+                    public void onResponse(JSONObject response)
+                    {
+                        String statusResponse;
+                        String requestIdResponse;
+
+                        try
+                        {
+                            statusResponse = response.getString("status");
+                            requestIdResponse = response.getString("requestId");
+                            Log.e("Response for Status", statusResponse);
+
+
+                            if(statusResponse.equals("Success"))
+                            {}
+
+                            else
+                            {}
                         }
 
                         catch (Exception e)
@@ -327,7 +444,7 @@ public class sendUserData
     }
 
     //Send Notification that Ride has Started
-    public static void sendRideCompeteNotification(Context myContext, final String requestId, final double distanceTravelled, LatLng driverLocation)
+    public static void sendRideCompleteNotification(Context myContext, final String requestId, final double distanceTravelled, LatLng driverLocation)
     {
         final Context context= myContext;
         JSONObject jsonObj = new JSONObject();
