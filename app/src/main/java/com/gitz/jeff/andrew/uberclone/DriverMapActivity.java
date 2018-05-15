@@ -85,12 +85,13 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
     Button endOfSession;
     Button customerInformation;
 
-    boolean rideInSession;
-    boolean readyToStartRide;
     boolean locationDataCopied = false;
-    boolean driverAvailable = false;  //Set When Driver is Available
-    boolean rideComplete = false;
     boolean registrationComplete = false;
+    boolean driverAvailable = false;  //Set When Driver is Available
+
+    boolean readyToStartRide = false;
+    boolean rideInSession = false;
+    boolean rideComplete = false;
 
     TinyDB savedUserPhoneNumber;
     TinyDB savedSelectedChoice;
@@ -138,8 +139,12 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
     String costOfRide = "0.0";
     double rideDistance = 0.0;
     double totalDistanceTravelled = 0.0;
-
+    int firstTime = 0;
     Button distanceDisplay;
+
+    Location loc1 = new Location("");
+    Location loc2 = new Location("");
+
 
     private static DriverMapActivity inst;
     public static DriverMapActivity instance()
@@ -169,6 +174,13 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
         {
             mapFragment.getMapAsync(this);
         }
+
+        loc1.setLatitude(0);
+        loc1.setLongitude(0);
+
+        loc2.setLatitude(0);
+        loc2.setLongitude(0);
+
 
         distanceDisplay = (Button)findViewById(R.id.distanceTest);
 
@@ -244,15 +256,30 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
 
     public void handleDriverMainActivityButton()
     {
-        if(readyToStartRide && !rideComplete)
+        if(readyToStartRide == false && rideInSession == false && rideComplete == false) //If Process has started
+        {
+            boolean available = true;
+
+            driverMainButton.setText("Checking For Customers...");
+            driverMainButton.setBackgroundColor(Color.RED);
+            driverMainButton.setTextColor(Color.WHITE);
+            previousLocation = currentLocation;  //Pick Coordinates At exactly when driver says he is Available
+            sendUserData.sendDriverAvailable(getBaseContext(), driverPhoneNumber, available);  //Send Notification that you are Available
+            driverAvailable = true;
+            readyToStartRide = true; //We are now ready to start ride
+            rideInSession = false;
+            rideComplete = false;
+        }
+
+
+        else if(readyToStartRide)
         {
             endOfSession.setVisibility(View.VISIBLE);
             endOfSession.setText("End Session?");
             customerInformation.setVisibility(View.GONE);
             driverMainButton.setText("Status: Ride In Session");
             driverMainButton.setClickable(false);
-            readyToStartRide = false;
-            rideInSession = true;
+
             startOfRideLocation = currentLocation;   //Pick Exact Coordinates of when Ride Started
 
             clearRouteFromMap();  //Clear Drawn Route to Customer
@@ -263,26 +290,19 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
             }
 
             sendUserData.sendRideStartedNotification(getBaseContext(), requestId, driverPhoneNumber);   //currentLatitudeLongitude is current Driver Location
+
+            //Set boolean Values Appropriately
+            readyToStartRide = false;
+            rideInSession = true;  //We shift to the next state
+            rideComplete = false;
         }
 
-        else
+        else if(rideComplete)  //If ride Complete
         {
-            if(!rideComplete)
-            {
-                driverAvailable = true;
-                driverMainButton.setText("Checking For Customers...");
-                driverMainButton.setBackgroundColor(Color.RED);
-                driverMainButton.setTextColor(Color.WHITE);
-                previousLocation = currentLocation;  //Pick Coordinates At exactly when driver says he is Available
-                sendUserData.sendDriverAvailable(getBaseContext(), driverPhoneNumber, currentDriverLocation);  //Send Notification that you are Available
-            }
+            selectedChoice = 0;
+            savedSelectedChoice.putInt("select", selectedChoice); //Save Latest Value to Memory
 
-            if(rideComplete)
-            {
-                selectedChoice = 0;
-                showRideDetails();
-            }
-
+            showRideDetails();
         }
 
     }
@@ -382,6 +402,48 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
         });
 
 
+
+            /*Driver has Accepted Customer's ride Request*/
+        channel.bind("ride_cancelled", new SubscriptionEventListener()   //Events
+        {
+            @Override
+            public void onEvent(String channelName, String eventName, final String data)
+            {
+                Log.e("CANCEL RESPONSE", data);
+
+                //Received Messages From Server
+                JSONObject jsonObj = null;
+                String statusResponse;
+
+                try
+                {
+                    jsonObj = new JSONObject(data);
+
+                    statusResponse = jsonObj.getString("status");
+
+                    if(statusResponse.equals("Success"))
+                    {
+                        runOnUiThread(new Runnable()   //Special Thread to do the work
+                        {
+
+                            @Override
+                            public void run()
+                            {
+                                defaultUI();
+                            }
+                        });
+                    }
+
+                }
+
+                catch (Exception e)
+                {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+
          /*Driver has Accepted Customer's ride Request*/
         channel.bind("ride_completed", new SubscriptionEventListener()   //Events
         {
@@ -427,6 +489,7 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
 
             }
         });
+
 
 
          /*Driver has Accepted Customer's ride Request*/
@@ -517,7 +580,10 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
         driverMainButton.setText("Available");
         driverMainButton.setVisibility(View.VISIBLE); //Not Visible
         driverMainButton.setClickable(true);
+        endOfSession.setVisibility(View.INVISIBLE);
+        customerInformation.setVisibility(View.INVISIBLE);
         rideInSession = false;
+        readyToStartRide = false;
     }
 
     public void  showAssignedCustomerProfile()
@@ -679,6 +745,7 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
                 readyToStartRide = false;
                 hideAssignedCustomerLocation(); //Hide Customer Location Marker
                 clearRouteFromMap();  //Clear Route From Map
+                defaultUI();
             }
         });
 
@@ -713,7 +780,6 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
 
                 sendUserData.sendRideCompleteNotification(getBaseContext(), requestId, distanceCovered, currentDriverLocation);   //currentLatitudeLongitude is current Driver Location
 
-                //customerInformation.setVisibility(View.GONE);
                 int backgroundColour = Color.parseColor("#40E0D0");
                 driverMainButton.setBackgroundColor(backgroundColour);
                 driverMainButton.setVisibility(View.VISIBLE);
@@ -844,9 +910,6 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
         }
 
 
-        checkIfLocationHasChangedConsiderably(); //Update Driver Location if Position Changed > 200m
-
-
         mMap.animateCamera(CameraUpdateFactory.zoomTo(myZoomLevel), new GoogleMap.CancelableCallback() {
             @Override
             public void onFinish()
@@ -862,6 +925,13 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
         });
 
 
+
+        if(readyToStartRide)   //If assigned successfully
+        {
+            sendUserData.sendPeriodicDriverLocationToCustomer(getBaseContext(), requestId, driverPhoneNumber, currentDriverLocation);   //Send every 2.5s Driver Location
+        }
+
+/*
         if(rideInSession)   //Compute Distance only Once Ride has Started
         {
             //Calculate Total Distance Travelled
@@ -876,12 +946,52 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
                 from = to; //Update value of to
                 totalDistanceTravelled = (totalDistanceTravelled + distance);  //Add Initial Value to Current Value
                 totalDistanceTravelled = Math.floor(totalDistanceTravelled*100) / 100;
+                totalDistanceTravelled = (totalDistanceTravelled/1000);  //Send Distance in Km
 
                 String doubleDistance = Double.toString(totalDistanceTravelled);
                 distanceDisplay.setText(doubleDistance);
             }
         }
 
+*/
+        checkIfLocationHasChangedConsiderably(); //Update Driver Location if Position Changed > 200m
+
+        if((loc1.getLatitude() == 0 && loc1.getLongitude() == 0) && (loc2.getLatitude() == 0 && loc2.getLongitude() == 0))  //If First Time
+        {
+            loc1.setLatitude(location.getLatitude());
+            loc1.setLongitude(location.getLongitude());
+            firstTime = 1;
+            //Log.e("dis", "One");
+        }
+
+        else
+        {
+            //Log.e("dis", "Two");
+            Location location1 = new Location("");
+            location1.setLatitude(location.getLatitude());
+            location1.setLongitude(location.getLongitude());
+
+            float distanceMetres = loc1.distanceTo(location1);
+
+            //Error Correction Mechanism
+            if(distanceMetres < 2 || firstTime == 1) // Discard First value
+            {
+                distanceMetres = 0; //Don't count it
+            }
+
+            else
+            {
+                firstTime = 2;
+                totalDistanceTravelled = totalDistanceTravelled + distanceMetres;
+            }
+
+            loc1 = location1;
+
+            distanceDisplay.setText(String.valueOf(totalDistanceTravelled));
+            Log.e("distance", ""+distanceMetres);
+            //Log.e("distance", ""+totalDistanceTravelled);
+
+        }
 
     }
 
@@ -913,19 +1023,14 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
             drawRouteBetweenDriverAndPickupLocation(currentDriverLocation, customerPickupLocation);
         }
 
-        if(readyToStartRide)   //If assigned successfully
-        {
-            sendUserData.sendPeriodicDriverLocationToCustomer(getBaseContext(), requestId, driverPhoneNumber, currentDriverLocation);   //Send every 2.5s Driver Location
-        }
-
     }
 
     @Override
     public void onConnected(@Nullable Bundle bundle)
     {
         locationRequest = new LocationRequest();
-        locationRequest.setInterval(2500);    //Refresh rate
-        locationRequest.setFastestInterval(2500);
+        locationRequest.setInterval(4000);    //Refresh rate
+        locationRequest.setFastestInterval(4000);
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);  //Highest Accuracy, However drains a lot of battery power
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED)

@@ -21,24 +21,22 @@ import org.json.JSONObject;
 public class sendUserData
 {
     //Send Ride Request
-    public static  void sendDriverAvailable(Context myContext, final String userId, LatLng currentDriverLocation)
+    public static  void sendDriverAvailable(Context myContext, final String userId, final boolean driverAvailability)
     {
         final Context context= myContext;
         final JSONObject jsonObj = new JSONObject();
         try
         {
-            jsonObj.put("userPhone", userId);
+            jsonObj.put("driverPhone", userId);
+            jsonObj.put("availability", driverAvailability);
 
-            //Pickpup Location Coordinates
-            jsonObj.put("sourceLatitude", currentDriverLocation.latitude);
-            jsonObj.put("sourceLongitude", currentDriverLocation.longitude);
         }
         catch (JSONException jse)
         {
             jse.printStackTrace();
         }
 
-        String url= "http://46.101.73.84:8080/request/driver/availability";
+        String url= "http://46.101.73.84:8080/driver/availability";
         JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.POST, url,jsonObj,   //url,jsonObj
                 new Response.Listener<JSONObject>()
                 {
@@ -157,22 +155,21 @@ public class sendUserData
         Volley.newRequestQueue(context).add(getRequest);
     }
 
-    public static  void sendCancelRideRequest(Context myContext, final String userId, final String requestId)
+    public static  void sendCancelRideRequest(Context myContext, final String requestId, final String userId)
     {
         final Context context= myContext;
         final JSONObject jsonObj = new JSONObject();
         try
         {
-            jsonObj.put("userPhone", userId);
+            jsonObj.put("driverPhone", userId);
             jsonObj.put("requestId", requestId);
-
         }
         catch (JSONException jse)
         {
             jse.printStackTrace();
         }
 
-        String url= "http://46.101.73.84:8080/request/cancel method";
+        String url= "http://46.101.73.84:8080/request/cancel";
         JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.POST, url,jsonObj,   //url,jsonObj
                 new Response.Listener<JSONObject>()
                 {
@@ -180,13 +177,10 @@ public class sendUserData
                     public void onResponse(JSONObject response)
                     {
                         String statusResponse;
-                        String requestIdResponse;
-
                         try
                         {
                             statusResponse = response.getString("status");
-                            requestIdResponse = response.getString("requestId");
-                            Log.e("Response for Status", statusResponse);
+                            Log.e("CANCEL REQUEST", statusResponse);
 
 
                             if(statusResponse.equals("Success"))

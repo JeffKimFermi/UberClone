@@ -23,15 +23,14 @@
         android:theme="@style/AppTheme"
         tools:replace="android:label">
         <activity android:name=".splashActivity"
-                  android:noHistory = "true">
+                  android:noHistory="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
 
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-        <activity android:name=".Login"
-                  android:noHistory = "true"/>
+        <activity android:name=".Login"/>
         <!--
              The API key for Google Maps-based APIs is defined as a string resource.
              (See the file "res/values/google_maps_api.xml").
@@ -46,14 +45,17 @@
 
         <activity
             android:name=".DriverMapActivity"
-            android:label="@string/title_activity_driver_map"/>
+            android:label="@string/title_activity_driver_map"
+            android:noHistory="true"/>
         <activity android:name=".CustomerMapActivity"
-                  android:label="@string/title_activity_driver_map"/>
-        <activity android:name=".userType"/>
+                  android:label="@string/title_activity_driver_map"
+                  android:noHistory="true"/>
+        <activity android:name=".userType"
+                  />
         <activity android:name=".driverRegister"
-                  android:noHistory = "true"/>
+                  android:noHistory="true"/>
         <activity android:name=".customerRegister"
-                  android:noHistory = "true"/>
+                  android:noHistory="true"/>
         <activity android:name=".About"/>
         <activity android:name=".Help"/>
         <activity android:name=".settingsApp"/>

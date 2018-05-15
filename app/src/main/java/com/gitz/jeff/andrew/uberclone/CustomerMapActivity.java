@@ -61,8 +61,6 @@ import com.pusher.client.channel.Channel;
 import com.pusher.client.channel.SubscriptionEventListener;
 import org.json.JSONObject;
 
-import java.math.RoundingMode;
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -88,10 +86,7 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
     String vehicleRegistration = "KAV 587V";
     double driverLatitude;
     double driverLongitude;
-    double distanceDriverCustomer = 0.0;  //Distance between Driver and Customer
-
-    LatLng currentDriverLatLang = new LatLng(0,0);  //LatLang Object of current Driver Location
-    LatLng periodicDriverLatLang = new LatLng(0,0); //Latlang Object to show periodic Driver Locations once ride Accepted
+    double interDistance = 0.0;  //Distance between Driver and Customer
 
     Button callTaxi;   //Request for a Taxi
     Button cancelRequest;    //Cancel Taxi Request
@@ -110,11 +105,13 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
     Marker markerDestination;  //Destination Marker
     Marker markerCurrentLocation; //My Current Locaton Marker
     Marker markerInitialDriverLocation;
-    Marker markerPeriodicDriverLocation;
+    Marker markerCurrentDriverLocation;
 
     LatLng latlngDestinationCoordinates;    //Longitude Latitude coordates of your destination
     LatLng latlngPickUpLocationCoordinates;  //Longitude Latitude co-ordinates of your preferred Pickup Location
     LatLng currentCustomerLatLang = new LatLng(0,0);
+    LatLng currentDriverLatLang = new LatLng(0,0);  //LatLang Object of current Driver Location
+
 
     private List<Polyline> polylines;
 
@@ -169,11 +166,9 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
             mapFragment.getMapAsync(this);
         }
 
-
         myDialog = new Dialog(this);
         alertDialogCancel = new SpotsDialog(CustomerMapActivity.this);  //Display Alert for 4 Seconds before going to next Activity
         alertDialog = new SpotsDialog(CustomerMapActivity.this);  //Display Alert for 4 Seconds before going to next Activity
-
 
         savedUserPhoneNumber = new TinyDB(getBaseContext());
         userPhoneNumber = savedUserPhoneNumber.getString("userPhoneNumber");
@@ -333,9 +328,9 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
         driverInfo.setClickable(false);
         driverInfo.setVisibility(View.INVISIBLE);
 
-        if(markerPeriodicDriverLocation != null)
+        if(markerCurrentDriverLocation != null)
         {
-            markerPeriodicDriverLocation.remove();  //Removing Periodic Driver Location Marker Before Placing current Location Marker
+            markerCurrentDriverLocation.remove();  //Removing Periodic Driver Location Marker Before Placing current Location Marker
         }
 
         cancelRequest.setText("Cancel Ride Request?");
@@ -349,26 +344,40 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
 
     }
 
-    public void displayDistanceBtwnDriverAndCustomerOnceRideRequestAccepted()
+
+    public void updateDistancesDisplayedOnUI()
     {
-        double distanceInKms;
+        //Update Driver to Customer Distance Periodically
+        double interDistanceInMetres ;
+        double interDistanceInKms;
 
-        distanceDriverCustomer = getPeriodicDistanceBetweenDriverAndCustomer();  //Use Dummy Data for the Time Being
-        distanceInKms = distanceDriverCustomer / 1000;
+        interDistanceInMetres = interDistance;
+        interDistanceInKms = (interDistanceInMetres/1000);
 
-        if (distanceDriverCustomer < 60)  //If Distance Btwn Driver and Customer is less than 100m
+        Log.e("DinMetres", String.valueOf(interDistanceInMetres));
+
+        //Update Distances Displayed on UI
+        if(interDistanceInMetres <= 1000)
         {
-            callTaxi.setBackgroundColor(Color.RED);
-            callTaxi.setTextColor(Color.WHITE);
-            //callTaxi.setText("Driver has Arrived");
-            callTaxi.setText("Driver Found: " + String.valueOf(distanceInKms) + " km");  //Change Button Appropriately
+            if (interDistanceInMetres < 60)  //If Distance Btwn Driver and Customer is less than 100m
+            {
+                callTaxi.setBackgroundColor(Color.RED);
+                callTaxi.setTextColor(Color.WHITE);
+                callTaxi.setText("Driver has Arrived");
+            }
+            else                                     //If Distance Btwn Driver and Customer is more than 100m
+            {
+                callTaxi.setBackgroundColor(Color.RED);
+                callTaxi.setTextColor(Color.WHITE);
+                callTaxi.setText("Driver Found: " + String.valueOf(interDistanceInMetres) + " m");  //Change Button Appropriately
+            }
         }
 
-        else                                     //If Distance Btwn Driver and Customer is more than 100m
+        else
         {
             callTaxi.setBackgroundColor(Color.RED);
             callTaxi.setTextColor(Color.WHITE);
-            callTaxi.setText("Driver Found: " + String.valueOf(distanceInKms) + " km");  //Change Button Appropriately
+            callTaxi.setText("Driver Found: " + String.valueOf(interDistanceInKms) + " km");  //Change Button Appropriately
         }
     }
 
@@ -423,27 +432,19 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
         ImageView callBtn;
         ImageView sendSms;
         final EditText textMessage;
-        TextView name, phone, numberPlate, distance;
+        TextView name, phone, numberPlate;
         myDialog.setContentView(R.layout.custompopup_driver_details);
 
         txtclose =(TextView) myDialog.findViewById(R.id.txtclose);
         name =(TextView) myDialog.findViewById(R.id.driverName);
         phone =(TextView) myDialog.findViewById(R.id.driverPhone);
         numberPlate = (TextView)myDialog.findViewById(R.id.vehicleRegistration);
-        distance = (TextView)myDialog.findViewById(R.id.distance);
 
         //Get Distance Between Driver and Customer
-        double distanceBtwnDriverAndCustomerInMetres;
-        double distanceBtwnDriverAndCustomerInKilometres;
-
-        distanceBtwnDriverAndCustomerInMetres = getPeriodicDistanceBetweenDriverAndCustomer();
-        distanceBtwnDriverAndCustomerInKilometres = distanceBtwnDriverAndCustomerInMetres/1000;
-        String doubleDistance = Double.toString(distanceBtwnDriverAndCustomerInKilometres);
-
         name.setText(driverName);
         phone.setText(driverPhone);
         numberPlate.setText(vehicleRegistration);
-        distance.setText(doubleDistance + " km ");
+        //distance.setText(String.valueOf(interDistanceInKms) + " Km ");
 
         callBtn = (ImageView)myDialog.findViewById(R.id.callbutton);
         sendSms = (ImageView)myDialog.findViewById(R.id.sendSms);
@@ -503,34 +504,35 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
 
     public void showAssignedDriverLocation()
     {
-        cancelRequest.setClickable(true);
-        cancelRequest.setVisibility(View.VISIBLE);
-
-        driverInfo.setClickable(true);
-        driverInfo.setVisibility(View.VISIBLE);
-
+        //Driver Markers Stuff
         int heightCar = 40;
         int widthCar = 35;
         BitmapDrawable bitmapdrawCar =(BitmapDrawable)getResources().getDrawable(R.mipmap.car);
         Bitmap bCar = bitmapdrawCar.getBitmap();
         Bitmap smallCar = Bitmap.createScaledBitmap(bCar, widthCar, heightCar, false);
 
-        markerInitialDriverLocation= mMap.addMarker(new MarkerOptions().position(currentDriverLatLang).title("Driver Location").icon(BitmapDescriptorFactory.fromBitmap(smallCar)));  //Add Marker, and Set Title of Marker
 
-        locationDataCopied = true;
+        cancelRequest.setClickable(true);
+        cancelRequest.setVisibility(View.VISIBLE);
+
+        driverInfo.setClickable(true);
+        driverInfo.setVisibility(View.VISIBLE);
+
+        markerInitialDriverLocation= mMap.addMarker(new MarkerOptions().position(currentDriverLatLang).title("Driver Location").icon(BitmapDescriptorFactory.fromBitmap(smallCar)));  //Add Marker, and Set Title of Marker
         mMap.moveCamera(CameraUpdateFactory.newLatLng(currentDriverLatLang));
     }
 
     public void hideAssignedDriverLocation()
     {
-        if(markerInitialDriverLocation != null && (markerPeriodicDriverLocation != null))
+        if(markerInitialDriverLocation != null && markerCurrentDriverLocation != null)
         {
             markerInitialDriverLocation.remove();
-            markerPeriodicDriverLocation.remove();
+            markerCurrentDriverLocation.remove();
         }
     }
 
-    public double getPeriodicDistanceBetweenDriverAndCustomer()
+    /*
+    public double getDistanceBtwnDriverAndCustomer()
     {
         Double currentDistanceBtwnDriverAndCustomer;
         currentDistanceBtwnDriverAndCustomer = SphericalUtil.computeDistanceBetween(periodicDriverLatLang,  currentCustomerLatLang);
@@ -538,40 +540,17 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
         currentDistanceBtwnDriverAndCustomer = Math.floor(currentDistanceBtwnDriverAndCustomer*100) / 100;
         return currentDistanceBtwnDriverAndCustomer;
     }
-
-    public float getDistanceBetweenDriverAndCustomer()
-    {
-        float results[]  = new float[10];
-        Location.distanceBetween(currentDriverLatLang.latitude, currentDriverLatLang.longitude, currentCustomerLatLang.latitude, currentCustomerLatLang.longitude, results);
-        /*
-        double distanceBetweenDriverAndCustomer;
-
-        //Driver Co-ordinates
-        Location currentDriverLocation = new Location("");
-
-        currentDriverLocation.setLatitude(periodicDriverLatLang.latitude);
-        currentDriverLocation.setLongitude(periodicDriverLatLang.longitude);
-
-        Location currentCustomerLocation = new Location("");
-
-        currentCustomerLocation.setLatitude(currentCustomerLatLang.latitude);
-        currentCustomerLocation.setLongitude(currentCustomerLatLang.longitude);
-
-        distanceBetweenDriverAndCustomer = currentCustomerLocation.distanceTo(currentCustomerLocation);
-        return distanceBetweenDriverAndCustomer;
-        */
-        return results[0];
-    }
+*/
 
     public void handleCancelRideRequest()
     {
         taxiRequestMade = false;
 
         //Pop up an Alert Dialog to confirm End of ride
-        AlertDialog.Builder dialogC = new AlertDialog.Builder(CustomerMapActivity.this);
-        dialogC.setTitle("Cancel Request?");
-        dialogC.setMessage("Confirm you want to Cancel Request?");
-        dialogC.setPositiveButton("Yes", new DialogInterface.OnClickListener()
+        AlertDialog.Builder dialog = new AlertDialog.Builder(CustomerMapActivity.this);
+        dialog.setTitle("Cancel Request?");
+        dialog.setMessage("Confirm you want to Cancel Request?");
+        dialog.setPositiveButton("Yes", new DialogInterface.OnClickListener()
         {
             @Override
             public void onClick(DialogInterface paramDialogInterface, int paramInt)
@@ -582,7 +561,7 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
                     @Override
                     public void run()
                     {
-                        sendUserData.sendCancelRideRequest(getBaseContext(), userPhoneNumber, requestId);
+                        sendUserData.sendCancelRideRequest(getBaseContext(), requestId, userPhoneNumber);
                         alertDialogCancel.dismiss(); //Dismiss just in case there was network error
 
                         defaultUI();
@@ -595,7 +574,7 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
             }
         });
 
-        dialogC.setNegativeButton("No", new DialogInterface.OnClickListener()
+        dialog.setNegativeButton("No", new DialogInterface.OnClickListener()
         {
 
             @Override
@@ -605,63 +584,7 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
             }
         });
 
-        dialogC.show();
-
-
-
-        if(rideInSession)   //If Ride has Already Started
-        {
-            //Pop up an Alert Dialog to confirm End of ride
-            AlertDialog.Builder dialog = new AlertDialog.Builder(CustomerMapActivity.this);
-            dialog.setTitle("End Ride Session?");
-            dialog.setMessage("Confirm you want to End Session?");
-            dialog.setPositiveButton("Yes", new DialogInterface.OnClickListener()
-            {
-                @Override
-                public void onClick(DialogInterface paramDialogInterface, int paramInt)
-                {
-                    int backgroundColour = Color.parseColor("#40E0D0");
-                    callTaxi.setBackgroundColor(backgroundColour);
-                    callTaxi.setText("Call Taxi");
-                    cancelRequest.setText("Session Ended Successfully");
-                    callTaxi.setClickable(true);
-                    rideRequestAccepted = true;
-                    rideInSession = false;
-
-                    cancelRequest.setVisibility(View.INVISIBLE);
-                    driverInfo.setVisibility(View.INVISIBLE);
-                    autocompleteFragmentDestination.getView().setVisibility(View.VISIBLE);
-                    autocompleteFragmentDestination.getView().setClickable(true);
-                    autocompleteFragmentPickup.getView().setVisibility(View.VISIBLE);
-                    autocompleteFragmentPickup.getView().setClickable(true);
-
-                    double currentFare = 734.54;
-                    cancelRequest.setText("End Session?");
-                    callTaxi.setText("Fare Payable: KSh" +currentFare);
-
-                    hideAssignedDriverLocation();
-
-                    if(markerPickUp != null && markerDestination != null)
-                    {
-                        markerPickUp.remove();            //Clear Pick Up Point Marker
-                        markerDestination.remove();       //Clear the Marker for the Destination previously chosen
-                        clearRouteFromMap();   //Clear Route From Map
-                    }
-                }
-            });
-
-            dialog.setNegativeButton("No", new DialogInterface.OnClickListener()
-            {
-
-                @Override
-                public void onClick(DialogInterface paramDialogInterface, int paramInt)
-                {
-                    //Do Nothing
-                }
-            });
-
-            dialog.show();
-        }
+        dialog.show();
     }
 
     public void rideHasStarted()
@@ -696,9 +619,9 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
                     markerPickUp.remove();  //Remove Pickup Marker
                 }
 
-                if(markerPeriodicDriverLocation != null && markerInitialDriverLocation != null)
+                if(markerCurrentDriverLocation != null && markerInitialDriverLocation != null)
                 {
-                    markerPeriodicDriverLocation.remove();
+                    markerCurrentDriverLocation.remove();
                     markerInitialDriverLocation.remove();
                 }
 
@@ -708,16 +631,15 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
 
     public void showPeriodicLocationOfAssignedDriver()
     {
+        //Driver Markers Stuff
         int heightCar = 40;
         int widthCar = 35;
         BitmapDrawable bitmapdrawCar =(BitmapDrawable)getResources().getDrawable(R.mipmap.car);
         Bitmap bCar = bitmapdrawCar.getBitmap();
         Bitmap smallCar = Bitmap.createScaledBitmap(bCar, widthCar, heightCar, false);
 
-        markerPeriodicDriverLocation = mMap.addMarker(new MarkerOptions().position(periodicDriverLatLang).title("Driver Location").icon(BitmapDescriptorFactory.fromBitmap(smallCar)));  //Add Marker, and Set Title of Marker
-
-        locationDataCopied = true;
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(periodicDriverLatLang));
+        markerCurrentDriverLocation = mMap.addMarker(new MarkerOptions().position(currentDriverLatLang).title("Driver Location").icon(BitmapDescriptorFactory.fromBitmap(smallCar)));  //Add Marker, and Set Title of Marker
+        //mMap.moveCamera(CameraUpdateFactory.newLatLng(currentDriverLatLang));
     }
 
     public void checkForPushMessagesFromServer()
@@ -788,7 +710,6 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
                         public void run()
                         {
                             showAssignedDriverLocation();        //Display Driver's Current Location
-                            displayDistanceBtwnDriverAndCustomerOnceRideRequestAccepted();  //Display Distance
                         }
                     });
 
@@ -838,7 +759,7 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
                     {
                         driverLatitude = jsonObj.getDouble("driverLatitude");
                         driverLongitude = jsonObj.getDouble("driverLongitude");
-                        periodicDriverLatLang = new LatLng(driverLatitude, driverLongitude); //Co-ordinates of Periodic driver Location one Ride Accepted
+                        currentDriverLatLang= new LatLng(driverLatitude, driverLongitude); //Co-ordinates of Periodic driver Location once Ride Accepted
                     }
 
                 }
@@ -850,6 +771,47 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
 
             }
         });
+
+
+        channel.bind("ride_cancelled", new SubscriptionEventListener()   //Events
+        {
+            @Override
+            public void onEvent(String channelName, String eventName, final String data)
+            {
+                //Received Messages From Server
+                Log.e("CANCEL RESPONSE", data);
+                JSONObject jsonObj = null;
+                String statusResponse;
+
+                try
+                {
+                    jsonObj = new JSONObject(data);
+
+                    statusResponse = jsonObj.getString("status");
+
+                    if(statusResponse.equals("Success"))
+                    {
+                        runOnUiThread(new Runnable()   //Special Thread to do the work
+                        {
+
+                            @Override
+                            public void run()
+                            {
+                                defaultUI();
+                            }
+                        });
+                    }
+
+                }
+
+                catch (Exception e)
+                {
+                    e.printStackTrace();
+                }
+
+            }
+        });
+
 
 
          /*Driver has Accepted Customer's ride Request*/
@@ -936,7 +898,8 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
         callTaxi.setBackgroundColor(backgroundColour);
         callTaxi.setText("Call Taxi");
         callTaxi.setClickable(true);
-        rideRequestAccepted = true;
+
+        rideRequestAccepted = false;
         rideInSession = false;
 
         cancelRequest.setVisibility(View.INVISIBLE);
@@ -946,11 +909,22 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
         autocompleteFragmentPickup.getView().setVisibility(View.VISIBLE);
         autocompleteFragmentPickup.getView().setClickable(true);
 
-        if(markerPickUp != null && markerDestination != null)
+        if(markerPickUp != null)
         {
             markerPickUp.remove();            //Clear Pick Up Point Marker
+            clearRouteFromMap();   //Clear Route From Map
+        }
+
+        if(markerDestination != null)
+        {
             markerDestination.remove();       //Clear the Marker for the Destination previously chosen
             clearRouteFromMap();   //Clear Route From Map
+        }
+        if(markerInitialDriverLocation != null && markerCurrentDriverLocation != null)
+        {
+            markerCurrentDriverLocation.remove();
+            markerInitialDriverLocation.remove();
+            clearRouteFromMap();
         }
     }
 
@@ -1002,7 +976,6 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
             markerCurrentLocation = mMap.addMarker(new MarkerOptions().position(initLatLang).title("My Current Location"));  //Add Marker, and Set Title of Marker
             locationDataCopied = true;
             mMap.moveCamera(CameraUpdateFactory.newLatLng(initLatLang));
-
         }
 
         else if(lastLocation != location)
@@ -1034,16 +1007,30 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
             }
         });
 
+        Double currentDistanceBtwnDriverAndCustomer;
+        if((currentDriverLatLang.latitude != 0.0 && currentDriverLatLang.longitude != 0.0) && (currentCustomerLatLang.latitude != 0.0 && currentCustomerLatLang.longitude != 0.0))  //If non is zero
+        {
+            currentDistanceBtwnDriverAndCustomer = SphericalUtil.computeDistanceBetween(currentDriverLatLang, currentCustomerLatLang);
+            currentDistanceBtwnDriverAndCustomer = Math.floor(currentDistanceBtwnDriverAndCustomer * 100) / 100;
+
+            interDistance = currentDistanceBtwnDriverAndCustomer;  //Get periodic distance between Driver and Customer
+            Log.e("dLat", String.valueOf(currentDriverLatLang.latitude));
+            Log.e("dLong", String.valueOf(currentDriverLatLang.longitude));
+            Log.e("cLat", String.valueOf(currentCustomerLatLang.latitude));
+            Log.e("cLong", String.valueOf(currentCustomerLatLang.longitude));
+
+        }
+
         if(rideRequestAccepted)    //If Driver has Accepted Ride Request
         {
-            distanceDriverCustomer = getPeriodicDistanceBetweenDriverAndCustomer();  //Get periodic distance between Driver and Customer
-
             if(markerInitialDriverLocation != null)
             {
-                markerInitialDriverLocation.remove();  //Remove Marker of Initial Driver Location
+                //markerInitialDriverLocation.remove();  //Remove Marker of Initial Driver Location
                 showPeriodicLocationOfAssignedDriver();  //Show Periodic Location of Assigned Driver
+                updateDistancesDisplayedOnUI();
             }
         }
+
     }
 
     @Override
