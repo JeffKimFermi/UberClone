@@ -46,8 +46,8 @@
             android:gravity="center_vertical">
 
             <ImageView
-                android:layout_width="60sp"
-                android:layout_height="55sp"
+                android:layout_width="63sp"
+                android:layout_height="58sp"
                 android:id="@+id/callCustomerCare"
                 android:src="@drawable/ic_call_customer"
                 android:padding="12sp"
@@ -91,7 +91,7 @@
             </android.support.design.widget.TextInputLayout>
 
             <Button
-                android:layout_width="wrap_content"
+                android:layout_width="60dp"
                 android:layout_height="37dp"
                 android:id="@+id/send_btn"
                 android:text="Send"

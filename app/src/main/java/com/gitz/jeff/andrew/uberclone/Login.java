@@ -83,7 +83,7 @@ public class Login extends AppCompatActivity
             public void onClick(View v)
             {
                 registrationComplete = true; //Rem to Uncoment
-                if(registrationComplete)   //If Regstration successful
+                if(registrationComplete)   //If Registration successful
                 {
                     handleLoginRequest();
                     showDialogAlertDuringLogin();

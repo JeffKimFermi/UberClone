@@ -22,8 +22,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         tools:replace="android:label">
-        <activity android:name=".splashActivity"
-                  android:noHistory="true">
+        <activity android:name=".splashActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
 
@@ -45,17 +44,13 @@
 
         <activity
             android:name=".DriverMapActivity"
-            android:label="@string/title_activity_driver_map"
-            android:noHistory="true"/>
+            android:label="@string/title_activity_driver_map"/>
         <activity android:name=".CustomerMapActivity"
-                  android:label="@string/title_activity_driver_map"
-                  android:noHistory="true"/>
+                  android:label="@string/title_activity_driver_map"/>
         <activity android:name=".userType"
                   />
-        <activity android:name=".driverRegister"
-                  android:noHistory="true"/>
-        <activity android:name=".customerRegister"
-                  android:noHistory="true"/>
+        <activity android:name=".driverRegister"/>
+        <activity android:name=".customerRegister"/>
         <activity android:name=".About"/>
         <activity android:name=".Help"/>
         <activity android:name=".settingsApp"/>

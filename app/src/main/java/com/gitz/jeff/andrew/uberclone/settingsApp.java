@@ -14,7 +14,7 @@ public class settingsApp extends AppCompatActivity
 {
 
     ListView listView;
-    String settingsItems[] = new String [] {"Change User Profile", "Change User Type", "Change Font"};
+    String settingsItems[] = new String [] {"Change Login Credentials"};
     TinyDB saveUserType;
 
     @Override
@@ -39,22 +39,13 @@ public class settingsApp extends AppCompatActivity
                 switch( position )
                 {
                     case 0:
-                        if(saveUserType != null)
-                        {
-                            saveUserType.clear();
-                        }
-                        Intent intent1 = new Intent(getBaseContext(), customerRegister.class);
-                        startActivity(intent1);
-                        break;
-
-                    case 1:
-                        if(saveUserType != null)
-                        {
-                            saveUserType.clear();
-                        }
-                        Intent intent2 = new Intent(getBaseContext(), userType.class);
-                        startActivity(intent2);
-                        break;
+                    if(saveUserType != null)
+                    {
+                        saveUserType.clear();
+                    }
+                    Intent intent2 = new Intent(getBaseContext(), userType.class);
+                    startActivity(intent2);
+                    break;
                 }
 
             }

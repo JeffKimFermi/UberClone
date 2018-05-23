@@ -20,6 +20,7 @@ import org.json.JSONObject;
 
 public class sendUserData
 {
+    static String ip = "http://46.101.73.84:8080";
     //Send Ride Request
     public static  void sendDriverAvailable(Context myContext, final String userId, final boolean driverAvailability)
     {
@@ -36,7 +37,7 @@ public class sendUserData
             jse.printStackTrace();
         }
 
-        String url= "http://46.101.73.84:8080/driver/availability";
+        String url= ip+"/driver/availability";
         JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.POST, url,jsonObj,   //url,jsonObj
                 new Response.Listener<JSONObject>()
                 {
@@ -104,7 +105,7 @@ public class sendUserData
             jse.printStackTrace();
         }
 
-        String url= "http://46.101.73.84:8080/request/new";
+        String url= ip+"/request/new";
         JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.POST, url,jsonObj,   //url,jsonObj
                 new Response.Listener<JSONObject>()
                 {
@@ -169,7 +170,7 @@ public class sendUserData
             jse.printStackTrace();
         }
 
-        String url= "http://46.101.73.84:8080/request/cancel";
+        String url= ip+"/request/cancel";
         JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.POST, url,jsonObj,   //url,jsonObj
                 new Response.Listener<JSONObject>()
                 {
@@ -226,7 +227,7 @@ public class sendUserData
             jse.printStackTrace();
         }
 
-        String url= "http://46.101.73.84:8080/request/driver/accept";
+        String url= ip+"/request/driver/accept";
         JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.POST, url,jsonObj,   //url,jsonObj
                 new Response.Listener<JSONObject>()
                 {
@@ -275,7 +276,7 @@ public class sendUserData
             jse.printStackTrace();
         }
 
-        String url= "http://46.101.73.84:8080/request/driver/reject";
+        String url= ip+"/request/driver/reject";
         JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.POST, url,jsonObj,   //url,jsonObj
                 new Response.Listener<JSONObject>()
                 {
@@ -326,7 +327,7 @@ public class sendUserData
             jse.printStackTrace();
         }
 
-        String url= "http://46.101.73.84:8080/user/login";
+        String url= ip+"/user/login";
         JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.POST, url,jsonObj,   //url,jsonObj
                 new Response.Listener<JSONObject>()
                 {
@@ -402,7 +403,7 @@ public class sendUserData
             jse.printStackTrace();
         }
 
-        String url= "http://46.101.73.84:8080/request/startRide";
+        String url= ip+"/request/startRide";
         JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.POST, url,jsonObj,   //url,jsonObj
                 new Response.Listener<JSONObject>()
                 {
@@ -454,7 +455,7 @@ public class sendUserData
             jse.printStackTrace();
         }
 
-        String url= "http://46.101.73.84:8080/request/complete";
+        String url= ip+"/request/complete";
         JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.POST, url,jsonObj,   //url,jsonObj
                 new Response.Listener<JSONObject>()
                 {
@@ -508,7 +509,7 @@ public class sendUserData
             jse.printStackTrace();
         }
 
-        String url= "http://46.101.73.84:8080/user/add";
+        String url= ip+"/user/add";
         JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.POST, url,jsonObj,   //url,jsonObj
                 new Response.Listener<JSONObject>()
                 {
@@ -576,7 +577,7 @@ public class sendUserData
             jse.printStackTrace();
         }
 
-        String url= "http://46.101.73.84:8080/user/add";
+        String url= ip+"/user/add";
         JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.POST, url,jsonObj,   //url,jsonObj
                 new Response.Listener<JSONObject>()
                 {
@@ -640,7 +641,7 @@ public class sendUserData
             jse.printStackTrace();
         }
 
-        String url= "http://46.101.73.84:8080/request/driver/location/update";
+        String url= ip+"/request/driver/location/update";
         JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.POST, url,jsonObj,   //url,jsonObj
                 new Response.Listener<JSONObject>()
                 {
