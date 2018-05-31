@@ -27,7 +27,7 @@
         android:id="@+id/about_txt1"
         android:textSize="16dp"
         android:layout_below="@+id/about_txt"
-        android:text="This Software was Written by Daniel Gitz."/>
+        android:text="This Software was Written by Daniel Gitau."/>
 
     <TextView
         android:layout_width="wrap_content"

@@ -20,6 +20,9 @@ import org.json.JSONObject;
 
 public class sendUserData
 {
+    //static String ip = "http://46.101.73.84:8080";
+    static  String ip = "http://188.166.99.99:8080";
+    static String errorMsg = "Network Error, Call Customer Support";
     //Send Ride Request
     public static  void sendDriverAvailable(Context myContext, final String userId, final boolean driverAvailability)
     {
@@ -36,7 +39,7 @@ public class sendUserData
             jse.printStackTrace();
         }
 
-        String url= "http://46.101.73.84:8080/driver/availability";
+        String url= ip+"/request/driver/availability";
         JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.POST, url,jsonObj,   //url,jsonObj
                 new Response.Listener<JSONObject>()
                 {
@@ -61,6 +64,7 @@ public class sendUserData
 
                         catch (Exception e)
                         {
+                            //displayToast(context, errorMsg);
                             e.printStackTrace();
                         }
 
@@ -104,7 +108,7 @@ public class sendUserData
             jse.printStackTrace();
         }
 
-        String url= "http://46.101.73.84:8080/request/new";
+        String url= ip+"/request/new";
         JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.POST, url,jsonObj,   //url,jsonObj
                 new Response.Listener<JSONObject>()
                 {
@@ -132,12 +136,13 @@ public class sendUserData
                             {
                                 instCustomerMapActivity.defaultUI();
                                 instCustomerMapActivity.hideDialogAlert();
-                                displayToast(context, "Request Error, Please Try Again");
+                                //displayToast(context, "Request Error, Please Try Again");
                             }
                         }
 
                         catch (Exception e)
                         {
+                            displayToast(context, "Driver not Found, try again later.");
                             e.printStackTrace();
                         }
 
@@ -169,7 +174,7 @@ public class sendUserData
             jse.printStackTrace();
         }
 
-        String url= "http://46.101.73.84:8080/request/cancel";
+        String url= ip+"/request/cancel";
         JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.POST, url,jsonObj,   //url,jsonObj
                 new Response.Listener<JSONObject>()
                 {
@@ -192,6 +197,7 @@ public class sendUserData
 
                         catch (Exception e)
                         {
+                            //displayToast(context, errorMsg);
                             e.printStackTrace();
                         }
 
@@ -226,7 +232,7 @@ public class sendUserData
             jse.printStackTrace();
         }
 
-        String url= "http://46.101.73.84:8080/request/driver/accept";
+        String url= ip+"/request/driver/accept";
         JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.POST, url,jsonObj,   //url,jsonObj
                 new Response.Listener<JSONObject>()
                 {
@@ -242,6 +248,7 @@ public class sendUserData
 
                         catch (Exception e)
                         {
+                            //displayToast(context, errorMsg);
                             e.printStackTrace();
                         }
 
@@ -275,7 +282,7 @@ public class sendUserData
             jse.printStackTrace();
         }
 
-        String url= "http://46.101.73.84:8080/request/driver/reject";
+        String url= ip+"/request/driver/reject";
         JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.POST, url,jsonObj,   //url,jsonObj
                 new Response.Listener<JSONObject>()
                 {
@@ -291,6 +298,7 @@ public class sendUserData
 
                         catch (Exception e)
                         {
+                            //displayToast(context, errorMsg);
                             e.printStackTrace();
                         }
 
@@ -326,7 +334,7 @@ public class sendUserData
             jse.printStackTrace();
         }
 
-        String url= "http://46.101.73.84:8080/user/login";
+        String url= ip+"/user/login";
         JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.POST, url,jsonObj,   //url,jsonObj
                 new Response.Listener<JSONObject>()
                 {
@@ -342,6 +350,7 @@ public class sendUserData
                         }
                         catch (Exception e)
                         {
+                            //displayToast(context, errorMsg);
                             e.printStackTrace();
                         }
 
@@ -402,7 +411,7 @@ public class sendUserData
             jse.printStackTrace();
         }
 
-        String url= "http://46.101.73.84:8080/request/startRide";
+        String url= ip+"/request/startRide";
         JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.POST, url,jsonObj,   //url,jsonObj
                 new Response.Listener<JSONObject>()
                 {
@@ -418,6 +427,7 @@ public class sendUserData
 
                         catch (Exception e)
                         {
+                            //displayToast(context, errorMsg);
                             e.printStackTrace();
                         }
 
@@ -454,7 +464,7 @@ public class sendUserData
             jse.printStackTrace();
         }
 
-        String url= "http://46.101.73.84:8080/request/complete";
+        String url= ip+"/request/complete";
         JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.POST, url,jsonObj,   //url,jsonObj
                 new Response.Listener<JSONObject>()
                 {
@@ -470,6 +480,7 @@ public class sendUserData
 
                         catch (Exception e)
                         {
+                            //displayToast(context, errorMsg);
                             e.printStackTrace();
                         }
 
@@ -508,7 +519,7 @@ public class sendUserData
             jse.printStackTrace();
         }
 
-        String url= "http://46.101.73.84:8080/user/add";
+        String url= ip+"/user/add";
         JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.POST, url,jsonObj,   //url,jsonObj
                 new Response.Listener<JSONObject>()
                 {
@@ -524,6 +535,7 @@ public class sendUserData
                         }
                         catch (Exception e)
                         {
+                           // displayToast(context, errorMsg);
                             e.printStackTrace();
                         }
 
@@ -535,7 +547,7 @@ public class sendUserData
                         else if(registrationResponse.equals("User Already Exists"))
                         {
                             registration = false;
-                            //displayToast(context, "Error, User Already Exists");
+                            displayToast(context, "Error, User Already Exists");
                         }
 
                         registrationStatus.putBoolean("registrationStatus", registration);  //Save registration Status in sharedPrefs
@@ -576,7 +588,7 @@ public class sendUserData
             jse.printStackTrace();
         }
 
-        String url= "http://46.101.73.84:8080/user/add";
+        String url= ip+"/user/add";
         JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.POST, url,jsonObj,   //url,jsonObj
                 new Response.Listener<JSONObject>()
                 {
@@ -592,6 +604,7 @@ public class sendUserData
                         }
                         catch (Exception e)
                         {
+                            //displayToast(context, errorMsg);
                             e.printStackTrace();
                         }
 
@@ -624,6 +637,7 @@ public class sendUserData
         Volley.newRequestQueue(context).add(getRequest);
     }
 
+
     public static void sendPeriodicDriverLocationToCustomer(Context myContext, final String requestId, final String userId, LatLng currentDriverLocation)
     {
         final Context context= myContext;
@@ -640,10 +654,13 @@ public class sendUserData
             jse.printStackTrace();
         }
 
-        String url= "http://46.101.73.84:8080/request/driver/location/update";
+        String url= ip+"/request/driver/location/update";
         JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.POST, url,jsonObj,   //url,jsonObj
                 new Response.Listener<JSONObject>()
                 {
+
+                    CustomerMapActivity instCustomerMapActivity = CustomerMapActivity.instance();
+
                     @Override
                     public void onResponse(JSONObject response)
                     {
@@ -656,6 +673,10 @@ public class sendUserData
 
                         catch (Exception e)
                         {
+                           // displayToast(context, errorMsg);
+
+                            instCustomerMapActivity.defaultUI();  //Revert to Default
+
                             e.printStackTrace();
                         }
 
@@ -665,6 +686,7 @@ public class sendUserData
                 },
                 new Response.ErrorListener()
                 {
+
                     @Override
                     public void onErrorResponse(VolleyError error) {
                         Log.e("Error.Response", error.toString());

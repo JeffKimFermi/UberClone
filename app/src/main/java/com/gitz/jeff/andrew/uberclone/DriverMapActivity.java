@@ -2,6 +2,7 @@ package com.gitz.jeff.andrew.uberclone;
 
 import android.Manifest;
 import android.app.Dialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -9,6 +10,7 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
+import android.location.Criteria;
 import android.location.Location;
 import android.net.Uri;
 import android.support.annotation.NonNull;
@@ -47,7 +49,6 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
-import com.google.maps.android.SphericalUtil;
 import com.pusher.client.Pusher;
 import com.pusher.client.PusherOptions;
 import com.pusher.client.channel.Channel;
@@ -68,11 +69,10 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
     Location lastLocation;
     LatLng currentLocation = new LatLng(0, 0);
     LatLng previousLocation = new LatLng(0, 0);
+    LatLng initialDriverLocation = new LatLng(0,0);
     LatLng currentDriverLocation = new LatLng(0, 0);
     LatLng startOfRideLocation = new LatLng(0, 0); //Location of Ride Start
     LatLng endOfRideLocation = new LatLng(0, 0);   //Location of Ride End
-    LatLng from = new LatLng(0, 0);
-    LatLng to = new LatLng(0, 0);
     Marker markerDriverLocation;   //My Current Location Marker
     Marker markerCustomerLocation;  //Customer Location Marker
 
@@ -94,17 +94,8 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
     boolean rideComplete = false;
 
     TinyDB savedUserPhoneNumber;
-    TinyDB savedSelectedChoice;
-    TinyDB savedSourceLatitude;
-    TinyDB savedSourceLongitude;
-    TinyDB savedDestinationLatitude;
-    TinyDB savedDestinationLongitude;
     TinyDB savedRequestId;
-    TinyDB savedDriverLatitude;
-    TinyDB savedCustomerName;
-    TinyDB savedCustomerPhone;
-    TinyDB savedPickup;
-    TinyDB savedDestination;
+
     TinyDB savedRegistrationStatus;
 
     public static String driverPhoneNumber;
@@ -130,20 +121,31 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
     TextView name;
     TextView phone;
 
-    int selectedChoice;
+    int selectedChoice = 0;
 
     Dialog myDialog;
     Dialog rideDetailsDialog;
 
     //End Of Journey Parameters
     String costOfRide = "0.0";
-    double rideDistance = 0.0;
-    double totalDistanceTravelled = 0.0;
-    int firstTime = 0;
-    Button distanceDisplay;
+    String rideDistance = "0.0";
+    String rideTime = "0.0";
+
+    float totalDistanceTravelled = 0;
+    float currentDistance = 0;
+    float previousDistance = 0;
+    long startTime = 0;  //Time between two Locations
+    long stopTime = 0;
 
     Location loc1 = new Location("");
     Location loc2 = new Location("");
+
+
+    //New Customer Popup
+    Dialog  dialog;
+
+    //Button display;
+    String errorMsg = "Network Error, Call Customer Support";
 
 
     private static DriverMapActivity inst;
@@ -181,22 +183,11 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
         loc2.setLatitude(0);
         loc2.setLongitude(0);
 
-
-        distanceDisplay = (Button)findViewById(R.id.distanceTest);
+        //display = (Button)findViewById(R.id.distanceDisplay);
 
         savedUserPhoneNumber = new TinyDB(getBaseContext());
-        savedSelectedChoice = new TinyDB(getBaseContext());
-        savedSourceLatitude = new TinyDB(getBaseContext());
-        savedSourceLongitude = new TinyDB(getBaseContext());
-        savedDestinationLatitude = new TinyDB(getBaseContext());
-        savedDestinationLongitude = new TinyDB(getBaseContext());
-        savedDriverLatitude = new TinyDB(getBaseContext());
-        savedSourceLongitude = new TinyDB(getBaseContext());
+
         savedRequestId = new TinyDB(getBaseContext());
-        savedCustomerName = new TinyDB(getBaseContext());
-        savedCustomerPhone = new TinyDB(getBaseContext());
-        savedPickup = new TinyDB(getBaseContext());
-        savedDestination = new TinyDB(getBaseContext());
         savedRegistrationStatus = new TinyDB(getBaseContext());
 
         driverPhoneNumber = savedUserPhoneNumber.getString("userPhoneNumber");
@@ -214,8 +205,6 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
         driverMainButton = (Button)findViewById(R.id.driverMainButton);
 
         checkForPushMessagesFromServer();  //Check for Push Messages
-
-        updateUIAfterCustomerRideRequest();  //Update UI based on Driver Choice to ride request
 
         driverMainButton.setOnClickListener(new View.OnClickListener()       //Main Driver Functionality Button
         {
@@ -265,8 +254,11 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
             driverMainButton.setTextColor(Color.WHITE);
             previousLocation = currentLocation;  //Pick Coordinates At exactly when driver says he is Available
             sendUserData.sendDriverAvailable(getBaseContext(), driverPhoneNumber, available);  //Send Notification that you are Available
+
+            initialDriverLocation = currentLocation;  //Pick co-ordinated of Initial Driver Location once he/she was available
+
             driverAvailable = true;
-            readyToStartRide = true; //We are now ready to start ride
+           // readyToStartRide = true; //We are now ready to start ride
             rideInSession = false;
             rideComplete = false;
         }
@@ -299,9 +291,7 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
 
         else if(rideComplete)  //If ride Complete
         {
-            selectedChoice = 0;
-            savedSelectedChoice.putInt("select", selectedChoice); //Save Latest Value to Memory
-
+            selectedChoice = 0;  //Reset Selected Choice
             showRideDetails();
         }
 
@@ -348,31 +338,21 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
                     latitudeDriverLocation = currentDriverLocation.latitude;
                     longitudeDriverLocation = currentDriverLocation.longitude;
 
-                    savedDriverLatitude.putDouble("driverLatitude", latitudeDriverLocation);  //Save current coordinates
-                    savedDriverLatitude.putDouble("driverLongitude", longitudeDriverLocation);  //Save current ooordinates
-
-
                     //Get Pickup and Destination Locations Descriptions
                     pickupName = jsonObj.getString("sourceDescription");
                     destinationName = jsonObj.getString("destinationDescription");
 
                     if(statusResponse.equals("Success"))
                     {
-                        //Save the Co-ordinates
-                        savedSourceLatitude.putDouble("sLatitude", latitudePickupLocation);
-                        savedSourceLongitude.putDouble("sLongitude", longitudePickupLocation);
-                        savedDestinationLatitude.putDouble("dLatitude", latitudeDestinationLocation);
-                        savedDestinationLongitude.putDouble("dLongitude", longitudeDestinationLocation);
+                        runOnUiThread(new Runnable()   //Special Thread to do the work
+                        {
 
-                        savedCustomerName.putString("customerName", customerName);
-                        savedCustomerPhone.putString("customerPhone", customerPhone);
-                        savedPickup.putString("pickupPoint", pickupName);
-                        savedDestination.putString("destinationPoint", destinationName);
-
-                        Intent intent = new Intent(DriverMapActivity.this, newCustomerPopup.class);
-                        intent.putExtra("pickup", pickupName);
-                        intent.putExtra("destination", destinationName);
-                        startActivity(intent);
+                            @Override
+                            public void run()
+                            {
+                                newCustomerAlertPopup();
+                            }
+                        });
                     }
                     else
                     {}
@@ -381,6 +361,7 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
 
                 catch (Exception e)
                 {
+                    //displayToast(getBaseContext(), errorMsg);
                     Log.e("JSONPARSE ERROR", "error parsing JSON from pusher");
                     e.printStackTrace();
                 }
@@ -438,13 +419,13 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
 
                 catch (Exception e)
                 {
+                    //displayToast(getBaseContext(), errorMsg);
                     e.printStackTrace();
                 }
             }
         });
 
 
-         /*Driver has Accepted Customer's ride Request*/
         channel.bind("ride_completed", new SubscriptionEventListener()   //Events
         {
             @Override
@@ -460,13 +441,19 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
                 {
                     jsonObj = new JSONObject(data);
 
-                    requestId = jsonObj.getString("requestId");
+                    //requestId = jsonObj.getString("requestId");
                     statusResponse = jsonObj.getString("status");
+
                     costOfRide = jsonObj.getString("cost");
+                    rideTime = jsonObj.getString("rideTime");
+                    rideDistance = jsonObj.getString("distance");
 
                     if(statusResponse.equals("Success"))
                     {
                         rideComplete = true;
+                        rideInSession = false;
+                        readyToStartRide = false;
+
                         runOnUiThread(new Runnable()   //Special Thread to do the work
                         {
 
@@ -476,6 +463,10 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
                                 driverMainButton.setClickable(true);
                                 driverMainButton.setBackgroundColor(Color.RED);
                                 driverMainButton.setText("Ride Details");
+
+                                endOfSession.setVisibility(View.INVISIBLE);
+                                customerInformation.setVisibility(View.INVISIBLE);
+
                             }
                         });
                     }
@@ -483,6 +474,7 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
 
                 catch (Exception e)
                 {
+                    //displayToast(getBaseContext(), errorMsg);
                     e.printStackTrace();
                 }
 
@@ -530,48 +522,6 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
 
     }
 
-    public void updateUIAfterCustomerRideRequest()
-    {
-
-        requestId = savedRequestId.getString("id");
-        selectedChoice = savedSelectedChoice.getInt("select"); //1 for Accept, 2, for Reject, 3 for Cancel
-
-        latitudePickupLocation = savedSourceLatitude.getDouble("sLatitude", 0.0);
-        longitudePickupLocation = savedSourceLongitude.getDouble("sLongitude", 0.0);
-
-        customerPickupLocation = new LatLng(latitudePickupLocation, longitudePickupLocation);
-        customerDestinationLocation = new LatLng(latitudeDestinationLocation, longitudeDestinationLocation);
-        currentDriverLocation = new LatLng(savedDriverLatitude.getDouble("driverLatitude", 0.0), savedDestinationLongitude.getDouble("driverLongitude", 0.0));
-
-        //Toast.makeText(getBaseContext(), ""+selectedChoice, Toast.LENGTH_LONG).show();
-
-        if(selectedChoice == 1)  //Accept
-        {
-            sendUserData.sendRideRequestAccepted(getBaseContext(), requestId, driverPhoneNumber, currentDriverLocation);
-            driverMainButton.setVisibility(View.VISIBLE);
-            driverMainButton.setClickable(true);
-            driverMainButton.setText("START SESSION");
-            endOfSession.setVisibility(View.VISIBLE);
-            endOfSession.setText("Cancel Request?");
-            customerInformation.setVisibility(View.VISIBLE);
-            readyToStartRide = true;
-        }
-
-        else if(selectedChoice == 2)  //Reject
-        {
-            sendUserData.sendRideRequestRejected(getBaseContext(), requestId, driverPhoneNumber);
-            defaultUI();
-
-        }
-
-        else if(selectedChoice == 3)  //Cancel
-        {
-            sendUserData.sendRideRequestRejected(getBaseContext(), requestId, driverPhoneNumber);
-            defaultUI();
-        }
-
-        else{}
-    }
 
     public void defaultUI()
     {
@@ -584,7 +534,95 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
         customerInformation.setVisibility(View.INVISIBLE);
         rideInSession = false;
         readyToStartRide = false;
+        rideComplete = false;
     }
+
+    public void newCustomerAlertPopup()
+    {
+        TextView txtclose;
+        TextView pickupLocation;
+        TextView destinationLocation;
+
+        Button acceptRequest;
+        Button rejectRequest;
+
+        dialog = new Dialog(DriverMapActivity.this);
+        dialog.setContentView(R.layout.newcustomeralert);
+        dialog.setCanceledOnTouchOutside(false);  //Prevent it from disappearing when touches outside
+        dialog.setCancelable(false);  //Protection from disappearing on back press
+
+        txtclose = (TextView)dialog.findViewById(R.id.txtclose);
+        pickupLocation = (TextView)dialog.findViewById(R.id.pickup);
+        destinationLocation = (TextView)dialog.findViewById(R.id.destination);
+
+        acceptRequest = (Button)dialog.findViewById(R.id.accept);
+        rejectRequest = (Button)dialog.findViewById(R.id.reject);
+
+        pickupLocation.setText(pickupName);
+        destinationLocation.setText(destinationName);
+
+
+        customerPickupLocation = new LatLng(latitudePickupLocation, longitudePickupLocation);
+        customerDestinationLocation = new LatLng(latitudeDestinationLocation, longitudeDestinationLocation);
+        currentDriverLocation = new LatLng(latitudeDriverLocation, longitudeDriverLocation);
+
+        txtclose.setText("X");
+
+        txtclose.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                //selectedChoice = 3;
+
+                sendUserData.sendRideRequestRejected(getBaseContext(), requestId, driverPhoneNumber);
+                defaultUI();
+
+                dialog.dismiss();
+            }
+        });
+
+        acceptRequest.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                //selectedChoice = 1;  //Request Accepted
+
+                sendUserData.sendRideRequestAccepted(getBaseContext(), requestId, driverPhoneNumber, currentDriverLocation);
+                driverMainButton.setVisibility(View.VISIBLE);
+                driverMainButton.setClickable(true);
+                driverMainButton.setText("START SESSION");
+                endOfSession.setVisibility(View.VISIBLE);
+                endOfSession.setText("Cancel Request?");
+                customerInformation.setVisibility(View.VISIBLE);
+                readyToStartRide = true;
+
+                dialog.dismiss();
+            }
+        });
+
+
+        rejectRequest.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                //selectedChoice = 2; //Request Rejected
+
+
+                sendUserData.sendRideRequestRejected(getBaseContext(), requestId, driverPhoneNumber);
+                defaultUI();
+
+                dialog.dismiss();
+            }
+        });
+
+        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        dialog.show();
+
+    }
+
 
     public void  showAssignedCustomerProfile()
     {
@@ -606,15 +644,11 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
         pickup = (TextView)myDialog.findViewById(R.id.pickupPoint);
         destination = (TextView)myDialog.findViewById(R.id.destinationPoint);
 
-        customerName = savedCustomerName.getString("customerName");
-        customerPhone = savedCustomerPhone.getString("customerPhone");
-        //pickupName = savedPickup.getString("pickupPoint");
-        destinationName = savedDestination.getString("destinationPoint");
 
         //Update Dialog Alert Popup UI Appropriately
         name.setText(customerName);     //Customer Name
         phone.setText(customerPhone);   //Customer Phone
-        //pickup.setText(pickupName);     //Pickup Location Name
+        pickup.setText(pickupName);     //Pickup Location Name
         destination.setText(destinationName);  //Destination Location Name
 
         txtclose.setText("X");
@@ -673,12 +707,19 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
     {
         rideDetailsDialog = new Dialog(DriverMapActivity.this);
         rideDetailsDialog.setContentView(R.layout.ridedetails);
+        rideDetailsDialog.setCanceledOnTouchOutside(false);  //Prevent it from disappearing when touches outside
+        rideDetailsDialog.setCancelable(false);  //Protection from disappearing on back press
+
 
         TextView txtclose;
         txtclose = (TextView)rideDetailsDialog.findViewById(R.id.txtclose);
 
         TextView rideCost;
         TextView distanceCovered;
+        TextView rideDuration;
+
+        float timeHours = 0;
+        float timeMins = 0;
 
         txtclose.setText("X");
 
@@ -687,7 +728,6 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
             @Override
             public void onClick(View v)
             {
-               // resetFlagsAndMemoryElements(); //Reset boolean values
                 rideDetailsDialog.dismiss();  //Dismiss Dialog
                 defaultUI();
             }
@@ -696,13 +736,30 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
 
         rideCost = (TextView) rideDetailsDialog.findViewById(R.id.cost);
         distanceCovered =(TextView) rideDetailsDialog.findViewById(R.id.distance);
+        rideDuration = (TextView)rideDetailsDialog.findViewById(R.id.duration);
 
-        rideDistance = totalDistanceTravelled;
 
-        String doubleDistance = Double.toString(rideDistance);
+        float cost = Float.parseFloat(costOfRide);
+        float distance = Float.parseFloat(rideDistance);
+        float time = Float.parseFloat(rideTime);
 
-        rideCost.setText(costOfRide + " Ksh");
-        distanceCovered.setText(doubleDistance + " Km");
+        if(time >= 60)
+        {
+           timeMins = (time%60);
+           timeHours = (time/60);
+
+           rideCost.setText(String.format("%.2f", cost) + " Ksh");
+           distanceCovered.setText(String.format("%.2f", distance) + " Km");
+           rideDuration.setText((String.format("%.2f", timeMins) + " Mins") + (String.format(String.format("%.2f", timeHours) + " Hrs")));
+
+        }
+
+        else  //If Ride more than 1hr
+        {
+            rideCost.setText(String.format("%.2f", cost) + " Ksh");
+            distanceCovered.setText(String.format("%.2f", distance) + " Km");
+            rideDuration.setText(String.format("%.2f", timeMins) + " Mins");
+        }
 
         rideDetailsDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         rideDetailsDialog.show();
@@ -723,7 +780,10 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
 
     public void hideAssignedCustomerLocation()
     {
-        markerCustomerLocation.remove();
+        if(markerCustomerLocation != null)
+        {
+            markerCustomerLocation.remove();
+        }
     }
 
 
@@ -776,19 +836,12 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
             public void onClick(DialogInterface paramDialogInterface, int paramInt)
             {
                 endOfRideLocation = currentLocation; //Pick Exact Coordinates of when Ride Stopped
+
                 double distanceCovered = totalDistanceTravelled; //Get Total Distance Travelled during Ride
+                distanceCovered = distanceCovered/1000; //In Km
 
                 sendUserData.sendRideCompleteNotification(getBaseContext(), requestId, distanceCovered, currentDriverLocation);   //currentLatitudeLongitude is current Driver Location
 
-                int backgroundColour = Color.parseColor("#40E0D0");
-                driverMainButton.setBackgroundColor(backgroundColour);
-                driverMainButton.setVisibility(View.VISIBLE);
-                driverMainButton.setClickable(true);
-                driverMainButton.setText("Available");
-                endOfSession.setVisibility(View.INVISIBLE);
-                customerInformation.setVisibility(View.INVISIBLE);
-                rideInSession = false;
-                readyToStartRide = false;
                 hideAssignedCustomerLocation(); //Hide Customer Marker
                 clearRouteFromMap();  //Clear Route From Marker
             }
@@ -829,23 +882,15 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
         polylines.clear();
     }
 
-    public void resetFlagsAndMemoryElements()
-    {
-        rideInSession = false;
-        readyToStartRide = false;
-        driverAvailable = false;  //Set When Driver is Available
-        rideComplete = false;
-    }
-
     public void checkIfLocationHasChangedConsiderably()
     {
         String localRequestId = "UPDATE";
-        Location previousLoc = new Location("");
 
-        if(previousLocation != null)  //Avoid Null Pointer Exception
+        Location initialLoc = new Location("");
+        if(initialDriverLocation != null)  //Avoid Null Pointer Exception
         {
-            previousLoc.setLatitude(previousLocation.latitude);
-            previousLoc.setLongitude(previousLocation.longitude);
+            initialLoc.setLatitude(initialDriverLocation.latitude);
+            initialLoc.setLongitude(initialDriverLocation.longitude);
         }
 
         Location currentLoc = new Location("");
@@ -857,14 +902,14 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
 
         float differenceInDistance;
 
-        if((previousLocation.latitude != 0 && previousLocation.longitude!= 0) && (currentLocation.latitude != 0 && currentLocation.longitude != 0))
+        if((initialDriverLocation.latitude != 0 &&initialDriverLocation.longitude!= 0) && (currentLocation.latitude != 0 && currentLocation.longitude != 0))
         {
+            differenceInDistance = initialLoc.distanceTo(currentLoc);
 
-            differenceInDistance = previousLoc.distanceTo(currentLoc);
-
-            if(differenceInDistance > 200)
+            if(differenceInDistance > 400) //If greater than 400m
             {
-                sendUserData.sendRideRequestAccepted(getBaseContext(), localRequestId, driverPhoneNumber, currentDriverLocation);
+                sendUserData.sendPeriodicDriverLocationToCustomer(getBaseContext(), localRequestId, driverPhoneNumber, currentDriverLocation);   //Send every 2.5s Driver Location
+                initialDriverLocation = currentLocation; //Update state of Initial Driver Location
             }
         }
 
@@ -875,12 +920,12 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
     {
         int heightCar = 40;
         int widthCar = 35;
-        BitmapDrawable bitmapdrawCar =(BitmapDrawable)getResources().getDrawable(R.mipmap.car);
+        BitmapDrawable bitmapdrawCar = (BitmapDrawable) getResources().getDrawable(R.mipmap.car);
         Bitmap bCar = bitmapdrawCar.getBitmap();
         Bitmap smallCar = Bitmap.createScaledBitmap(bCar, widthCar, heightCar, false);
 
 
-        if(!locationDataCopied)
+        if (!locationDataCopied)
         {
             lastLocation = location;  //Copy the Data
 
@@ -892,10 +937,9 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
             mMap.moveCamera(CameraUpdateFactory.newLatLng(initLatLang));
 
         }
-
-        else if(lastLocation != location)
+        else if (lastLocation != location)
         {
-            if(rideInSession)  //Only recentre when Driver is in Motion
+            if (rideInSession)  //Only recentre when Driver is in Motion
             {
                 markerDriverLocation.remove();
                 lastLocation = location;
@@ -910,7 +954,8 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
         }
 
 
-        mMap.animateCamera(CameraUpdateFactory.zoomTo(myZoomLevel), new GoogleMap.CancelableCallback() {
+        mMap.animateCamera(CameraUpdateFactory.zoomTo(myZoomLevel), new GoogleMap.CancelableCallback()
+        {
             @Override
             public void onFinish()
             {
@@ -925,71 +970,68 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
         });
 
 
-
-        if(readyToStartRide)   //If assigned successfully
+        if (readyToStartRide)   //If assigned successfully
         {
-            sendUserData.sendPeriodicDriverLocationToCustomer(getBaseContext(), requestId, driverPhoneNumber, currentDriverLocation);   //Send every 2.5s Driver Location
+            checkIfLocationHasChangedConsiderably(); //Update Driver Location if Position Changed > 200m
+            // sendUserData.sendPeriodicDriverLocationToCustomer(getBaseContext(), requestId, driverPhoneNumber, currentDriverLocation);   //Send every 2.5s Driver Location
         }
 
-/*
-        if(rideInSession)   //Compute Distance only Once Ride has Started
-        {
-            //Calculate Total Distance Travelled
-            if ((to.latitude == 0 && from.latitude == 0) && (from.latitude == 0 && from.longitude == 0))  //If Initial Point
-            {
-                from = new LatLng(location.getLatitude(), location.getLongitude());  //Original Location
-            }
-            else
-            {
-                to = new LatLng(location.getLatitude(), location.getLongitude());
-                Double distance = SphericalUtil.computeDistanceBetween(from, to);
-                from = to; //Update value of to
-                totalDistanceTravelled = (totalDistanceTravelled + distance);  //Add Initial Value to Current Value
-                totalDistanceTravelled = Math.floor(totalDistanceTravelled*100) / 100;
-                totalDistanceTravelled = (totalDistanceTravelled/1000);  //Send Distance in Km
 
-                String doubleDistance = Double.toString(totalDistanceTravelled);
-                distanceDisplay.setText(doubleDistance);
-            }
-        }
 
-*/
-        checkIfLocationHasChangedConsiderably(); //Update Driver Location if Position Changed > 200m
+        //if (rideInSession)
+        //{
+        Log.e("disLat", ""+location.getLatitude());
+        Log.e("disLong", ""+location.getLongitude());
 
-        if((loc1.getLatitude() == 0 && loc1.getLongitude() == 0) && (loc2.getLatitude() == 0 && loc2.getLongitude() == 0))  //If First Time
+
+        if ((loc1.getLatitude() == 0 && loc1.getLongitude() == 0) && (loc2.getLatitude() == 0 && loc2.getLongitude() == 0))  //If First Time
         {
             loc1.setLatitude(location.getLatitude());
             loc1.setLongitude(location.getLongitude());
-            firstTime = 1;
-            //Log.e("dis", "One");
+            startTime = System.currentTimeMillis();  //Pick System Time
         }
-
         else
         {
-            //Log.e("dis", "Two");
-            Location location1 = new Location("");
+            Location location1 = location;
+
             location1.setLatitude(location.getLatitude());
             location1.setLongitude(location.getLongitude());
 
-            float distanceMetres = loc1.distanceTo(location1);
-
             //Error Correction Mechanism
-            if(distanceMetres < 2 || firstTime == 1) // Discard First value
+            stopTime = System.currentTimeMillis();
+            long timeDifference = (stopTime - startTime)/1000;  //Difference in Seconds
+
+            /*I don't expect someone to drive 130km/hr in Nairobi = 36m/s*/
+            long normalDistance = (timeDifference * 36);   //Expected Normal distance at a speed of 130km/hr
+            Log.e("disNormal", ""+normalDistance);
+
+            float distanceMetres = loc1.distanceTo(location1); //Formula to calculate Distance
+            currentDistance = distanceMetres;
+
+            float deltaDistance = currentDistance - previousDistance;
+
+            if((deltaDistance > 6 || deltaDistance < -6)  || (distanceMetres > normalDistance))  //If covered > 180km/hr
             {
-                distanceMetres = 0; //Don't count it
+                distanceMetres = previousDistance;  //Pick the Previous distance instead
             }
 
-            else
+            if((distanceMetres < 2))   //Assume Stationary if less than 2m/s
             {
-                firstTime = 2;
-                totalDistanceTravelled = totalDistanceTravelled + distanceMetres;
+                distanceMetres = 0;    //Assign least possible value
             }
 
-            loc1 = location1;
+            totalDistanceTravelled = (totalDistanceTravelled + distanceMetres);
 
-            distanceDisplay.setText(String.valueOf(totalDistanceTravelled));
-            Log.e("distance", ""+distanceMetres);
-            //Log.e("distance", ""+totalDistanceTravelled);
+            //Update previous distance, location and time
+            previousDistance = currentDistance;  //Update Distance
+            loc1 = location1;  //Update Location
+            startTime = stopTime; //Update start Time
+
+           // display.setText(String.format("%.2f", totalDistanceTravelled));  //2 decimal places
+
+            Log.e("disMetres", ""+distanceMetres);
+            Log.e("disDelta", ""+deltaDistance);
+
 
         }
 
@@ -1029,10 +1071,9 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
     public void onConnected(@Nullable Bundle bundle)
     {
         locationRequest = new LocationRequest();
-        locationRequest.setInterval(4000);    //Refresh rate
-        locationRequest.setFastestInterval(4000);
+        locationRequest.setInterval(1000);    //Refresh rate
+        locationRequest.setFastestInterval(1000);
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);  //Highest Accuracy, However drains a lot of battery power
-
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED)
         {
 
@@ -1164,12 +1205,102 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
         return super.onOptionsItemSelected(item);
     }
 
+
+    @Override
+    public void onResume()
+    {
+        requestId = savedRequestId.getString("id");
+        super.onResume();
+    }
+
     @Override
     public  void onBackPressed()
     {
-        finish();
-        super.onBackPressed();
+        quitAlertPopup();
+        // super.onBackPressed();
     }
+
+    public static  void displayToast(Context myContext, String displayToastMessage)
+    {
+        Context context = myContext;
+        Toast.makeText(myContext, displayToastMessage, Toast.LENGTH_LONG).show();
+    }
+
+
+    public void quitAlertPopup()
+    {
+        Intent intent = new Intent(Intent.ACTION_MAIN);
+        intent.addCategory(Intent.CATEGORY_HOME);
+        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);//***Change Here***
+        startActivity(intent);
+
+        /*
+        AlertDialog.Builder dialog = new AlertDialog.Builder(DriverMapActivity.this);
+        dialog.setTitle("Exit Session?");
+        dialog.setMessage("Are you sure you want to exit session");
+        dialog.setPositiveButton("YES", new DialogInterface.OnClickListener()
+        {
+            @Override
+            public void onClick(DialogInterface paramDialogInterface, int paramInt)
+            {
+                Intent intent = new Intent(Intent.ACTION_MAIN);
+                intent.addCategory(Intent.CATEGORY_HOME);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);//***Change Here***
+                startActivity(intent);
+                //finish();  //Kill App
+               // System.exit(0);  //Kill App
+            }
+
+        });
+
+        dialog.setNegativeButton("NO", new DialogInterface.OnClickListener()
+        {
+            @Override
+            public void onClick(DialogInterface paramDialogInterface, int paramInt)
+            {
+                //Do Nothing
+            }
+        });
+
+        dialog.show();
+
+
+
+        Intent intent = new Intent(Intent.ACTION_MAIN);
+        intent.addCategory(Intent.CATEGORY_HOME);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);//***Change Here***
+        startActivity(intent);
+        */
+    }
+
+
+/*
+    if(rideInSession)   //Compute Distance only Once Ride has Started
+    {
+        //Calculate Total Distance Travelled
+        if ((to.latitude == 0 && from.latitude == 0) && (from.latitude == 0 && from.longitude == 0))  //If Initial Point
+        {
+            from = new LatLng(location.getLatitude(), location.getLongitude());  //Original Location
+        }
+        else
+        {
+            to = new LatLng(location.getLatitude(), location.getLongitude());
+            Double distance = SphericalUtil.computeDistanceBetween(from, to);
+            from = to; //Update value of to
+            totalDistanceTravelled = (totalDistanceTravelled + distance);  //Add Initial Value to Current Value
+
+            Log.e("distance", String.valueOf(distance));
+            display.setText(String.valueOf(totalDistanceTravelled));
+
+            //totalDistanceTravelled = Math.floor(totalDistanceTravelled*100) / 100;
+            //totalDistanceTravelled = (totalDistanceTravelled/1000);  //Send Distance in Km
+
+            //String doubleDistance = Double.toString(totalDistanceTravelled);
+            //distanceDisplay.setText(doubleDistance);
+        }
+    }
+*/
+
 }
 
 

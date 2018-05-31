@@ -4,8 +4,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16sp"
-    android:background="#F5F5F5"
+    android:padding="15sp"
+    android:background="#FFFFFF"
     android:orientation="vertical">
 
     <TextView
@@ -22,7 +22,7 @@
     android:layout_height="match_parent"
     android:layout_width="match_parent"
     android:divider="#f00"
-    android:listSelector="#40E0D0"
+    android:listSelector="#F5F5F5"
     android:dividerHeight="1dp"
     android:layout_marginTop="20sp"
     android:layout_marginBottom="20sp">
