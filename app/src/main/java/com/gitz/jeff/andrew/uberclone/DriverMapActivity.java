@@ -248,12 +248,15 @@ public class DriverMapActivity extends AppCompatActivity implements OnMapReadyCa
         if(readyToStartRide == false && rideInSession == false && rideComplete == false) //If Process has started
         {
             boolean available = true;
+            String localRequestId = "UPDATE";
 
             driverMainButton.setText("Checking For Customers...");
             driverMainButton.setBackgroundColor(Color.RED);
             driverMainButton.setTextColor(Color.WHITE);
             previousLocation = currentLocation;  //Pick Coordinates At exactly when driver says he is Available
             sendUserData.sendDriverAvailable(getBaseContext(), driverPhoneNumber, available);  //Send Notification that you are Available
+            sendUserData.sendPeriodicDriverLocationToCustomer(getBaseContext(), localRequestId, driverPhoneNumber, currentDriverLocation);   //Send every 2.5s Driver Location
+
 
             initialDriverLocation = currentLocation;  //Pick co-ordinated of Initial Driver Location once he/she was available
 

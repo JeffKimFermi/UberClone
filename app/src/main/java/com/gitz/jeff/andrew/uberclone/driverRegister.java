@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Handler;
+import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -19,6 +20,7 @@ public class driverRegister extends AppCompatActivity {
 
     EditText userNames;      //User Name
     EditText phoneNumber;   //User Phone Number
+    EditText id;           //Id Number
     EditText vehicleRegistration;  //User Email Address
     EditText passWord1;     //User Password
     EditText passWord2;     //Password Confirmation
@@ -31,8 +33,6 @@ public class driverRegister extends AppCompatActivity {
     int registrationStatus = 1; //Registration Done Successfully
     private final int displayTime = 3500;  //Alert Dialog Display Time
 
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
@@ -43,7 +43,6 @@ public class driverRegister extends AppCompatActivity {
         saveRegistrationComplete = new TinyDB(getBaseContext());
         getRegistration = new TinyDB(getBaseContext());
         registerButton = (Button)findViewById(R.id.register);
-
         loginButton = (Button)findViewById(R.id.login);
 
         registerButton.setOnClickListener(new View.OnClickListener()
@@ -64,8 +63,15 @@ public class driverRegister extends AppCompatActivity {
                 startActivity(intent);
             }
         });
+
     }
 
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data)
+    {
+       super.onActivityResult(requestCode, resultCode, data);
+    }
 
     public void handleRegistrationProcess()
     {
@@ -74,6 +80,7 @@ public class driverRegister extends AppCompatActivity {
        // {
             userNames = (EditText) findViewById(R.id.userName);
             phoneNumber = (EditText) findViewById(R.id.phoneNumber);
+            id = (EditText)findViewById(R.id.idNumber);
             vehicleRegistration = (EditText) findViewById(R.id.vehicleRegistration);
             passWord1 = (EditText) findViewById(R.id.passWord1);
             passWord2 = (EditText) findViewById(R.id.passWord2);
@@ -93,6 +100,7 @@ public class driverRegister extends AppCompatActivity {
                     String userType = "Driver";                                           //Customer
                     String userName = userNames.getText().toString().trim();                   //User's Name
                     String userPhone = phoneNumber.getText().toString().trim();              //User Mobile Number
+                    String idNumber = id.getText().toString().trim();  //Driver National ID
                     String userPassword = pass1;                                              //Std name for user password
                     String registrationVehicle = vehicleRegistration.getText().toString().trim();              //User Email Address
 
@@ -109,7 +117,8 @@ public class driverRegister extends AppCompatActivity {
                         //IF Connected to Network either via Mobile Data or Wifi
                         if (activeNetwork.getType() == ConnectivityManager.TYPE_MOBILE || activeNetwork.getType() == ConnectivityManager.TYPE_WIFI)
                         {
-                            sendUserData.sendDriverRegistrationCredentials(getBaseContext(), userPhone, userName, userPassword, userType, registrationVehicle);     //Send Bloody Data
+                            //sendUserData.sendDriverRegistrationCredentials(getBaseContext(), userPhone, userName, userPassword, userType, registrationVehicle);     //Send Bloody Data
+                            sendUserData.sendDriverRegistrationCredentials(getBaseContext(), userPhone, userName, userPassword, userType, registrationVehicle, idNumber);     //Send Bloody Data
                         }
 
                         new Handler().postDelayed(new Runnable()

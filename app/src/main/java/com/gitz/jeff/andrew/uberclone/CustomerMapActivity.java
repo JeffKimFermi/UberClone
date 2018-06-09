@@ -342,11 +342,11 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
 
         cancelRequest.setText("Cancel Ride Request?");
         autocompleteFragmentDestination.setText("");
-        autocompleteFragmentDestination.getView().setVisibility(View.INVISIBLE);
+        autocompleteFragmentDestination.getView().setVisibility(View.GONE);
         autocompleteFragmentDestination.getView().setClickable(false);
 
         autocompleteFragmentPickup.setText("");
-        autocompleteFragmentPickup.getView().setVisibility(View.INVISIBLE);
+        autocompleteFragmentPickup.getView().setVisibility(View.GONE);
         autocompleteFragmentPickup.getView().setClickable(false);
 
         if(markerCurrentDriverLocation != null)
@@ -1087,6 +1087,7 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
             showAssignedDriverLocation();        //Display Driver's Current Location
         }
 
+        /*
         if(taxiRequestMade)  //If a request has been made
         {
             stopSearchTime= System.currentTimeMillis();
@@ -1102,6 +1103,7 @@ public class CustomerMapActivity extends AppCompatActivity implements OnMapReady
 
             //Log.e("RideRequestRes", "" + rideRequestAccepted);
         }
+        */
 
     }
 

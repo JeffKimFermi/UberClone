@@ -32,7 +32,6 @@ public class sendUserData
         {
             jsonObj.put("driverPhone", userId);
             jsonObj.put("availability", driverAvailability);
-
         }
         catch (JSONException jse)
         {
@@ -569,7 +568,7 @@ public class sendUserData
     }
 
     //Send Customer Registration Details
-    public static void sendDriverRegistrationCredentials(Context myContext, final String userPhoneNumber, final String userFullNames,  final String userConfirmedPassword, final String userType, final String vehicleRegistration)
+    public static void sendDriverRegistrationCredentials(Context myContext, final String userPhoneNumber, final String userFullNames,  final String userConfirmedPassword, final String userType, final String vehicleRegistration, final String idNumber)
     {
         final TinyDB registrationStatus = new TinyDB(myContext);  //Will save a boolean value representing registration status
 
@@ -582,6 +581,7 @@ public class sendUserData
             jsonObj.put("userPassword", userConfirmedPassword);
             jsonObj.put("userType", userType);
             jsonObj.put("registration", vehicleRegistration);
+            jsonObj.put("idNumber", idNumber);
         }
         catch (JSONException jse)
         {
@@ -659,7 +659,7 @@ public class sendUserData
                 new Response.Listener<JSONObject>()
                 {
 
-                    CustomerMapActivity instCustomerMapActivity = CustomerMapActivity.instance();
+                    DriverMapActivity instDriverMapActivity = DriverMapActivity.instance();
 
                     @Override
                     public void onResponse(JSONObject response)
@@ -675,7 +675,7 @@ public class sendUserData
                         {
                            // displayToast(context, errorMsg);
 
-                            instCustomerMapActivity.defaultUI();  //Revert to Default
+                            //instDriverMapActivity.defaultUI();  //Revert to Default
 
                             e.printStackTrace();
                         }
